@@ -11,6 +11,7 @@ public class SemPass1 extends ZooKeeperBaseVisitor<Nodes.Node> {
     final CompilerContext mContext;
     private Nodes.LibNode mCurrentLibNode;
     private Map<String, String> mCurrentKeyValuePairs;
+    private Map<String, ZooKeeperParser.KeyvalueContext> mCurrentKeyValueContext;
 
     public SemPass1(CompilerContext context) {
         mContext = context;
@@ -26,6 +27,7 @@ public class SemPass1 extends ZooKeeperBaseVisitor<Nodes.Node> {
         String name = ctx.name.getText();
         mCurrentLibNode = new Nodes.LibNode(name);
         mCurrentKeyValuePairs = mCurrentLibNode.keyValuePairs;
+        mCurrentKeyValueContext = mCurrentLibNode.keyValueContext;
         visit(ctx.keyvalues());
 
         return putMap(ctx, mCurrentLibNode);
@@ -36,6 +38,7 @@ public class SemPass1 extends ZooKeeperBaseVisitor<Nodes.Node> {
         String key = ctx.key.getText();
         String value = ctx.value.getText();
         mCurrentKeyValuePairs.put(key, value);
+        mCurrentKeyValueContext.put(key, ctx);
 
         return putMap(ctx, new Nodes.KeyValue(key, value));
     }

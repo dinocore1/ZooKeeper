@@ -12,8 +12,6 @@ import java.io.IOException;
 
 public class ZooKeeper {
 
-    private Nodes.Node mFileNode;
-
     ZooKeeper() {
 
     }
@@ -29,7 +27,7 @@ public class ZooKeeper {
         ZooKeeperParser.FileContext root = parser.file();
 
         SemPass1 semPass1 = new SemPass1(compilerContext);
-        mFileNode = semPass1.visitFile(root);
+        Nodes.Node fileNode = semPass1.visitFile(root);
 
         if(compilerContext.hasErrors()) {
             compilerContext.reportMessages(System.err);
