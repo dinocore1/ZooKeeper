@@ -6,6 +6,7 @@ import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.atn.ATNConfigSet;
 import org.antlr.v4.runtime.dfa.DFA;
 
+import java.io.File;
 import java.io.PrintStream;
 import java.util.*;
 
@@ -46,6 +47,8 @@ public class CompilerContext {
         }
     }
 
+    public File fileRoot;
+    public DependencyGraph dependencyGraph;
     public final List<CompileMessage> compileMessages = new ArrayList<CompileMessage>();
     public final Map<ParserRuleContext, Nodes.Node> nodeMap = new HashMap<ParserRuleContext, Nodes.Node>();
 

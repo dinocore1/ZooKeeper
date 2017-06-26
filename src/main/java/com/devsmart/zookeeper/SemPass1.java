@@ -39,7 +39,7 @@ public class SemPass1 extends ZooKeeperBaseVisitor<Nodes.Node> {
         String value = ctx.value.getText();
         value = value.substring(1, value.length()-1);
         value = value.replaceAll("\\\\\"", "\"");
-        value = value.replaceAll("\\\\", "\\");
+        value = value.replace("\\\\", "\\");
         mCurrentKeyValuePairs.put(key, value);
         mCurrentKeyValueContext.put(key, ctx);
 

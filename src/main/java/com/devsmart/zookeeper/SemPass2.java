@@ -1,7 +1,15 @@
 package com.devsmart.zookeeper;
 
 
+import com.devsmart.zookeeper.action.BuildCMakeLibAction;
+import com.devsmart.zookeeper.action.DownloadAndUnzipAction;
 import com.devsmart.zookeeper.ast.Nodes;
+
+import java.io.File;
+import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Pattern;
 
 public class SemPass2 extends ZooKeeperBaseVisitor<Void> {
 
@@ -30,6 +38,55 @@ public class SemPass2 extends ZooKeeperBaseVisitor<Void> {
 
         Library library = new Library(libNode.mName, version);
 
+        Action buildLibraryAction = createBuildLibraryAction(ctx, library);
+
         return null;
+    }
+
+    private static final Pattern URL_REGEX = Pattern.compile("^http://");
+
+    private Action createBuildLibraryAction(ZooKeeperParser.LibraryContext ctx, Library library) {
+        BuildCMakeLibAction retval = null;
+        Nodes.LibNode libNode = (Nodes.LibNode) mContext.nodeMap.get(ctx);
+
+        final String KEY_SOURCE = "src";
+        String srcStr = libNode.keyValuePairs.get(KEY_SOURCE);
+        if(srcStr == null) {
+            mContext.error("library: '" + libNode.mName + "' is missing a '" + KEY_SOURCE + "' param", ctx.getStart());
+        } else {
+
+            List<Action> preBuildDependencies = new ArrayList<Action>();
+            File sourceDir;
+            if(URL_REGEX.matcher(srcStr).find()) {
+                String httpUrl = srcStr;
+                sourceDir = new File(mContext.fileRoot, "source");
+                sourceDir = new File(sourceDir, library.name);
+                Action downloadAction = createHttpDownloadAction(httpUrl, sourceDir);
+                preBuildDependencies.add(downloadAction);
+
+            } else {
+                sourceDir = new File(srcStr);
+                if(!sourceDir.exists()) {
+                    mContext.error("source dir does not exist: " + sourceDir.getAbsolutePath(), libNode.keyValueContext.get(KEY_SOURCE).value);
+                } else {
+                    retval = new BuildCMakeLibAction();
+                    retval.rootDir = sourceDir;
+                    retval.installDir = new File(mContext.fileRoot, "install");
+                    retval.installDir = new File(retval.installDir, library.name);
+                }
+            }
+
+            if(retval != null && !preBuildDependencies.isEmpty()) {
+                for(Action preBuild : preBuildDependencies) {
+                    mContext.dependencyGraph.addDependency(retval, preBuild);
+                }
+            }
+        }
+
+        return retval;
+    }
+
+    Action createHttpDownloadAction(String httpUrl, File sourceDir) {
+        return new DownloadAndUnzipAction(httpUrl, sourceDir);
     }
 }

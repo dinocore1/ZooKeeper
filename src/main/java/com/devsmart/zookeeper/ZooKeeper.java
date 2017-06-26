@@ -13,12 +13,19 @@ import java.io.InputStream;
 
 public class ZooKeeper {
 
-    ZooKeeper() {
+    public DependencyGraph mDependencyGraph = new DependencyGraph();
+    public File mZooKeeperRoot;
 
+    ZooKeeper() {
+        mZooKeeperRoot = new File(System.getProperty("user.home"));
+        mZooKeeperRoot = new File(mZooKeeperRoot, ".zookeeper");
+        mZooKeeperRoot.mkdirs();
     }
 
     public boolean compileInputStream(ANTLRInputStream inputStream) {
         CompilerContext compilerContext = new CompilerContext();
+        compilerContext.dependencyGraph = mDependencyGraph;
+        compilerContext.fileRoot = mZooKeeperRoot;
 
         ZooKeeperLexer lexer = new ZooKeeperLexer(inputStream);
         CommonTokenStream tokens = new CommonTokenStream(lexer);
