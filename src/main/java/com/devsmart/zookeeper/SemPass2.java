@@ -2,6 +2,7 @@ package com.devsmart.zookeeper;
 
 
 import com.devsmart.zookeeper.action.BuildCMakeLibAction;
+import com.devsmart.zookeeper.action.CheckLibAction;
 import com.devsmart.zookeeper.action.DownloadAndUnzipAction;
 import com.devsmart.zookeeper.ast.Nodes;
 
@@ -39,11 +40,25 @@ public class SemPass2 extends ZooKeeperBaseVisitor<Void> {
         Library library = new Library(libNode.mName, version);
 
         Action buildLibraryAction = createBuildLibraryAction(ctx, library);
+        createCheckLibraryAction(ctx, library, buildLibraryAction);
 
         return null;
     }
 
-    private static final Pattern URL_REGEX = Pattern.compile("^http://");
+    private Action createCheckLibraryAction(ZooKeeperParser.LibraryContext ctx, Library library, Action buildLibraryAction) {
+        CheckLibAction checkLibAction = new CheckLibAction();
+        checkLibAction.library = library;
+        checkLibAction.installDir = new File(mContext.fileRoot, "install");
+        checkLibAction.installDir = new File(checkLibAction.installDir, library.name);
+        checkLibAction.runIfNotFound = buildLibraryAction;
+        checkLibAction.dependencyGraph = mContext.dependencyGraph;
+
+        mContext.dependencyGraph.addAction("check"+library.name, checkLibAction);
+
+        return checkLibAction;
+    }
+
+    private static final Pattern URL_REGEX = Pattern.compile("^https?://");
 
     private Action createBuildLibraryAction(ZooKeeperParser.LibraryContext ctx, Library library) {
         BuildCMakeLibAction retval = null;
@@ -62,21 +77,23 @@ public class SemPass2 extends ZooKeeperBaseVisitor<Void> {
                 sourceDir = new File(mContext.fileRoot, "source");
                 sourceDir = new File(sourceDir, library.name);
                 Action downloadAction = createHttpDownloadAction(httpUrl, sourceDir);
+                mContext.dependencyGraph.addAction("download"+libNode.mName, downloadAction);
                 preBuildDependencies.add(downloadAction);
 
             } else {
                 sourceDir = new File(srcStr);
                 if(!sourceDir.exists()) {
                     mContext.error("source dir does not exist: " + sourceDir.getAbsolutePath(), libNode.keyValueContext.get(KEY_SOURCE).value);
-                } else {
-                    retval = new BuildCMakeLibAction();
-                    retval.rootDir = sourceDir;
-                    retval.installDir = new File(mContext.fileRoot, "install");
-                    retval.installDir = new File(retval.installDir, library.name);
                 }
             }
+            retval = new BuildCMakeLibAction();
+            retval.rootDir = sourceDir;
+            retval.installDir = new File(mContext.fileRoot, "install");
+            retval.installDir = new File(retval.installDir, library.name);
 
-            if(retval != null && !preBuildDependencies.isEmpty()) {
+            mContext.dependencyGraph.addAction("build"+library.name, retval);
+
+            if(!preBuildDependencies.isEmpty()) {
                 for(Action preBuild : preBuildDependencies) {
                     mContext.dependencyGraph.addDependency(retval, preBuild);
                 }
