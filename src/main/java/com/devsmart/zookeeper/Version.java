@@ -12,7 +12,7 @@ public class Version implements Comparable<Version> {
     public int minor;
     public int revision;
 
-    private static final Pattern REGEX = Pattern.compile("([0-9]+)\\.([0-9]+)\\.([0-9]+)");
+    private static final Pattern REGEX = Pattern.compile("^([0-9]+)\\.([0-9]+)\\.([0-9]+)$");
 
     public static Version fromString(String value) {
         Version retval = null;

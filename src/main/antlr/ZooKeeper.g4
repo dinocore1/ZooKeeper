@@ -23,5 +23,5 @@ LPAREN : '{' ;
 RPAREN : '}' ;
 STRING_LITERAL : '"' (~('"' | '\\' | '\r' | '\n') | '\\' ('"' | '\\'))* '"';
 
-ID : [a-zA-Z0-9_]+ ;
+ID : [a-zA-Z0-9_\\.]+ ;
 WS : [ \t\r\n]+ -> skip ;

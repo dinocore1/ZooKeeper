@@ -1,0 +1,5 @@
+
+lib gtest {
+  version "1.\"8.\\0"
+
+}

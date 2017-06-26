@@ -1,4 +1,4 @@
-package com.devsmart.zookeeper;
+package com.devsmart.zookeeper.action;
 
 
 import org.junit.Test;
@@ -16,7 +16,5 @@ public class BuildCMakeLibActionTest {
         cmakeBuild.installDir = new File("testInstall");
 
         cmakeBuild.doIt();
-
-        Thread.sleep(20000);
     }
 }

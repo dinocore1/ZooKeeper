@@ -9,6 +9,7 @@ import org.apache.commons.cli.*;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 
 public class ZooKeeper {
 
@@ -50,9 +51,12 @@ public class ZooKeeper {
         FileInputStream fin = new FileInputStream(file);
         ANTLRInputStream inputStream = new ANTLRInputStream(fin);
         inputStream.name = file.getAbsolutePath();
-        final boolean success = compileInputStream(inputStream);
+        return compileInputStream(inputStream);
+    }
 
-        return success;
+    public boolean compile(InputStream in) throws IOException {
+        ANTLRInputStream inputStream = new ANTLRInputStream(in);
+        return compileInputStream(inputStream);
     }
 
     public static void main(String[] args) {
