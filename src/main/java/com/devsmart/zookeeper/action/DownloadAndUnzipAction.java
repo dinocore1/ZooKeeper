@@ -2,6 +2,7 @@ package com.devsmart.zookeeper.action;
 
 import com.devsmart.IOUtils;
 import com.devsmart.zookeeper.Action;
+import com.google.common.io.Files;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,6 +33,16 @@ public class DownloadAndUnzipAction implements Action {
             LOGGER.info("Downloading: " + mUrlStr);
             InputStream zipInputStream = new URL(mUrlStr).openStream();
             IOUtils.unzipFile(zipInputStream, mDestDir, true);
+
+
+            //check if this zip file contained only 1 dir with all the code inside it.
+            //If so, move everything into the dest dir.
+            File[] unzipFileList = mDestDir.listFiles();
+            if(unzipFileList.length == 1 && unzipFileList[0].isDirectory()) {
+                for(File f : unzipFileList[0].listFiles()) {
+                    Files.move(f, new File(mDestDir, f.getName()));
+                }
+            }
 
         } catch (IOException e) {
             LOGGER.error("", e);
