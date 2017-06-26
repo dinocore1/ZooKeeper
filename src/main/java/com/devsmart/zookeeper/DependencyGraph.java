@@ -1,13 +1,19 @@
 package com.devsmart.zookeeper;
 
 
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.experimental.dag.DirectedAcyclicGraph;
 import org.jgrapht.graph.DefaultEdge;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 
 public class DependencyGraph {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(DependencyGraph.class);
 
     private class State {
         boolean hasRun = false;
@@ -16,7 +22,7 @@ public class DependencyGraph {
     private HashMap<Action, State> mActionState = new HashMap<Action, State>();
     private DirectedGraph<Action, DefaultEdge> mGraph = new DirectedAcyclicGraph<Action, DefaultEdge>(DefaultEdge.class);
     //private CycleDetector<Action, DefaultEdge> mCycleDetector = new CycleDetector<Action, DefaultEdge>(mGraph);
-    private HashMap<String, Action> mActionName = new HashMap<String, Action>();
+    private BiMap<String, Action> mActionName = HashBiMap.create();
     private Action mRootAction;
 
     public Action getAction(String name) {
@@ -44,6 +50,7 @@ public class DependencyGraph {
         }
 
         State actionState = mActionState.get(action);
+        LOGGER.info("running " + mActionName.inverse().get(action));
         action.doIt();
         actionState.hasRun = true;
     }

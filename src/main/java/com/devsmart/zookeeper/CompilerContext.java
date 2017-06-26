@@ -49,6 +49,7 @@ public class CompilerContext {
 
     public File fileRoot;
     public DependencyGraph dependencyGraph;
+    public ArrayList<Library> allLibraries;
     public final List<CompileMessage> compileMessages = new ArrayList<CompileMessage>();
     public final Map<ParserRuleContext, Nodes.Node> nodeMap = new HashMap<ParserRuleContext, Nodes.Node>();
 

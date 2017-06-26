@@ -1,6 +1,7 @@
 package com.devsmart.zookeeper;
 
 
+import com.devsmart.zookeeper.action.PhonyAction;
 import com.devsmart.zookeeper.ast.Nodes;
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -10,11 +11,13 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 
 public class ZooKeeper {
 
     public DependencyGraph mDependencyGraph = new DependencyGraph();
     public File mZooKeeperRoot;
+    public ArrayList<Library> mAllLibraries = new ArrayList<Library>();
 
     ZooKeeper() {
         mZooKeeperRoot = new File(System.getProperty("user.home"));
@@ -26,6 +29,7 @@ public class ZooKeeper {
         CompilerContext compilerContext = new CompilerContext();
         compilerContext.dependencyGraph = mDependencyGraph;
         compilerContext.fileRoot = mZooKeeperRoot;
+        compilerContext.allLibraries = mAllLibraries;
 
         ZooKeeperLexer lexer = new ZooKeeperLexer(inputStream);
         CommonTokenStream tokens = new CommonTokenStream(lexer);
@@ -49,6 +53,13 @@ public class ZooKeeper {
         if(compilerContext.hasErrors()) {
             compilerContext.reportMessages(System.err);
             return false;
+        }
+
+        PhonyAction checkAllLibsAction = new PhonyAction();
+        mDependencyGraph.addAction("check", checkAllLibsAction);
+        for(Library lib : mAllLibraries) {
+            Action checkLib = mDependencyGraph.getAction("check"+lib.name);
+            mDependencyGraph.addDependency(checkAllLibsAction, checkLib);
         }
 
         return true;

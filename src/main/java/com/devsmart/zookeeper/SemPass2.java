@@ -42,6 +42,8 @@ public class SemPass2 extends ZooKeeperBaseVisitor<Void> {
         Action buildLibraryAction = createBuildLibraryAction(ctx, library);
         createCheckLibraryAction(ctx, library, buildLibraryAction);
 
+        mContext.allLibraries.add(library);
+
         return null;
     }
 
