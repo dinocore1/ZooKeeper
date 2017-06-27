@@ -29,6 +29,13 @@ public class DownloadAndUnzipAction implements Action {
 
         try {
             mDestDir.mkdirs();
+            for(File f : mDestDir.listFiles()) {
+                if(f.isDirectory()) {
+                    IOUtils.deleteTree(f);
+                } else {
+                    f.delete();
+                }
+            }
 
             LOGGER.info("Downloading: " + mUrlStr);
             InputStream zipInputStream = new URL(mUrlStr).openStream();

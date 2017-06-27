@@ -46,7 +46,7 @@ public class BuildCMakeLibAction implements Action {
             commandLine.add("-D" + arg);
         }
 
-        commandLine.add("-DCMAKE_INSTALL_PREFIX=\"" + installDir.getAbsolutePath() + "\"");
+        commandLine.add("-DCMAKE_INSTALL_PREFIX=" + installDir.getAbsolutePath() + "");
 
         Process configProcess;
         ProcessBuilder builder = new ProcessBuilder()

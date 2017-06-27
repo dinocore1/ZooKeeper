@@ -45,10 +45,10 @@ public class ConfigLocalBuildCMakeAction implements Action {
 
     static void addCMakeLibraryArgs(List<String> commandLine, Library lib) {
         String includeDirList = Joiner.on(';').join(Iterables.transform(lib.includePaths, FILE_TO_STRING));
-        commandLine.add(String.format("-D%s_INCLUDE_DIRS=\"%s\"", lib.name, includeDirList));
+        commandLine.add(String.format("-D%s_INCLUDE_DIRS=%s", lib.name, includeDirList));
 
         String librariesList = Joiner.on(';').join(Iterables.transform(lib.linkLibPaths, FILE_TO_STRING));
-        commandLine.add(String.format("-D%s_LIBRARIES=\"%s\"", lib.name, librariesList));
+        commandLine.add(String.format("-D%s_LIBRARIES=%s", lib.name, librariesList));
     }
 
     void doConfig() throws Exception {

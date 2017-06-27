@@ -21,7 +21,7 @@ public class CheckLibAction implements Action {
     @Override
     public void doIt() {
 
-        boolean isInstalled = installDir.exists();
+        boolean isInstalled = installDir.exists() && installDir.listFiles().length > 0;
         LOGGER.info("checking lib installed: {}...{}", library.name, isInstalled ? "YES" : "NO");
         if(!isInstalled) {
             dependencyGraph.runAction(runIfNotFound);
