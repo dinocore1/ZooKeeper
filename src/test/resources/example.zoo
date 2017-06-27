@@ -4,3 +4,16 @@ lib gtest {
   src "https://github.com/google/googletest/archive/release-1.8.0.zip"
   build "cmake"
 }
+
+lib xraylib {
+  version "3.2.0"
+  src "https://github.com/dinocore1/xraylib/archive/cmake.zip"
+  build "cmake"
+}
+
+lib pivot {
+  version "0.1.0"
+  src "https://github.com/dinocore1/Pivot/archive/master.zip"
+  cmake_args "BuildTests=OFF"
+  build "cmake"
+}

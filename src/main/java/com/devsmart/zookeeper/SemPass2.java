@@ -93,6 +93,14 @@ public class SemPass2 extends ZooKeeperBaseVisitor<Void> {
             retval.installDir = new File(mContext.fileRoot, "install");
             retval.installDir = new File(retval.installDir, library.name);
 
+            final String CMAKE_ARGS = "cmake_args";
+            String cmakeArgs = libNode.keyValuePairs.get(CMAKE_ARGS);
+            if(cmakeArgs != null) {
+                for(String arg : cmakeArgs.split(" ")) {
+                    retval.cmakeArgs.add(arg);
+                }
+            }
+
             mContext.dependencyGraph.addAction("build"+library.name, retval);
 
             if(!preBuildDependencies.isEmpty()) {
