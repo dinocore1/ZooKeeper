@@ -12,6 +12,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Locale;
 
 public class ZooKeeper {
 
@@ -23,6 +24,39 @@ public class ZooKeeper {
         mZooKeeperRoot = new File(System.getProperty("user.home"));
         mZooKeeperRoot = new File(mZooKeeperRoot, ".zookeeper");
         mZooKeeperRoot.mkdirs();
+    }
+
+    public File getInstallDir(Library library, Platform platform) {
+        File retval = new File(mZooKeeperRoot, "install");
+        retval = new File(retval, String.format("%s-%s", library.name, library.version));
+        retval = new File(retval, platform.toString());
+        return retval;
+    }
+
+    public static Platform getNativePlatform() {
+        Platform.OS os;
+        String OSString = System.getProperty("os.name", "generic").toLowerCase(Locale.ENGLISH);
+        if (OSString.contains("mac") || OSString.contains("darwin")) {
+            os = Platform.OS.MACOSX;
+        } else if (OSString.contains("win")) {
+            os = Platform.OS.WINDOWS;
+        } else if (OSString.contains("nux")) {
+            os = Platform.OS.LINUX;
+        } else {
+            os = Platform.OS.UNKNOWN;
+        }
+
+        Platform.ARCH arch;
+        String archStr = System.getProperty("os.arch", "generic").toLowerCase(Locale.ENGLISH);
+        if(archStr.contains("x86_64") || archStr.contains("amd64")) {
+            arch = Platform.ARCH.x86_64;
+        } else if(archStr.contains("x86")){
+            arch = Platform.ARCH.x86;
+        } else {
+            arch = Platform.ARCH.UNKNOWN;
+        }
+
+        return new Platform(os, arch);
     }
 
     public boolean compileInputStream(ANTLRInputStream inputStream) {
