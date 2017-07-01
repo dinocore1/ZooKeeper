@@ -7,12 +7,14 @@ import com.google.common.hash.HashCode;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
+import com.google.common.util.concurrent.Atomics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.TreeSet;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class ComputeBuildHash implements Action {
 
@@ -25,11 +27,7 @@ public class ComputeBuildHash implements Action {
 
     public File mSourceDir;
     public final TreeSet<String> mBuildParams = new TreeSet<String>();
-    private HashCode mHash;
-
-    public HashCode getHashCode() {
-        return mHash;
-    }
+    public final AtomicReference<HashCode> libraryHash = Atomics.newReference();
 
     @Override
     public void doIt() {
@@ -44,7 +42,7 @@ public class ComputeBuildHash implements Action {
                 totalHasher.putString(buildParam, Charsets.UTF_8);
             }
 
-            mHash = totalHasher.hash();
+            libraryHash.set(totalHasher.hash());
 
         } catch (IOException e) {
             LOGGER.error("", e);

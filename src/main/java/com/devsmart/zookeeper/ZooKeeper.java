@@ -3,6 +3,7 @@ package com.devsmart.zookeeper;
 
 import com.devsmart.zookeeper.action.PhonyAction;
 import com.devsmart.zookeeper.ast.Nodes;
+import com.google.common.hash.HashCode;
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.apache.commons.cli.*;
@@ -26,7 +27,7 @@ public class ZooKeeper {
         mZooKeeperRoot.mkdirs();
     }
 
-    public File getInstallDir(Library library, Platform platform) {
+    public File getInstallDir(Library library, Platform platform, HashCode buildHash) {
         File retval = new File(mZooKeeperRoot, "install");
         retval = new File(retval, String.format("%s-%s", library.name, library.version));
         retval = new File(retval, platform.toString());

@@ -9,6 +9,7 @@ import java.io.File;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.regex.Pattern;
 
 public class SemPass2 extends ZooKeeperBaseVisitor<Void> {
@@ -58,7 +59,7 @@ public class SemPass2 extends ZooKeeperBaseVisitor<Void> {
         }
 
         Action buildLibraryAction = createBuildLibraryAction(ctx, library, platform);
-        createCheckLibraryAction(ctx, library, platform, buildLibraryAction);
+        //createCheckLibraryAction(ctx, library, platform, buildLibraryAction);
 
         mContext.allLibraries.add(library);
 
@@ -67,6 +68,7 @@ public class SemPass2 extends ZooKeeperBaseVisitor<Void> {
 
 
 
+    /*
     private Action createCheckLibraryAction(ZooKeeperParser.LibraryContext ctx, Library library, Platform platform, Action buildLibraryAction) {
         CheckLibAction checkLibAction = new CheckLibAction();
         checkLibAction.library = library;
@@ -78,10 +80,11 @@ public class SemPass2 extends ZooKeeperBaseVisitor<Void> {
 
         return checkLibAction;
     }
+    */
 
 
 
-    private Action createBuildLibraryAction(ZooKeeperParser.LibraryContext ctx, Library library, Platform platform) {
+    private Action createBuildLibraryAction(ZooKeeperParser.LibraryContext ctx, final Library library, final Platform platform) {
 
         BuildCMakeLibAction retval = null;
         Nodes.LibNode libNode = (Nodes.LibNode) mContext.nodeMap.get(ctx);
@@ -91,7 +94,7 @@ public class SemPass2 extends ZooKeeperBaseVisitor<Void> {
         if(srcStr == null) {
             mContext.error("library: '" + libNode.mName + "' is missing a '" + KEY_SOURCE + "' param", ctx.getStart());
         } else {
-            ComputeBuildHash buildHashAction = new ComputeBuildHash();
+            final ComputeBuildHash buildHashAction = new ComputeBuildHash();
             mContext.dependencyGraph.addAction(ComputeBuildHash.createActionName(library, platform), buildHashAction);
 
             List<Action> preBuildDependencies = new ArrayList<Action>();
@@ -105,6 +108,7 @@ public class SemPass2 extends ZooKeeperBaseVisitor<Void> {
                 Action downloadAction = createHttpDownloadAction(httpUrl, sourceDir);
                 mContext.dependencyGraph.addAction("download"+libNode.mName, downloadAction);
                 preBuildDependencies.add(downloadAction);
+                mContext.dependencyGraph.addDependency(buildHashAction, downloadAction);
 
             } else {
                 sourceDir = new File(srcStr);
@@ -114,7 +118,12 @@ public class SemPass2 extends ZooKeeperBaseVisitor<Void> {
             }
             retval = new BuildCMakeLibAction();
             retval.rootDir = sourceDir;
-            retval.installDir = mContext.zooKeeper.getInstallDir(library, platform);
+            retval.installDirCallable = new Callable<File>() {
+                @Override
+                public File call() throws Exception {
+                    return mContext.zooKeeper.getInstallDir(library, platform, buildHashAction.libraryHash.get());
+                }
+            };
 
             buildHashAction.mSourceDir = sourceDir;
             String cmakeArgs = libNode.keyValuePairs.get(KEY_CMAKE_ARGS);
@@ -125,10 +134,10 @@ public class SemPass2 extends ZooKeeperBaseVisitor<Void> {
                 }
             }
 
+            mContext.dependencyGraph.addAction(BuildCMakeLibAction.createActionName(library, platform), retval);
+
             Action rootAction = getOrCreatePhonyAction(BuildCMakeLibAction.createActionName(library));
             mContext.dependencyGraph.addDependency(rootAction, retval);
-
-            mContext.dependencyGraph.addAction(BuildCMakeLibAction.createActionName(library, platform), retval);
 
             if(!preBuildDependencies.isEmpty()) {
                 for(Action preBuild : preBuildDependencies) {

@@ -16,17 +16,17 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.Callable;
 
 public class BuildCMakeLibAction implements Action {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BuildCMakeLibAction.class);
 
     public File rootDir;
-    public File installDir;
+    public Callable<File> installDirCallable;
     public LinkedHashSet<String> cmakeArgs = new LinkedHashSet<String>();
     private File mBuildDir;
-
-
+    public File installDir;
 
     public static String createActionName(Library lib) {
         return "build" + Utils.captialFirstLetter(lib.name);
@@ -38,9 +38,13 @@ public class BuildCMakeLibAction implements Action {
 
     @Override
     public void doIt() {
-        installDir.mkdirs();
-        mBuildDir = createTmpBuildDir();
         try {
+            if(installDirCallable != null) {
+                installDir = installDirCallable.call();
+            }
+            installDir.mkdirs();
+            mBuildDir = createTmpBuildDir();
+
             doConfig();
             doInstall();
 
