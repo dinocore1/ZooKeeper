@@ -6,7 +6,6 @@ import com.devsmart.zookeeper.ast.Nodes;
 import com.google.common.collect.ImmutableList;
 
 import java.io.File;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -25,6 +24,7 @@ public class SemPass2 extends ZooKeeperBaseVisitor<Void> {
     }
 
     private final CompilerContext mContext;
+    private CheckBuildCacheAction mCurrentCheckLibCacheAction;
 
     public SemPass2(CompilerContext compilerContext) {
         mContext = compilerContext;
@@ -70,7 +70,7 @@ public class SemPass2 extends ZooKeeperBaseVisitor<Void> {
 
     /*
     private Action createCheckLibraryAction(ZooKeeperParser.LibraryContext ctx, Library library, Platform platform, Action buildLibraryAction) {
-        CheckLibAction checkLibAction = new CheckLibAction();
+        CheckBuildCacheAction checkLibAction = new CheckBuildCacheAction();
         checkLibAction.library = library;
         checkLibAction.installDir = mContext.zooKeeper.getInstallDir(library, platform);
         checkLibAction.runIfNotFound = buildLibraryAction;
@@ -95,6 +95,12 @@ public class SemPass2 extends ZooKeeperBaseVisitor<Void> {
             mContext.error("library: '" + libNode.mName + "' is missing a '" + KEY_SOURCE + "' param", ctx.getStart());
         } else {
             final ComputeBuildHash buildHashAction = new ComputeBuildHash();
+
+            mCurrentCheckLibCacheAction = new CheckBuildCacheAction();
+            mContext.dependencyGraph.addAction(CheckBuildCacheAction.createActionName(library, platform), mCurrentCheckLibCacheAction);
+            mCurrentCheckLibCacheAction.libraryHash = buildHashAction.libraryHash;
+
+
             mContext.dependencyGraph.addAction(ComputeBuildHash.createActionName(library, platform), buildHashAction);
 
             List<Action> preBuildDependencies = new ArrayList<Action>();
