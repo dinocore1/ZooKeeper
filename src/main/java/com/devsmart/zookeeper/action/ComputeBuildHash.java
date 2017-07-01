@@ -1,8 +1,7 @@
 package com.devsmart.zookeeper.action;
 
 
-import com.devsmart.zookeeper.Action;
-import com.devsmart.zookeeper.FSChecksum;
+import com.devsmart.zookeeper.*;
 import com.google.common.base.Charsets;
 import com.google.common.hash.HashCode;
 import com.google.common.hash.HashFunction;
@@ -13,17 +12,19 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.TreeSet;
 
 public class ComputeBuildHash implements Action {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ComputeBuildHash.class);
-
     private static final HashFunction HASH_FUNCTION = Hashing.sha1();
 
+    public static String createActionName(Library lib, Platform platform) {
+        return "hash"+ Utils.captialFirstLetter(lib.name) + Utils.captialFirstLetter(platform.toString());
+    }
+
     public File mSourceDir;
-    public final TreeMap<String, String> mBuildParams = new TreeMap<String, String>();
+    public final TreeSet<String> mBuildParams = new TreeSet<String>();
     private HashCode mHash;
 
     public HashCode getHashCode() {
@@ -39,9 +40,8 @@ public class ComputeBuildHash implements Action {
             Hasher totalHasher = HASH_FUNCTION.newHasher();
             totalHasher.putBytes(fsHash.asBytes());
 
-            for(Map.Entry<String, String> buildParam : mBuildParams.entrySet()) {
-                totalHasher.putString(buildParam.getKey(), Charsets.UTF_8);
-                totalHasher.putString(buildParam.getValue(), Charsets.UTF_8);
+            for(String buildParam : mBuildParams) {
+                totalHasher.putString(buildParam, Charsets.UTF_8);
             }
 
             mHash = totalHasher.hash();

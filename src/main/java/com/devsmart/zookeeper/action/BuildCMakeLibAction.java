@@ -3,6 +3,10 @@ package com.devsmart.zookeeper.action;
 
 import com.devsmart.ThreadUtils;
 import com.devsmart.zookeeper.Action;
+import com.devsmart.zookeeper.Library;
+import com.devsmart.zookeeper.Platform;
+import com.devsmart.zookeeper.Utils;
+import com.google.common.base.CaseFormat;
 import com.google.common.io.BaseEncoding;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,6 +25,16 @@ public class BuildCMakeLibAction implements Action {
     public File installDir;
     public LinkedHashSet<String> cmakeArgs = new LinkedHashSet<String>();
     private File mBuildDir;
+
+
+
+    public static String createActionName(Library lib) {
+        return "build" + Utils.captialFirstLetter(lib.name);
+    }
+
+    public static String createActionName(Library lib, Platform platform) {
+        return "build" + Utils.captialFirstLetter(lib.name) + Utils.captialFirstLetter(platform.toString());
+    }
 
     @Override
     public void doIt() {
