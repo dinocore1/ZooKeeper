@@ -48,6 +48,7 @@ public class CompilerContext {
     }
 
     public File fileRoot;
+    public ZooKeeper zooKeeper;
     public DependencyGraph dependencyGraph;
     public ArrayList<Library> allLibraries;
     public final List<CompileMessage> compileMessages = new ArrayList<CompileMessage>();

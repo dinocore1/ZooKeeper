@@ -64,6 +64,7 @@ public class ZooKeeper {
         compilerContext.dependencyGraph = mDependencyGraph;
         compilerContext.fileRoot = mZooKeeperRoot;
         compilerContext.allLibraries = mAllLibraries;
+        compilerContext.zooKeeper = this;
 
         ZooKeeperLexer lexer = new ZooKeeperLexer(inputStream);
         CommonTokenStream tokens = new CommonTokenStream(lexer);

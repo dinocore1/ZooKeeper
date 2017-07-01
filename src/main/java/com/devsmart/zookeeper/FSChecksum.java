@@ -9,7 +9,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Comparator;
 
-public class FSCache {
+public class FSChecksum {
 
     private static final Comparator<File> LEX_COMPARATOR = new Comparator<File>() {
         @Override
@@ -22,7 +22,7 @@ public class FSCache {
     private final HashFunction mHashFunction = Hashing.sha1();
     private Hasher mHasher;
 
-    public FSCache(File root) {
+    public FSChecksum(File root) {
         mRoot = root;
     }
 

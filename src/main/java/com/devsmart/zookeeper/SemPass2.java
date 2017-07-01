@@ -39,19 +39,27 @@ public class SemPass2 extends ZooKeeperBaseVisitor<Void> {
 
         Library library = new Library(libNode.mName, version);
 
-        Action buildLibraryAction = createBuildLibraryAction(ctx, library);
-        createCheckLibraryAction(ctx, library, buildLibraryAction);
+        Platform platform;
+        final String KEY_PLATFORM = "platform";
+        String platformStr = libNode.keyValuePairs.get(KEY_PLATFORM);
+        if(platformStr != null) {
+            platform = Platform.parse(platformStr);
+        } else {
+            platform = ZooKeeper.getNativePlatform();
+        }
+
+        Action buildLibraryAction = createBuildLibraryAction(ctx, library, platform);
+        createCheckLibraryAction(ctx, library, platform, buildLibraryAction);
 
         mContext.allLibraries.add(library);
 
         return null;
     }
 
-    private Action createCheckLibraryAction(ZooKeeperParser.LibraryContext ctx, Library library, Action buildLibraryAction) {
+    private Action createCheckLibraryAction(ZooKeeperParser.LibraryContext ctx, Library library, Platform platform, Action buildLibraryAction) {
         CheckLibAction checkLibAction = new CheckLibAction();
         checkLibAction.library = library;
-        checkLibAction.installDir = new File(mContext.fileRoot, "install");
-        checkLibAction.installDir = new File(checkLibAction.installDir, library.name);
+        checkLibAction.installDir = mContext.zooKeeper.getInstallDir(library, platform);
         checkLibAction.runIfNotFound = buildLibraryAction;
         checkLibAction.dependencyGraph = mContext.dependencyGraph;
 
@@ -62,7 +70,7 @@ public class SemPass2 extends ZooKeeperBaseVisitor<Void> {
 
     private static final Pattern URL_REGEX = Pattern.compile("^https?://");
 
-    private Action createBuildLibraryAction(ZooKeeperParser.LibraryContext ctx, Library library) {
+    private Action createBuildLibraryAction(ZooKeeperParser.LibraryContext ctx, Library library, Platform platform) {
         BuildCMakeLibAction retval = null;
         Nodes.LibNode libNode = (Nodes.LibNode) mContext.nodeMap.get(ctx);
 
@@ -90,8 +98,7 @@ public class SemPass2 extends ZooKeeperBaseVisitor<Void> {
             }
             retval = new BuildCMakeLibAction();
             retval.rootDir = sourceDir;
-            retval.installDir = new File(mContext.fileRoot, "install");
-            retval.installDir = new File(retval.installDir, library.name);
+            retval.installDir = mContext.zooKeeper.getInstallDir(library, platform);
 
             final String CMAKE_ARGS = "cmake_args";
             String cmakeArgs = libNode.keyValuePairs.get(CMAKE_ARGS);

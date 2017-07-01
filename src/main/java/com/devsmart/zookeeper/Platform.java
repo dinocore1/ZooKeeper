@@ -22,12 +22,17 @@ public class Platform {
     public enum ARCH {
         x86,
         x86_64,
-        armv7a,
+        arm,
+        avr,
         UNKNOWN;
     }
 
     private final OS os;
     private final ARCH arch;
+
+    public static Platform parse(String platformStr) {
+        return null;
+    }
 
     Platform(OS os, ARCH arch) {
         this.os = os;
