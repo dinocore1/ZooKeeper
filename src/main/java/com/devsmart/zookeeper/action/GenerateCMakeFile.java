@@ -50,6 +50,9 @@ public class GenerateCMakeFile implements Action {
             writer.newLine();
             writeTargetIncludeDirs(writer);
             writer.newLine();
+            writer.newLine();
+            writeInstall(writer);
+            writer.newLine();
 
             writer.flush();
 
@@ -58,6 +61,39 @@ public class GenerateCMakeFile implements Action {
         }
 
 
+    }
+
+    private void writeInstall(BufferedWriter writer) throws IOException {
+        writer.newLine();
+        writer.write("install(TARGETS ${PROJECT_NAME}");
+        writer.newLine();
+        writer.write("  EXPORT ${PROJECT_NAME}");
+        writer.newLine();
+        writer.write("  RUNTIME DESTINATION bin");
+        writer.newLine();
+        writer.write("  LIBRARY DESTINATION lib");
+        writer.newLine();
+        writer.write("  ARCHIVE DESTINATION lib/static");
+        writer.newLine();
+        writer.write(")");
+
+        writer.newLine();
+        writer.newLine();
+
+        writer.write("install(DIRECTORY include/");
+        writer.newLine();
+        writer.write("  DESTINATION include");
+        writer.newLine();
+        writer.write(")");
+
+        writer.newLine();
+        writer.newLine();
+
+        writer.write("install(EXPORT ${PROJECT_NAME}");
+        writer.newLine();
+        writer.write("  DESTINATION lib/${PROJECT_NAME}");
+        writer.newLine();
+        writer.write(")");
     }
 
     private void writeFindCompileDependencies(BufferedWriter writer) throws IOException {
