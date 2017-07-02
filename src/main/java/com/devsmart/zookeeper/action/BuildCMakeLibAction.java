@@ -12,21 +12,30 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.Callable;
 
 public class BuildCMakeLibAction implements Action {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BuildCMakeLibAction.class);
 
+    public static class ExternalLibrary {
+        Library library;
+        File cmakeExportDir;
+    }
+
     public File rootDir;
-    public Callable<File> installDirCallable;
-    public LinkedHashSet<String> cmakeArgs = new LinkedHashSet<String>();
-    private File mBuildDir;
+
     public File installDir;
+    public Callable<File> installDirCallable;
+
+    public Iterable<ExternalLibrary> externalLibraries = Collections.emptyList();
+    public Callable<Iterable<ExternalLibrary>> externalLibrariesCallable;
+
+    public LinkedHashSet<String> cmakeArgs = new LinkedHashSet<String>();
+
+
+    private File mBuildDir;
 
     public static String createActionName(Library lib) {
         return "build" + Utils.captialFirstLetter(lib.name);
@@ -43,6 +52,11 @@ public class BuildCMakeLibAction implements Action {
                 installDir = installDirCallable.call();
             }
             installDir.mkdirs();
+
+            if(externalLibrariesCallable != null) {
+                externalLibraries = externalLibrariesCallable.call();
+            }
+
             mBuildDir = createTmpBuildDir();
 
             doConfig();
@@ -65,6 +79,13 @@ public class BuildCMakeLibAction implements Action {
         }
 
         commandLine.add("-DCMAKE_INSTALL_PREFIX=" + installDir.getAbsolutePath() + "");
+
+        for(ExternalLibrary externalLibrary : externalLibraries) {
+            commandLine.add(String.format("-D%s_DIR=%s",
+                    externalLibrary.library.name,
+                    externalLibrary.cmakeExportDir.getAbsolutePath()
+                    ));
+        }
 
         Process configProcess;
         ProcessBuilder builder = new ProcessBuilder()

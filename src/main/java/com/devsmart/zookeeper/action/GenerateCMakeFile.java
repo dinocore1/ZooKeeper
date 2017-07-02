@@ -101,7 +101,7 @@ public class GenerateCMakeFile implements Action {
     private void writeFindCompileDependencies(BufferedWriter writer) throws IOException {
         for(Library depenLib : mLibrary.compileLibDependencies) {
             writer.newLine();
-            writer.write("find_package(" + depenLib.name + ")");
+            writer.write("find_package(" + depenLib.name + " REQUIRED)");
         }
 
     }

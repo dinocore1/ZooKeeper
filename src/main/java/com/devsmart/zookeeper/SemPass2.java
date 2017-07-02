@@ -117,6 +117,15 @@ public class SemPass2 extends ZooKeeperBaseVisitor<Void> {
                 return mContext.zooKeeper.getInstallDir(libNode.library, platform, buildHashAction.libraryHash.get());
             }
         };
+        cmakeBuildAction.externalLibrariesCallable = new Callable<Iterable<BuildCMakeLibAction.ExternalLibrary>>() {
+            @Override
+            public Iterable<BuildCMakeLibAction.ExternalLibrary> call() throws Exception {
+
+                CheckBuildCacheAction.
+
+                return null;
+            }
+        };
 
         buildHashAction.mSourceDir = sourceDir;
         /*
