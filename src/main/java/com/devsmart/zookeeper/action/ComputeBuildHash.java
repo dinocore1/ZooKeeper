@@ -25,6 +25,15 @@ public class ComputeBuildHash implements Action {
         return "hash"+ Utils.captialFirstLetter(lib.name) + Utils.captialFirstLetter(platform.toString());
     }
 
+    public ComputeBuildHash(Library lib, Platform platform, ZooKeeper zooKeeper) {
+        this.library = lib;
+        this.platform = platform;
+        this.zooKeeper = zooKeeper;
+    }
+
+    public final Library library;
+    public final Platform platform;
+    public final ZooKeeper zooKeeper;
     public File mSourceDir;
     public final TreeSet<String> mBuildParams = new TreeSet<String>();
     public final AtomicReference<HashCode> libraryHash = Atomics.newReference();
@@ -42,7 +51,10 @@ public class ComputeBuildHash implements Action {
                 totalHasher.putString(buildParam, Charsets.UTF_8);
             }
 
-            libraryHash.set(totalHasher.hash());
+            final HashCode hashCode = totalHasher.hash();
+
+            zooKeeper.setBuildHash(library, platform, hashCode);
+            libraryHash.set(hashCode);
 
         } catch (IOException e) {
             LOGGER.error("", e);

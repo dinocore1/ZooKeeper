@@ -5,9 +5,11 @@ import com.devsmart.StringUtils;
 import com.devsmart.zookeeper.action.*;
 import com.devsmart.zookeeper.ast.Nodes;
 import com.google.common.collect.ImmutableList;
+import com.google.common.hash.HashCode;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.regex.Pattern;
@@ -25,7 +27,6 @@ public class SemPass2 extends ZooKeeperBaseVisitor<Void> {
     }
 
     private final CompilerContext mContext;
-    private CheckBuildCacheAction mCurrentCheckLibCacheAction;
 
     public SemPass2(CompilerContext compilerContext) {
         mContext = compilerContext;
@@ -33,62 +34,20 @@ public class SemPass2 extends ZooKeeperBaseVisitor<Void> {
 
     @Override
     public Void visitLibrary(ZooKeeperParser.LibraryContext ctx) {
-        Nodes.LibNode libNode = (Nodes.LibNode) mContext.nodeMap.get(ctx);
-
-        Platform platform = ZooKeeper.getNativePlatform();
-        createBuildLibraryAction(ctx, platform);
-        /*
-
-        Library library = new Library(libNode.name, version);
-
-        Platform platform;
-        final String KEY_PLATFORM = "platform";
-        String platformStr = libNode.keyValuePairs.get(KEY_PLATFORM);
-        if(platformStr != null) {
-            platform = Platform.parse(platformStr);
-        } else {
-            platform = ZooKeeper.getNativePlatform();
-        }
-
-        Action buildLibraryAction = createBuildLibraryAction(ctx, library, platform);
-        //createCheckLibraryAction(ctx, library, platform, buildLibraryAction);
-
-        mContext.allLibraries.add(library);
-
-        */
-
-        return null;
-    }
-
-
-
-    /*
-    private Action createCheckLibraryAction(ZooKeeperParser.LibraryContext ctx, Library library, Platform platform, Action buildLibraryAction) {
-        CheckBuildCacheAction checkLibAction = new CheckBuildCacheAction();
-        checkLibAction.library = library;
-        checkLibAction.installDir = mContext.zooKeeper.getInstallDir(library, platform);
-        checkLibAction.runIfNotFound = buildLibraryAction;
-        checkLibAction.dependencyGraph = mContext.dependencyGraph;
-
-        mContext.dependencyGraph.addAction("check"+library.name, checkLibAction);
-
-        return checkLibAction;
-    }
-    */
-
-
-
-    private void createBuildLibraryAction(ZooKeeperParser.LibraryContext ctx, final Platform platform) {
-        final Nodes.LibNode libNode = (Nodes.LibNode) mContext.nodeMap.get(ctx);
         List<Action> preBuildDependencies = new ArrayList<Action>();
+        final Nodes.LibNode libNode = (Nodes.LibNode) mContext.nodeMap.get(ctx);
 
-        final ComputeBuildHash buildHashAction = new ComputeBuildHash();
+        final Platform platform = ZooKeeper.getNativePlatform();
+
+        //Compute Build Hash
+        final ComputeBuildHash buildHashAction = new ComputeBuildHash(libNode.library, platform, mContext.zooKeeper);
         mContext.dependencyGraph.addAction(ComputeBuildHash.createActionName(libNode.library, platform), buildHashAction);
         preBuildDependencies.add(buildHashAction);
 
-        mCurrentCheckLibCacheAction = new CheckBuildCacheAction();
-        mContext.dependencyGraph.addAction(CheckBuildCacheAction.createActionName(libNode.library, platform), mCurrentCheckLibCacheAction);
-        mCurrentCheckLibCacheAction.libraryHash = buildHashAction.libraryHash;
+        //Check for installed Build
+        final CheckBuildInstalledAction checkBuildInstalledAction = new CheckBuildInstalledAction(libNode.library, platform, mContext.zooKeeper);
+        mContext.dependencyGraph.addAction(CheckBuildInstalledAction.createActionName(libNode.library, platform), checkBuildInstalledAction);
+        mContext.dependencyGraph.addDependency(checkBuildInstalledAction, buildHashAction);
 
 
         File sourceDir;
@@ -109,25 +68,38 @@ public class SemPass2 extends ZooKeeperBaseVisitor<Void> {
             }
         }
 
+        buildHashAction.mSourceDir = sourceDir;
+
         BuildCMakeLibAction cmakeBuildAction = new BuildCMakeLibAction();
+        checkBuildInstalledAction.runIfNotInstalled = cmakeBuildAction;
         cmakeBuildAction.rootDir = sourceDir;
         cmakeBuildAction.installDirCallable = new Callable<File>() {
             @Override
             public File call() throws Exception {
-                return mContext.zooKeeper.getInstallDir(libNode.library, platform, buildHashAction.libraryHash.get());
+                HashCode buildHash = mContext.zooKeeper.getBuildHash(libNode.library, platform);
+                return mContext.zooKeeper.getInstallDir(libNode.library, platform, buildHash);
             }
         };
         cmakeBuildAction.externalLibrariesCallable = new Callable<Iterable<BuildCMakeLibAction.ExternalLibrary>>() {
             @Override
             public Iterable<BuildCMakeLibAction.ExternalLibrary> call() throws Exception {
+                HashSet<BuildCMakeLibAction.ExternalLibrary> retval = new HashSet<BuildCMakeLibAction.ExternalLibrary>();
 
-                CheckBuildCacheAction.
+                for(Library library : libNode.compileLibDependencies){
+                    HashCode buildHash = mContext.zooKeeper.getBuildHash(library, platform);
+                    File installDir = mContext.zooKeeper.getInstallDir(library, platform, buildHash);
 
-                return null;
+                    BuildCMakeLibAction.ExternalLibrary externLib = new BuildCMakeLibAction.ExternalLibrary();
+                    externLib.library = library;
+                    externLib.cmakeExportDir = installDir;
+                    retval.add(externLib);
+                }
+
+                return retval;
             }
         };
 
-        buildHashAction.mSourceDir = sourceDir;
+
         /*
         String cmakeArgs = libNode.keyValuePairs.get(KEY_CMAKE_ARGS);
         if(cmakeArgs != null) {
@@ -139,16 +111,28 @@ public class SemPass2 extends ZooKeeperBaseVisitor<Void> {
         */
 
         mContext.dependencyGraph.addAction(BuildCMakeLibAction.createActionName(libNode.library, platform), cmakeBuildAction);
-
-        Action rootAction = getOrCreatePhonyAction(BuildCMakeLibAction.createActionName(libNode.library));
-        mContext.dependencyGraph.addDependency(rootAction, cmakeBuildAction);
-
-        if(!preBuildDependencies.isEmpty()) {
-            for(Action preBuild : preBuildDependencies) {
-                mContext.dependencyGraph.addDependency(cmakeBuildAction, preBuild);
-            }
+        for(Action preBuild : preBuildDependencies) {
+            mContext.dependencyGraph.addDependency(cmakeBuildAction, preBuild);
         }
+
+        return null;
     }
+
+
+
+    /*
+    private Action createCheckLibraryAction(ZooKeeperParser.LibraryContext ctx, Library library, Platform platform, Action buildLibraryAction) {
+        CheckBuildCacheAction checkLibAction = new CheckBuildCacheAction();
+        checkLibAction.library = library;
+        checkLibAction.installDir = mContext.zooKeeper.getInstallDir(library, platform);
+        checkLibAction.runIfNotFound = buildLibraryAction;
+        checkLibAction.dependencyGraph = mContext.dependencyGraph;
+
+        mContext.dependencyGraph.addAction("check"+library.name, checkLibAction);
+
+        return checkLibAction;
+    }
+    */
 
     Action getOrCreatePhonyAction(String actionName) {
         Action retval = mContext.dependencyGraph.getAction(actionName);

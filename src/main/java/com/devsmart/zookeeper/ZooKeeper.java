@@ -3,6 +3,7 @@ package com.devsmart.zookeeper;
 
 import com.devsmart.zookeeper.action.PhonyAction;
 import com.devsmart.zookeeper.ast.Nodes;
+import com.google.common.collect.ComparisonChain;
 import com.google.common.hash.HashCode;
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -14,17 +15,50 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Locale;
+import java.util.TreeMap;
+import java.util.TreeSet;
 
 public class ZooKeeper {
+
+    private static class LibraryKey implements Comparable<LibraryKey> {
+        public final Library lib;
+        public final Platform platform;
+
+        public LibraryKey(Library lib, Platform platform) {
+            this.lib = lib;
+            this.platform = platform;
+        }
+
+        @Override
+        public int compareTo(LibraryKey o) {
+            return ComparisonChain.start()
+                    .compare(lib.name, o.lib.name)
+                    .compare(lib.version, o.lib.version)
+                    .compare(platform.os, o.platform.os)
+                    .compare(platform.arch, o.platform.arch)
+                    .result();
+        }
+    }
 
     public DependencyGraph mDependencyGraph = new DependencyGraph();
     public File mZooKeeperRoot;
     public ArrayList<Library> mAllLibraries = new ArrayList<Library>();
+    public TreeMap<LibraryKey, HashCode> mLibraryHashTable = new TreeMap<LibraryKey, HashCode>();
 
     ZooKeeper() {
         mZooKeeperRoot = new File(System.getProperty("user.home"));
         mZooKeeperRoot = new File(mZooKeeperRoot, ".zookeeper");
         mZooKeeperRoot.mkdirs();
+    }
+
+    public HashCode getBuildHash(Library library, Platform platform) {
+        LibraryKey key = new LibraryKey(library, platform);
+        return mLibraryHashTable.get(key);
+    }
+
+    public void setBuildHash(Library library, Platform platform, HashCode hash) {
+        LibraryKey key = new LibraryKey(library, platform);
+        mLibraryHashTable.put(key, hash);
     }
 
     public File getInstallDir(Library library, Platform platform, HashCode buildHash) {
@@ -84,6 +118,14 @@ public class ZooKeeper {
 
         SemPass2 semPass2 = new SemPass2(compilerContext);
         semPass2.visit(root);
+
+        if(compilerContext.hasErrors()) {
+            compilerContext.reportMessages(System.err);
+            return false;
+        }
+
+        SemPass3 semPass3 = new SemPass3(compilerContext);
+        semPass3.visit(root);
 
 
         if(compilerContext.hasErrors()) {

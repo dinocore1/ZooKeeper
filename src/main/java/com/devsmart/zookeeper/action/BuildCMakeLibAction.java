@@ -20,8 +20,8 @@ public class BuildCMakeLibAction implements Action {
     private static final Logger LOGGER = LoggerFactory.getLogger(BuildCMakeLibAction.class);
 
     public static class ExternalLibrary {
-        Library library;
-        File cmakeExportDir;
+        public Library library;
+        public File cmakeExportDir;
     }
 
     public File rootDir;

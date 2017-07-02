@@ -27,8 +27,8 @@ public class Platform {
         UNKNOWN;
     }
 
-    private final OS os;
-    private final ARCH arch;
+    public final OS os;
+    public final ARCH arch;
 
     public static Platform parse(String platformStr) {
         return null;
