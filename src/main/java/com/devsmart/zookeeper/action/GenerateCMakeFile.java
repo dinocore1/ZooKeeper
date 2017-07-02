@@ -35,11 +35,15 @@ public class GenerateCMakeFile implements Action {
 
             writer.write("cmake_minimum_required(VERSION 3.2 FATAL_ERROR)");
             writer.newLine();
-            writer.write("project(" + mLibrary.library.name + " VERSION " + versionStr + " LANGUAGES CXX C");
+            writer.newLine();
+            writer.write("project(" + mLibrary.library.name + " VERSION " + versionStr + " LANGUAGES CXX C)");
+            writer.newLine();
             writer.newLine();
             writer.write("OPTION(BUILD_TESTS \"Build unit tests\" ON)");
             writer.newLine();
+            writer.newLine();
             writeTargetIncludeDirs(writer);
+            writer.newLine();
             writer.newLine();
             writeAddLibrary(writer);
             writer.newLine();

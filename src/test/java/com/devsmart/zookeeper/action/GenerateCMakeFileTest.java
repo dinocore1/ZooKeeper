@@ -4,14 +4,29 @@ package com.devsmart.zookeeper.action;
 import com.devsmart.zookeeper.Version;
 import com.devsmart.zookeeper.ast.Nodes;
 import com.google.common.base.Charsets;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
-import java.io.BufferedWriter;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.OutputStreamWriter;
+import java.io.*;
 
 public class GenerateCMakeFileTest {
+
+    File genFile;
+
+    @Before
+    public void setup() {
+        genFile = new File("example");
+        genFile = new File(genFile, "library");
+        genFile = new File(genFile, "CMakeLists.txt");
+
+    }
+
+    @After
+    public void tearDown() {
+        //genFile.delete();
+
+    }
 
     @Test
     public void generateCMakeFileForLibrary() throws Exception {
@@ -21,10 +36,10 @@ public class GenerateCMakeFileTest {
         generateCMakeFile.mProjectRootDir = new File("example");
         generateCMakeFile.mProjectRootDir = new File(generateCMakeFile.mProjectRootDir, "library");
 
-        generateCMakeFile.writer = new BufferedWriter(null);
+        FileWriter fileWriter = new FileWriter(genFile);
+        generateCMakeFile.writer = new BufferedWriter(fileWriter);
         generateCMakeFile.doIt();
-        generateCMakeFile.outputStream.close();
-
+        generateCMakeFile.writer.close();
 
 
     }
