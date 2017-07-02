@@ -2,8 +2,8 @@ package com.devsmart.zookeeper.action;
 
 
 import com.devsmart.zookeeper.Action;
+import com.devsmart.zookeeper.Library;
 import com.devsmart.zookeeper.ast.Nodes;
-import com.google.common.base.Charsets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,10 +42,13 @@ public class GenerateCMakeFile implements Action {
             writer.write("OPTION(BUILD_TESTS \"Build unit tests\" ON)");
             writer.newLine();
             writer.newLine();
-            writeTargetIncludeDirs(writer);
+            writeFindCompileDependencies(writer);
             writer.newLine();
             writer.newLine();
             writeAddLibrary(writer);
+            writer.newLine();
+            writer.newLine();
+            writeTargetIncludeDirs(writer);
             writer.newLine();
 
             writer.flush();
@@ -54,6 +57,14 @@ public class GenerateCMakeFile implements Action {
           LOGGER.error("", e);
         }
 
+
+    }
+
+    private void writeFindCompileDependencies(BufferedWriter writer) throws IOException {
+        for(Library depenLib : mLibrary.compileLibDependencies) {
+            writer.newLine();
+            writer.write("find_package(" + depenLib.name + ")");
+        }
 
     }
 
