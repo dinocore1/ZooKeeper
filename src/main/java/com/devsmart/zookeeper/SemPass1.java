@@ -46,6 +46,12 @@ public class SemPass1 extends ZooKeeperBaseVisitor<Nodes.Node> {
     }
 
     @Override
+    public Nodes.Node visitSource(ZooKeeperParser.SourceContext ctx) {
+        mCurrentLibNode.src = escapeStringLiteral(ctx.src.getText());
+        return super.visitSource(ctx);
+    }
+
+    @Override
     public Nodes.Node visitDependList(ZooKeeperParser.DependListContext ctx) {
         if(ctx.COMPILE() != null) {
             String libName = ctx.ID().getText();
@@ -62,13 +68,17 @@ public class SemPass1 extends ZooKeeperBaseVisitor<Nodes.Node> {
         return super.visitDependList(ctx);
     }
 
+    private static String escapeStringLiteral(String input) {
+        input = input.substring(1, input.length()-1);
+        input = input.replaceAll("\\\\\"", "\"");
+        input = input.replace("\\\\", "\\");
+        return input;
+    }
+
     @Override
     public Nodes.Node visitKeyvalue(ZooKeeperParser.KeyvalueContext ctx) {
         String key = ctx.key.getText();
-        String value = ctx.value.getText();
-        value = value.substring(1, value.length()-1);
-        value = value.replaceAll("\\\\\"", "\"");
-        value = value.replace("\\\\", "\\");
+        String value = escapeStringLiteral(ctx.value.getText());
         mCurrentKeyValuePairs.put(key, value);
         mCurrentKeyValueContext.put(key, ctx);
 

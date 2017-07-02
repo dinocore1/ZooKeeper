@@ -18,11 +18,11 @@ import java.util.*;
 public class GenerateCMakeFile implements Action {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GenerateCMakeFile.class);
+    private static final ImmutableSet<String> SOURCE_POSTFIXES = ImmutableSet.of(".cpp", ".cc", ".c", ".h");
 
     public Nodes.LibNode mLibrary;
     public BufferedWriter writer;
     public File mProjectRootDir;
-
 
 
     @Override
@@ -105,16 +105,6 @@ public class GenerateCMakeFile implements Action {
         }
 
     }
-
-    private static final Comparator<File> LEX_FILE_COMPARATOR = new Comparator<File>() {
-
-        @Override
-        public int compare(File o1, File o2) {
-            return o1.getName().compareTo(o2.getName());
-        }
-    };
-
-    private static final ImmutableSet<String> SOURCE_POSTFIXES = ImmutableSet.of(".cpp", ".cc", ".c", ".h");
 
     private static boolean isSourceFile(File f) {
         if(f.isFile()) {

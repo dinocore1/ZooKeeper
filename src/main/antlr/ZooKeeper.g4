@@ -14,14 +14,23 @@ version
     ;
 
 libraryBody
-    : libraryBody DEPENDENCIES LPAREN dependList RPAREN
+    : libraryBody dependencies
+    | libraryBody source
     |
+    ;
+
+dependencies
+    : DEPENDENCIES LPAREN dependList RPAREN
     ;
 
 dependList
     : dependList COMPILE ID version
     | dependList TEST ID version
     |
+    ;
+
+source
+    : SRC src=STRING_LITERAL
     ;
 
 keyvalues
@@ -38,6 +47,7 @@ DOT : '.' ;
 LPAREN : '{' ;
 RPAREN : '}' ;
 DEPENDENCIES : 'dependencies' ;
+SRC : 'src' ;
 COMPILE : 'compile' ;
 TEST : 'test' ;
 STRING_LITERAL : '"' (~('"' | '\\' | '\r' | '\n') | '\\' ('"' | '\\'))* '"';

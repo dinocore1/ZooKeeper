@@ -27,7 +27,7 @@ public class Nodes {
 
     public static class LibNode extends Node {
         public final Library library;
-
+        public String src;
         public final List<Library> compileLibDependencies = new ArrayList<Library>();
         public final List<Library> testLibDependencies = new ArrayList<Library>();
 

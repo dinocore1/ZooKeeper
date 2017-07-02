@@ -2,6 +2,8 @@ package com.devsmart.zookeeper.action;
 
 import com.devsmart.IOUtils;
 import com.devsmart.zookeeper.Action;
+import com.devsmart.zookeeper.Library;
+import com.devsmart.zookeeper.Utils;
 import com.google.common.io.Files;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,5 +57,9 @@ public class DownloadAndUnzipAction implements Action {
             LOGGER.error("", e);
         }
 
+    }
+
+    public static String createActionName(Library library) {
+        return "download" + Utils.captialFirstLetter(library.name) + library.version.toString();
     }
 }

@@ -1,6 +1,7 @@
 package com.devsmart.zookeeper;
 
 
+import com.devsmart.StringUtils;
 import com.devsmart.zookeeper.action.*;
 import com.devsmart.zookeeper.ast.Nodes;
 import com.google.common.collect.ImmutableList;
@@ -34,6 +35,8 @@ public class SemPass2 extends ZooKeeperBaseVisitor<Void> {
     public Void visitLibrary(ZooKeeperParser.LibraryContext ctx) {
         Nodes.LibNode libNode = (Nodes.LibNode) mContext.nodeMap.get(ctx);
 
+        Platform platform = ZooKeeper.getNativePlatform();
+        createBuildLibraryAction(ctx, platform);
         /*
 
         Library library = new Library(libNode.name, version);
@@ -75,80 +78,67 @@ public class SemPass2 extends ZooKeeperBaseVisitor<Void> {
 
 
 
-    private Action createBuildLibraryAction(ZooKeeperParser.LibraryContext ctx, final Library library, final Platform platform) {
+    private void createBuildLibraryAction(ZooKeeperParser.LibraryContext ctx, final Platform platform) {
+        final Nodes.LibNode libNode = (Nodes.LibNode) mContext.nodeMap.get(ctx);
+        List<Action> preBuildDependencies = new ArrayList<Action>();
 
-        /*
-        BuildCMakeLibAction retval = null;
-        Nodes.LibNode libNode = (Nodes.LibNode) mContext.nodeMap.get(ctx);
+        final ComputeBuildHash buildHashAction = new ComputeBuildHash();
+        mContext.dependencyGraph.addAction(ComputeBuildHash.createActionName(libNode.library, platform), buildHashAction);
+        preBuildDependencies.add(buildHashAction);
 
-        final String KEY_SOURCE = "src";
-        String srcStr = libNode.keyValuePairs.get(KEY_SOURCE);
-        if(srcStr == null) {
-            mContext.error("library: '" + libNode.name + "' is missing a '" + KEY_SOURCE + "' param", ctx.getStart());
+        mCurrentCheckLibCacheAction = new CheckBuildCacheAction();
+        mContext.dependencyGraph.addAction(CheckBuildCacheAction.createActionName(libNode.library, platform), mCurrentCheckLibCacheAction);
+        mCurrentCheckLibCacheAction.libraryHash = buildHashAction.libraryHash;
+
+
+        File sourceDir;
+        if(StringUtils.isEmptyString(libNode.src)){
+            sourceDir = mContext.fileRoot;
+        } else if(URL_REGEX.matcher(libNode.src).find()){
+            String httpUrl = libNode.src;
+            sourceDir = new File(mContext.fileRoot, "download");
+            sourceDir = new File(sourceDir, libNode.library.name+libNode.library.version);
+            DownloadAndUnzipAction downloadAction = new DownloadAndUnzipAction(httpUrl, sourceDir);
+            mContext.dependencyGraph.addAction(DownloadAndUnzipAction.createActionName(libNode.library), downloadAction);
+            preBuildDependencies.add(downloadAction);
+            mContext.dependencyGraph.addDependency(buildHashAction, downloadAction);
         } else {
-            final ComputeBuildHash buildHashAction = new ComputeBuildHash();
-
-            mCurrentCheckLibCacheAction = new CheckBuildCacheAction();
-            mContext.dependencyGraph.addAction(CheckBuildCacheAction.createActionName(library, platform), mCurrentCheckLibCacheAction);
-            mCurrentCheckLibCacheAction.libraryHash = buildHashAction.libraryHash;
-
-
-            mContext.dependencyGraph.addAction(ComputeBuildHash.createActionName(library, platform), buildHashAction);
-
-            List<Action> preBuildDependencies = new ArrayList<Action>();
-            preBuildDependencies.add(buildHashAction);
-
-            File sourceDir;
-            if(URL_REGEX.matcher(srcStr).find()) {
-                String httpUrl = srcStr;
-                sourceDir = new File(mContext.fileRoot, "source");
-                sourceDir = new File(sourceDir, library.name);
-                Action downloadAction = createHttpDownloadAction(httpUrl, sourceDir);
-                mContext.dependencyGraph.addAction("download"+libNode.name, downloadAction);
-                preBuildDependencies.add(downloadAction);
-                mContext.dependencyGraph.addDependency(buildHashAction, downloadAction);
-
-            } else {
-                sourceDir = new File(srcStr);
-                if(!sourceDir.exists()) {
-                    mContext.error("source dir does not exist: " + sourceDir.getAbsolutePath(), libNode.keyValueContext.get(KEY_SOURCE).value);
-                }
-            }
-            retval = new BuildCMakeLibAction();
-            retval.rootDir = sourceDir;
-            retval.installDirCallable = new Callable<File>() {
-                @Override
-                public File call() throws Exception {
-                    return mContext.zooKeeper.getInstallDir(library, platform, buildHashAction.libraryHash.get());
-                }
-            };
-
-            buildHashAction.mSourceDir = sourceDir;
-            String cmakeArgs = libNode.keyValuePairs.get(KEY_CMAKE_ARGS);
-            if(cmakeArgs != null) {
-                for(String arg : cmakeArgs.split(" ")) {
-                    retval.cmakeArgs.add(arg);
-                    buildHashAction.mBuildParams.add("cmake:" + arg);
-                }
-            }
-
-            mContext.dependencyGraph.addAction(BuildCMakeLibAction.createActionName(library, platform), retval);
-
-            Action rootAction = getOrCreatePhonyAction(BuildCMakeLibAction.createActionName(library));
-            mContext.dependencyGraph.addDependency(rootAction, retval);
-
-            if(!preBuildDependencies.isEmpty()) {
-                for(Action preBuild : preBuildDependencies) {
-                    mContext.dependencyGraph.addDependency(retval, preBuild);
-                }
+            sourceDir = new File(libNode.src);
+            if(!sourceDir.exists()) {
+                mContext.error("source dir does not exist: " + sourceDir.getAbsolutePath(), null);
             }
         }
 
-        return retval;
+        BuildCMakeLibAction cmakeBuildAction = new BuildCMakeLibAction();
+        cmakeBuildAction.rootDir = sourceDir;
+        cmakeBuildAction.installDirCallable = new Callable<File>() {
+            @Override
+            public File call() throws Exception {
+                return mContext.zooKeeper.getInstallDir(libNode.library, platform, buildHashAction.libraryHash.get());
+            }
+        };
 
+        buildHashAction.mSourceDir = sourceDir;
+        /*
+        String cmakeArgs = libNode.keyValuePairs.get(KEY_CMAKE_ARGS);
+        if(cmakeArgs != null) {
+            for(String arg : cmakeArgs.split(" ")) {
+                retval.cmakeArgs.add(arg);
+                buildHashAction.mBuildParams.add("cmake:" + arg);
+            }
+        }
         */
 
-        return null;
+        mContext.dependencyGraph.addAction(BuildCMakeLibAction.createActionName(libNode.library, platform), cmakeBuildAction);
+
+        Action rootAction = getOrCreatePhonyAction(BuildCMakeLibAction.createActionName(libNode.library));
+        mContext.dependencyGraph.addDependency(rootAction, cmakeBuildAction);
+
+        if(!preBuildDependencies.isEmpty()) {
+            for(Action preBuild : preBuildDependencies) {
+                mContext.dependencyGraph.addDependency(cmakeBuildAction, preBuild);
+            }
+        }
     }
 
     Action getOrCreatePhonyAction(String actionName) {
@@ -160,7 +150,5 @@ public class SemPass2 extends ZooKeeperBaseVisitor<Void> {
         return retval;
     }
 
-    Action createHttpDownloadAction(String httpUrl, File sourceDir) {
-        return new DownloadAndUnzipAction(httpUrl, sourceDir);
-    }
+
 }
