@@ -1,10 +1,12 @@
 package com.devsmart.zookeeper;
 
 
+import com.devsmart.zookeeper.action.CheckBuildInstalledAction;
 import com.devsmart.zookeeper.action.PhonyAction;
 import com.devsmart.zookeeper.ast.Nodes;
 import com.google.common.collect.ComparisonChain;
 import com.google.common.hash.HashCode;
+import com.google.common.io.BaseEncoding;
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.apache.commons.cli.*;
@@ -51,6 +53,10 @@ public class ZooKeeper {
         mZooKeeperRoot.mkdirs();
     }
 
+    public Platform getBuildPlatform() {
+        return getNativePlatform();
+    }
+
     public HashCode getBuildHash(Library library, Platform platform) {
         LibraryKey key = new LibraryKey(library, platform);
         return mLibraryHashTable.get(key);
@@ -65,6 +71,7 @@ public class ZooKeeper {
         File retval = new File(mZooKeeperRoot, "install");
         retval = new File(retval, String.format("%s-%s", library.name, library.version));
         retval = new File(retval, platform.toString());
+        retval = new File(retval, BaseEncoding.base16().encode(buildHash.asBytes()).substring(0, 7));
         return retval;
     }
 
@@ -98,7 +105,6 @@ public class ZooKeeper {
         CompilerContext compilerContext = new CompilerContext();
         compilerContext.dependencyGraph = mDependencyGraph;
         compilerContext.fileRoot = mZooKeeperRoot;
-        compilerContext.allLibraries = mAllLibraries;
         compilerContext.zooKeeper = this;
 
         ZooKeeperLexer lexer = new ZooKeeperLexer(inputStream);
@@ -133,10 +139,11 @@ public class ZooKeeper {
             return false;
         }
 
+        Platform buildPlatform = getBuildPlatform();
         PhonyAction checkAllLibsAction = new PhonyAction();
-        mDependencyGraph.addAction("check", checkAllLibsAction);
+        mDependencyGraph.addAction("all", checkAllLibsAction);
         for(Library lib : mAllLibraries) {
-            Action checkLib = mDependencyGraph.getAction("check"+lib.name);
+            Action checkLib = mDependencyGraph.getAction(CheckBuildInstalledAction.createActionName(lib, buildPlatform));
             mDependencyGraph.addDependency(checkAllLibsAction, checkLib);
         }
 

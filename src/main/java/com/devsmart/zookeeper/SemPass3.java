@@ -16,7 +16,7 @@ public class SemPass3 extends ZooKeeperBaseVisitor<Void> {
 
     @Override
     public Void visitLibrary(ZooKeeperParser.LibraryContext ctx) {
-        final Platform platform = ZooKeeper.getNativePlatform();
+        final Platform platform = mContext.zooKeeper.getBuildPlatform();
 
         final Nodes.LibNode libNode = (Nodes.LibNode) mContext.nodeMap.get(ctx);
 

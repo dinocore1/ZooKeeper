@@ -39,7 +39,7 @@ public class FSChecksum {
             File[] fileList = f.listFiles();
             Arrays.sort(fileList, LEX_COMPARATOR);
             for(File f1 : fileList) {
-                computeHash(f);
+                computeHash(f1);
             }
         }
     }

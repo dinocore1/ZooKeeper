@@ -16,7 +16,7 @@ public class ParserTest {
         ZooKeeper zooKeeper = new ZooKeeper();
         assertTrue(zooKeeper.compile(Resources.getResource("library.zoo").openStream()));
 
-        Action checkAction = zooKeeper.mDependencyGraph.getAction("check");
+        Action checkAction = zooKeeper.mDependencyGraph.getAction("all");
         assertNotNull(checkAction);
         zooKeeper.mDependencyGraph.runAction(checkAction);
     }

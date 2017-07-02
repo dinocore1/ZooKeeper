@@ -7,6 +7,7 @@ import com.google.common.hash.HashCode;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
+import com.google.common.io.BaseEncoding;
 import com.google.common.util.concurrent.Atomics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,6 +53,7 @@ public class ComputeBuildHash implements Action {
             }
 
             final HashCode hashCode = totalHasher.hash();
+            LOGGER.info("source checksum for {} : {}", mSourceDir, BaseEncoding.base16().encode(hashCode.asBytes()));
 
             zooKeeper.setBuildHash(library, platform, hashCode);
             libraryHash.set(hashCode);

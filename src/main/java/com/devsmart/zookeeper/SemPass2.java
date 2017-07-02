@@ -5,6 +5,7 @@ import com.devsmart.StringUtils;
 import com.devsmart.zookeeper.action.*;
 import com.devsmart.zookeeper.ast.Nodes;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
 import com.google.common.hash.HashCode;
 
 import java.io.File;
@@ -37,7 +38,7 @@ public class SemPass2 extends ZooKeeperBaseVisitor<Void> {
         List<Action> preBuildDependencies = new ArrayList<Action>();
         final Nodes.LibNode libNode = (Nodes.LibNode) mContext.nodeMap.get(ctx);
 
-        final Platform platform = ZooKeeper.getNativePlatform();
+        final Platform platform = mContext.zooKeeper.getBuildPlatform();
 
         //Compute Build Hash
         final ComputeBuildHash buildHashAction = new ComputeBuildHash(libNode.library, platform, mContext.zooKeeper);
@@ -85,7 +86,7 @@ public class SemPass2 extends ZooKeeperBaseVisitor<Void> {
             public Iterable<BuildCMakeLibAction.ExternalLibrary> call() throws Exception {
                 HashSet<BuildCMakeLibAction.ExternalLibrary> retval = new HashSet<BuildCMakeLibAction.ExternalLibrary>();
 
-                for(Library library : libNode.compileLibDependencies){
+                for(Library library : Iterables.concat(libNode.compileLibDependencies, libNode.testLibDependencies)){
                     HashCode buildHash = mContext.zooKeeper.getBuildHash(library, platform);
                     File installDir = mContext.zooKeeper.getInstallDir(library, platform, buildHash);
 
@@ -114,6 +115,8 @@ public class SemPass2 extends ZooKeeperBaseVisitor<Void> {
         for(Action preBuild : preBuildDependencies) {
             mContext.dependencyGraph.addDependency(cmakeBuildAction, preBuild);
         }
+
+        mContext.zooKeeper.mAllLibraries.add(libNode.library);
 
         return null;
     }
