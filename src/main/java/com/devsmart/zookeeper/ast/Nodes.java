@@ -1,8 +1,9 @@
 package com.devsmart.zookeeper.ast;
 
 
+import com.devsmart.zookeeper.Library;
+import com.devsmart.zookeeper.Version;
 import com.devsmart.zookeeper.ZooKeeperParser;
-import org.antlr.v4.runtime.ParserRuleContext;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -19,13 +20,19 @@ public class Nodes {
         public final List<LibNode> libraries = new ArrayList<LibNode>();
     }
 
-    public static class LibNode extends Node {
-        public final String mName;
-        public final Map<String, String> keyValuePairs = new HashMap<String, String>();
-        public final Map<String, ZooKeeperParser.KeyvalueContext> keyValueContext = new HashMap<String, ZooKeeperParser.KeyvalueContext>();
+    public static class VersionNode extends Node {
+        public final Version version = new Version();
 
-        public LibNode(String name) {
-            mName = name;
+    }
+
+    public static class LibNode extends Node {
+        public final Library library;
+
+        public final List<Library> compileLibDependencies = new ArrayList<Library>();
+        public final List<Library> testLibDependencies = new ArrayList<Library>();
+
+        public LibNode(String name, Version version) {
+            library = new Library(name, version);
         }
     }
 

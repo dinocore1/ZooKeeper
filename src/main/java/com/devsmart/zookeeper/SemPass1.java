@@ -23,14 +23,43 @@ public class SemPass1 extends ZooKeeperBaseVisitor<Nodes.Node> {
     }
 
     @Override
+    public Nodes.Node visitVersion(ZooKeeperParser.VersionContext ctx) {
+        Nodes.VersionNode retval = new Nodes.VersionNode();
+        retval.version.major = Integer.parseInt(ctx.major.getText());
+        retval.version.minor = Integer.parseInt(ctx.minor.getText());
+        retval.version.revision = Integer.parseInt(ctx.patch.getText());
+
+        return putMap(ctx, retval);
+    }
+
+    @Override
     public Nodes.Node visitLibrary(ZooKeeperParser.LibraryContext ctx) {
+
+        Nodes.VersionNode versionNode = (Nodes.VersionNode) visit(ctx.version());
+
         String name = ctx.name.getText();
-        mCurrentLibNode = new Nodes.LibNode(name);
-        mCurrentKeyValuePairs = mCurrentLibNode.keyValuePairs;
-        mCurrentKeyValueContext = mCurrentLibNode.keyValueContext;
-        visit(ctx.keyvalues());
+        mCurrentLibNode = new Nodes.LibNode(name, versionNode.version);
+
+        visit(ctx.libraryBody());
 
         return putMap(ctx, mCurrentLibNode);
+    }
+
+    @Override
+    public Nodes.Node visitDependList(ZooKeeperParser.DependListContext ctx) {
+        if(ctx.COMPILE() != null) {
+            String libName = ctx.ID().getText();
+            Nodes.VersionNode versionNode = (Nodes.VersionNode) visit(ctx.version());
+            Library library = new Library(libName, versionNode.version);
+            mCurrentLibNode.compileLibDependencies.add(library);
+        } else if(ctx.TEST() != null) {
+            String libName = ctx.ID().getText();
+            Nodes.VersionNode versionNode = (Nodes.VersionNode) visit(ctx.version());
+            Library library = new Library(libName, versionNode.version);
+            mCurrentLibNode.testLibDependencies.add(library);
+        }
+
+        return super.visitDependList(ctx);
     }
 
     @Override

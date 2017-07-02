@@ -6,7 +6,22 @@ file
 
 
 library
-    : LIB name=ID LPAREN keyvalues RPAREN
+    : LIB name=ID version LPAREN libraryBody RPAREN
+    ;
+
+version
+    : major=NUM DOT minor=NUM DOT patch=NUM
+    ;
+
+libraryBody
+    : libraryBody DEPENDENCIES LPAREN dependList RPAREN
+    |
+    ;
+
+dependList
+    : dependList COMPILE ID version
+    | dependList TEST ID version
+    |
     ;
 
 keyvalues
@@ -19,9 +34,14 @@ keyvalue
     ;
 
 LIB : 'lib' ;
+DOT : '.' ;
 LPAREN : '{' ;
 RPAREN : '}' ;
+DEPENDENCIES : 'dependencies' ;
+COMPILE : 'compile' ;
+TEST : 'test' ;
 STRING_LITERAL : '"' (~('"' | '\\' | '\r' | '\n') | '\\' ('"' | '\\'))* '"';
 
-ID : [a-zA-Z0-9_\\.]+ ;
+NUM : [0-9]+ ;
+ID : [a-zA-Z0-9\-_]+ ;
 WS : [ \t\r\n]+ -> skip ;
