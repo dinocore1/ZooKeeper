@@ -4,14 +4,16 @@ package com.devsmart.zookeeper.action;
 import com.devsmart.zookeeper.Action;
 import com.devsmart.zookeeper.Library;
 import com.devsmart.zookeeper.ast.Nodes;
+import com.google.common.base.Function;
+import com.google.common.base.Joiner;
+import com.google.common.base.Predicate;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 public class GenerateCMakeFile implements Action {
 
@@ -65,9 +67,9 @@ public class GenerateCMakeFile implements Action {
 
     private void writeInstall(BufferedWriter writer) throws IOException {
         writer.newLine();
-        writer.write("install(TARGETS ${PROJECT_NAME}");
+        writer.write("install(TARGETS " + mLibrary.library.name);
         writer.newLine();
-        writer.write("  EXPORT ${PROJECT_NAME}");
+        writer.write("  EXPORT " + mLibrary.library.name +"Config");
         writer.newLine();
         writer.write("  RUNTIME DESTINATION bin");
         writer.newLine();
@@ -89,9 +91,9 @@ public class GenerateCMakeFile implements Action {
         writer.newLine();
         writer.newLine();
 
-        writer.write("install(EXPORT ${PROJECT_NAME}");
+        writer.write("install(EXPORT " + mLibrary.library.name + "Config");
         writer.newLine();
-        writer.write("  DESTINATION lib/${PROJECT_NAME}");
+        writer.write("  DESTINATION cmake");
         writer.newLine();
         writer.write(")");
     }
@@ -112,26 +114,43 @@ public class GenerateCMakeFile implements Action {
         }
     };
 
-    private void writeAddLibrary(BufferedWriter writer) throws IOException {
-        File srcDir = new File(mProjectRootDir, "src");
-        List<File> srcFileList = new LinkedList<File>();
-        for(File srcFile : srcDir.listFiles()) {
-            final String fileName = srcFile.getName();
-            if(fileName.endsWith(".cpp")
-                    || fileName.endsWith(".cc")
-                    || fileName.endsWith(".c")
-                    || fileName.endsWith(".h")) {
-                srcFileList.add(srcFile);
+    private static final ImmutableSet<String> SOURCE_POSTFIXES = ImmutableSet.of(".cpp", ".cc", ".c", ".h");
+
+    private static boolean isSourceFile(File f) {
+        if(f.isFile()) {
+            final String fileName = f.getName();
+            for (String postfix : SOURCE_POSTFIXES) {
+                if (fileName.endsWith(postfix)) {
+                    return true;
+                }
             }
         }
+        return false;
+    }
 
-        Collections.sort(srcFileList, LEX_FILE_COMPARATOR);
+    private void addSourceFiles(Collection<String> sourceSet, String[] prefix, File file) {
+        if(file.isDirectory()) {
+            prefix = Arrays.copyOf(prefix, prefix.length+1);
+            prefix[prefix.length-1] = file.getName();
+            for(File f : file.listFiles()) {
+                addSourceFiles(sourceSet, prefix, f);
+            }
+        } else if(isSourceFile(file)){
+            String[] path = Arrays.copyOf(prefix, prefix.length+1);
+            path[path.length-1] = file.getName();
+            sourceSet.add(Joiner.on('/').join(path));
+        }
+    }
 
+    private void writeAddLibrary(BufferedWriter writer) throws IOException {
+        TreeSet<String> srcFileList = new TreeSet<String>();
+        addSourceFiles(srcFileList, new String[0], new File(mProjectRootDir, "src"));
+        addSourceFiles(srcFileList, new String[0], new File(mProjectRootDir, "include"));
 
-        writer.write("add_library(${PROJECT_NAME}");
-        for(File f : srcFileList) {
+        writer.write("add_library(" + mLibrary.library.name);
+        for(String filePath : srcFileList) {
             writer.newLine();
-            writer.write("src/" + f.getName());
+            writer.write("  " + filePath);
         }
         writer.newLine();
         writer.write(")");
@@ -139,9 +158,9 @@ public class GenerateCMakeFile implements Action {
     }
 
     private void writeTargetIncludeDirs(BufferedWriter writer) throws IOException {
-        writer.write("target_include_directories(${PROJECT_NAME} PUBLIC");
+        writer.write("target_include_directories(" + mLibrary.library.name);
         writer.newLine();
-        writer.write("  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>");
+        writer.write("  PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>");
         writer.newLine();
         writer.write("  $<INSTALL_INTERFACE:include>");
         writer.newLine();
