@@ -3,6 +3,7 @@ package com.devsmart.zookeeper.action;
 
 import com.devsmart.zookeeper.Action;
 import com.devsmart.zookeeper.Library;
+import com.devsmart.zookeeper.Utils;
 import com.devsmart.zookeeper.ast.Nodes;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
@@ -20,15 +21,23 @@ public class GenerateCMakeFile implements Action {
     private static final Logger LOGGER = LoggerFactory.getLogger(GenerateCMakeFile.class);
     private static final ImmutableSet<String> SOURCE_POSTFIXES = ImmutableSet.of(".cpp", ".cc", ".c", ".h");
 
+    public static String createActionName(Library library) {
+        return "genCMake" + Utils.captialFirstLetter(library.name);
+    }
+
     public Nodes.LibNode mLibrary;
-    public BufferedWriter writer;
     public File mProjectRootDir;
+    public File mOutputFile;
 
 
     @Override
     public void doIt() {
 
         try {
+            LOGGER.info("Generating CMake file for:{} {}", mLibrary.library, mOutputFile.getAbsolutePath());
+
+            BufferedWriter writer = new BufferedWriter(new FileWriter(mOutputFile));
+
             String versionStr = String.format("%d.%d.%d",
                     mLibrary.library.version.major,
                     mLibrary.library.version.minor,
@@ -56,7 +65,7 @@ public class GenerateCMakeFile implements Action {
             writeInstall(writer);
             writer.newLine();
 
-            writer.flush();
+            writer.close();
 
         } catch (IOException e) {
           LOGGER.error("", e);

@@ -35,11 +35,9 @@ public class GenerateCMakeFileTest {
 
         generateCMakeFile.mProjectRootDir = new File("example");
         generateCMakeFile.mProjectRootDir = new File(generateCMakeFile.mProjectRootDir, "library");
+        generateCMakeFile.mOutputFile = genFile;
 
-        FileWriter fileWriter = new FileWriter(genFile);
-        generateCMakeFile.writer = new BufferedWriter(fileWriter);
         generateCMakeFile.doIt();
-        generateCMakeFile.writer.close();
 
 
     }

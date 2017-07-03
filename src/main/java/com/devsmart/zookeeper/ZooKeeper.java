@@ -2,6 +2,7 @@ package com.devsmart.zookeeper;
 
 
 import com.devsmart.zookeeper.action.CheckBuildInstalledAction;
+import com.devsmart.zookeeper.action.ListAllActionsAction;
 import com.devsmart.zookeeper.action.PhonyAction;
 import com.devsmart.zookeeper.ast.Nodes;
 import com.google.common.collect.ComparisonChain;
@@ -147,6 +148,8 @@ public class ZooKeeper {
             mDependencyGraph.addDependency(checkAllLibsAction, checkLib);
         }
 
+        mDependencyGraph.addAction("listActions", new ListAllActionsAction(this));
+
         return true;
     }
 
@@ -164,6 +167,8 @@ public class ZooKeeper {
 
     public static void main(String[] args) {
 
+        ZooKeeper zoo = new ZooKeeper();
+
         Options options = new Options();
 
         options.addOption(Option.builder("i")
@@ -179,18 +184,28 @@ public class ZooKeeper {
             String inputFileStr = cmdline.getOptionValue("i", "build.zoo");
             File inputFile = new File(inputFileStr);
             if(inputFile.exists() && inputFile.isFile()) {
-                ZooKeeper zoo = new ZooKeeper();
                 zoo.compileFile(inputFile);
             } else {
                 System.err.println("could not open file: " + inputFile.getAbsolutePath());
             }
+
+            String[] unparsedArgs = cmdline.getArgs();
+            for(String target : unparsedArgs) {
+                Action action = zoo.mDependencyGraph.getAction(target);
+                if(action != null) {
+                    zoo.mDependencyGraph.runAction(action);
+                } else {
+                    System.err.println("no target with name: " + target);
+                }
+            }
+
 
 
         } catch (ParseException e) {
             System.err.println("cmd line parse failed: " + e.getMessage());
 
             HelpFormatter formatter = new HelpFormatter();
-            formatter.printHelp("app [OPTIONS] [FILE]..", options);
+            formatter.printHelp("zookeeper [OPTIONS] [target]...", options);
             System.exit(-1);
         } catch (IOException e) {
             e.printStackTrace();

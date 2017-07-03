@@ -53,7 +53,7 @@ public class SemPass2 extends ZooKeeperBaseVisitor<Void> {
 
         File sourceDir;
         if(StringUtils.isEmptyString(libNode.src)){
-            sourceDir = mContext.fileRoot;
+            sourceDir = new File("").getAbsoluteFile();
         } else if(URL_REGEX.matcher(libNode.src).find()){
             String httpUrl = libNode.src;
             sourceDir = new File(mContext.fileRoot, "download");
@@ -117,6 +117,12 @@ public class SemPass2 extends ZooKeeperBaseVisitor<Void> {
         }
 
         mContext.zooKeeper.mAllLibraries.add(libNode.library);
+
+        GenerateCMakeFile generateCMakeFileAction = new GenerateCMakeFile();
+        generateCMakeFileAction.mProjectRootDir = sourceDir;
+        generateCMakeFileAction.mLibrary = libNode;
+        generateCMakeFileAction.mOutputFile = new File(sourceDir, "CMakeLists.txt");
+        mContext.dependencyGraph.addAction(GenerateCMakeFile.createActionName(libNode.library), generateCMakeFileAction);
 
         return null;
     }

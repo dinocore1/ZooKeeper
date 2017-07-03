@@ -29,6 +29,10 @@ public class DependencyGraph {
         return mActionName.get(name);
     }
 
+    public Iterable<String> getActionNames() {
+        return mActionName.keySet();
+    }
+
     public void addAction(String name, Action action) {
         mActionName.put(name, action);
         mActionState.put(action, new State());

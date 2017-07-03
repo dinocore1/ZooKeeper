@@ -98,6 +98,11 @@ public class BuildCMakeLibAction implements Action {
 
         ThreadUtils.IOThreads.execute(createStreamTask(configProcess.getInputStream()));
         configProcess.waitFor();
+
+        int exitCode = configProcess.exitValue();
+        if(exitCode != 0) {
+            throw new RuntimeException("cmake config process ended with code: " + exitCode);
+        }
     }
 
     void doInstall() throws Exception {
@@ -119,6 +124,11 @@ public class BuildCMakeLibAction implements Action {
         buildProcess = builder.start();
         ThreadUtils.IOThreads.execute(createStreamTask(buildProcess.getInputStream()));
         buildProcess.waitFor();
+
+        int exitCode = buildProcess.exitValue();
+        if(exitCode != 0) {
+            throw new RuntimeException("cmake install process exited with code: " + exitCode);
+        }
     }
 
     private Runnable createStreamTask(final InputStream in) {

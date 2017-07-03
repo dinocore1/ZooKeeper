@@ -4,7 +4,7 @@ project(add VERSION 0.1.0 LANGUAGES CXX C)
 
 OPTION(BUILD_TESTS "Build unit tests" ON)
 
-
+find_package(gtest2 REQUIRED)
 
 add_library(add
   include/example.h

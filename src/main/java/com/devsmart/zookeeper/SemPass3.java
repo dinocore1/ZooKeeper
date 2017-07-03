@@ -24,7 +24,11 @@ public class SemPass3 extends ZooKeeperBaseVisitor<Void> {
 
         for(Library library : Iterables.concat(libNode.compileLibDependencies, libNode.testLibDependencies)) {
             Action secureDependencyAction = mContext.dependencyGraph.getAction(CheckBuildInstalledAction.createActionName(library, platform));
-            mContext.dependencyGraph.addDependency(libBuildAction, secureDependencyAction);
+            if(secureDependencyAction != null) {
+                mContext.dependencyGraph.addDependency(libBuildAction, secureDependencyAction);
+            } else {
+                mContext.error("could not find build definition for: " + library, ctx.libraryBody().dependencies().getStart());
+            }
         }
 
         return null;
