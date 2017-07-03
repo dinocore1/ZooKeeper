@@ -85,6 +85,22 @@ task javadocJar(type: Jar, dependsOn: javadoc) {
     from 'build/docs/javadoc'
 }
 
+jar {
+    manifest {
+        attributes 'Implementation-Title': 'ZooKeeper',
+                'Implementation-Version': version,
+                'Main-Class': 'com.devsmart.zookeeper.ZooKeeper'
+    }
+
+    baseName = 'ZooKeeper'
+    //from {
+    //  configurations.compile.collect {
+    //    it.isDirectory() ? it : zipTree(it)
+    //  }
+    //}
+
+}
+
 task proguard(type: proguard.gradle.ProGuardTask) {
     configuration 'proguard.txt'
 
