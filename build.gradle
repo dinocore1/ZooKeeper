@@ -1,6 +1,15 @@
 group 'com.devsmart'
 version '1.0-SNAPSHOT'
 
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'net.sf.proguard:proguard-gradle:5.2.1'
+    }
+}
+
 apply plugin: 'java'
 apply plugin: 'maven'
 apply plugin: 'signing'
@@ -73,6 +82,16 @@ clean {
 task javadocJar(type: Jar, dependsOn: javadoc) {
     classifier = 'javadoc'
     from 'build/docs/javadoc'
+}
+
+task proguard(type: proguard.gradle.ProGuardTask) {
+    configuration 'proguard.txt'
+
+    injars jar.outputs
+    injars files(configurations.compile.collect())
+    //libraryjars files(configurations.compile.collect())
+    outjars 'build/libs/zookeeper-proguard.jar'
+    libraryjars "${System.getProperty('java.home')}/lib/rt.jar"
 }
 
 
