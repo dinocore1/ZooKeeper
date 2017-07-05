@@ -92,7 +92,7 @@ public class SemPass2 extends ZooKeeperBaseVisitor<Void> {
 
                     BuildCMakeLibAction.ExternalLibrary externLib = new BuildCMakeLibAction.ExternalLibrary();
                     externLib.library = library;
-                    externLib.cmakeExportDir = installDir;
+                    externLib.cmakeExportDir = new File(installDir, "cmake");
                     retval.add(externLib);
                 }
 

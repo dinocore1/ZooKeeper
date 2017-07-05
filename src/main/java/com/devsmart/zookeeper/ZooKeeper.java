@@ -206,10 +206,12 @@ public class ZooKeeper {
 
             HelpFormatter formatter = new HelpFormatter();
             formatter.printHelp("zookeeper [OPTIONS] [target]...", options);
-            System.exit(-1);
-        } catch (IOException e) {
+            System.exit(1);
+        } catch (Throwable e) {
             e.printStackTrace();
-            System.exit(-1);
+            System.exit(1);
         }
+
+        System.exit(0);
     }
 }

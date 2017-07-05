@@ -1,13 +1,25 @@
 
 -dontobfuscate
+-dontoptimize
 
 -dontwarn javax.**
 -dontwarn org.codehaus.mojo.**
 -dontwarn org.slf4j.**
 -dontwarn com.google.j2objc.annotations.Weak
 
--keep class ch.qos.logback.** { *; }
+
+#### SLF4J stuff ########
 -keep class org.slf4j.** { *; }
+
+###### logback stuff ########
+-keep class ch.qos.logback.** { *; }
+-dontwarn groovy.lang.**
+-dontwarn org.codehaus.groovy.**
+-dontwarn org.apache.tools.ant.**
+-dontwarn org.codehaus.janino.AntCompilerAdapter
+-dontwarn org.codehaus.janino.**
+-dontwarn org.codehaus.commons.compiler.CompileException
+
 
 -keep class com.devsmart.zookeeper.ZooKeeper {
  public static void main(java.lang.String[]);
