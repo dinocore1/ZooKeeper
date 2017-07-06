@@ -5,7 +5,6 @@ import com.devsmart.zookeeper.action.CheckBuildInstalledAction;
 import com.devsmart.zookeeper.action.ListAllActionsAction;
 import com.devsmart.zookeeper.action.PhonyAction;
 import com.devsmart.zookeeper.ast.Nodes;
-import com.google.common.collect.ComparisonChain;
 import com.google.common.hash.HashCode;
 import com.google.common.io.BaseEncoding;
 import org.antlr.v4.runtime.ANTLRInputStream;
@@ -19,34 +18,13 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Locale;
 import java.util.TreeMap;
-import java.util.TreeSet;
 
 public class ZooKeeper {
-
-    private static class LibraryKey implements Comparable<LibraryKey> {
-        public final Library lib;
-        public final Platform platform;
-
-        public LibraryKey(Library lib, Platform platform) {
-            this.lib = lib;
-            this.platform = platform;
-        }
-
-        @Override
-        public int compareTo(LibraryKey o) {
-            return ComparisonChain.start()
-                    .compare(lib.name, o.lib.name)
-                    .compare(lib.version, o.lib.version)
-                    .compare(platform.os, o.platform.os)
-                    .compare(platform.arch, o.platform.arch)
-                    .result();
-        }
-    }
 
     public DependencyGraph mDependencyGraph = new DependencyGraph();
     public File mZooKeeperRoot;
     public ArrayList<Library> mAllLibraries = new ArrayList<Library>();
-    public TreeMap<LibraryKey, HashCode> mLibraryHashTable = new TreeMap<LibraryKey, HashCode>();
+    public TreeMap<LibraryPlatformKey, HashCode> mLibraryHashTable = new TreeMap<LibraryPlatformKey, HashCode>();
 
     ZooKeeper() {
         mZooKeeperRoot = new File(System.getProperty("user.home"));
@@ -59,18 +37,18 @@ public class ZooKeeper {
     }
 
     public HashCode getBuildHash(Library library, Platform platform) {
-        LibraryKey key = new LibraryKey(library, platform);
+        LibraryPlatformKey key = new LibraryPlatformKey(library, platform);
         return mLibraryHashTable.get(key);
     }
 
     public void setBuildHash(Library library, Platform platform, HashCode hash) {
-        LibraryKey key = new LibraryKey(library, platform);
+        LibraryPlatformKey key = new LibraryPlatformKey(library, platform);
         mLibraryHashTable.put(key, hash);
     }
 
     public File getInstallDir(Library library, Platform platform, HashCode buildHash) {
         File retval = new File(mZooKeeperRoot, "install");
-        retval = new File(retval, String.format("%s-%s", library.name, library.version));
+        retval = new File(retval, library.name);
         retval = new File(retval, platform.toString());
         retval = new File(retval, BaseEncoding.base16().encode(buildHash.asBytes()).substring(0, 7));
         return retval;

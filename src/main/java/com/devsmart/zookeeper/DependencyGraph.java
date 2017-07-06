@@ -6,6 +6,7 @@ import com.google.common.collect.HashBiMap;
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.experimental.dag.DirectedAcyclicGraph;
 import org.jgrapht.graph.DefaultEdge;
+import org.jgrapht.traverse.DepthFirstIterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,6 +36,10 @@ public class DependencyGraph {
 
     public void addAction(String name, Action action) {
         mActionName.put(name, action);
+        addAction(action);
+    }
+
+    public void addAction(Action action) {
         mActionState.put(action, new State());
         mGraph.addVertex(action);
     }
@@ -54,8 +59,12 @@ public class DependencyGraph {
         }
 
         State actionState = mActionState.get(action);
-        LOGGER.info("running " + mActionName.inverse().get(action));
-        action.doIt();
-        actionState.hasRun = true;
+        try {
+            LOGGER.info("running " + mActionName.inverse().get(action));
+            action.doIt();
+            actionState.hasRun = true;
+        }catch (Exception e) {
+            LOGGER.error("", e);
+        }
     }
 }

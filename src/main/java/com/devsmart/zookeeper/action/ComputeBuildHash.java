@@ -22,44 +22,27 @@ public class ComputeBuildHash implements Action {
     private static final Logger LOGGER = LoggerFactory.getLogger(ComputeBuildHash.class);
     private static final HashFunction HASH_FUNCTION = Hashing.sha1();
 
-    public static String createActionName(Library lib, Platform platform) {
-        return "hash"+ Utils.captialFirstLetter(lib.name) + Utils.captialFirstLetter(platform.toString());
-    }
-
-    public ComputeBuildHash(Library lib, Platform platform, ZooKeeper zooKeeper) {
-        this.library = lib;
-        this.platform = platform;
-        this.zooKeeper = zooKeeper;
-    }
-
-    public final Library library;
-    public final Platform platform;
-    public final ZooKeeper zooKeeper;
-    public File mSourceDir;
+    public AtomicReference<File> mSourceDir;
     public final TreeSet<String> mBuildParams = new TreeSet<String>();
-    public final AtomicReference<HashCode> libraryHash = Atomics.newReference();
+    public AtomicReference<HashCode> libraryHash;
 
     @Override
-    public void doIt() {
-        try {
-            FSChecksum fsChecksum = new FSChecksum(mSourceDir);
-            HashCode fsHash = fsChecksum.computeHash();
+    public void doIt() throws Exception {
+        FSChecksum fsChecksum = new FSChecksum(mSourceDir.get());
+        HashCode fsHash = fsChecksum.computeHash();
 
-            Hasher totalHasher = HASH_FUNCTION.newHasher();
-            totalHasher.putBytes(fsHash.asBytes());
+        Hasher totalHasher = HASH_FUNCTION.newHasher();
+        totalHasher.putBytes(fsHash.asBytes());
 
-            for(String buildParam : mBuildParams) {
-                totalHasher.putString(buildParam, Charsets.UTF_8);
-            }
+        for(String buildParam : mBuildParams) {
+            totalHasher.putString(buildParam, Charsets.UTF_8);
+        }
 
-            final HashCode hashCode = totalHasher.hash();
-            LOGGER.info("source checksum for {} : {}", mSourceDir, BaseEncoding.base16().encode(hashCode.asBytes()));
+        final HashCode hashCode = totalHasher.hash();
+        LOGGER.info("source checksum for {} : {}", mSourceDir, BaseEncoding.base16().encode(hashCode.asBytes()));
 
-            zooKeeper.setBuildHash(library, platform, hashCode);
+        if(libraryHash != null) {
             libraryHash.set(hashCode);
-
-        } catch (IOException e) {
-            LOGGER.error("", e);
         }
     }
 }

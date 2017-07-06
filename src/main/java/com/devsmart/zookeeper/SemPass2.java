@@ -33,16 +33,51 @@ public class SemPass2 extends ZooKeeperBaseVisitor<Void> {
         mContext = compilerContext;
     }
 
+    private class ActionBuilder {
+
+        private final Action mAction;
+
+        ActionBuilder(Action a) {
+            mAction = a;
+            mContext.dependencyGraph.addAction(mAction);
+        }
+
+        ActionBuilder dependsOn(Action other) {
+            mContext.dependencyGraph.addDependency(mAction, other);
+            return this;
+        }
+
+        Action get() {
+            return mAction;
+        }
+
+    }
+
     @Override
     public Void visitLibrary(ZooKeeperParser.LibraryContext ctx) {
         List<Action> preBuildDependencies = new ArrayList<Action>();
         final Nodes.LibNode libNode = (Nodes.LibNode) mContext.nodeMap.get(ctx);
-
         final Platform platform = mContext.zooKeeper.getBuildPlatform();
+        final LibraryPlatformKey libraryPlatformKey = new LibraryPlatformKey(libNode.library, platform);
+        final CMakeBuildContext buildContext = new CMakeBuildContext(libNode.library, platform);
 
-        //Compute Build Hash
-        final ComputeBuildHash buildHashAction = new ComputeBuildHash(libNode.library, platform, mContext.zooKeeper);
-        mContext.dependencyGraph.addAction(ComputeBuildHash.createActionName(libNode.library, platform), buildHashAction);
+        File buildDir = new File(mContext.fileRoot, "builds");
+        buildDir = new File(buildDir, libNode.library.name);
+        buildDir = new File(buildDir, platform.toString());
+
+        buildContext.buildDir.set(buildDir);
+
+        ////////// Compute Build Hash //////////////
+        final ComputeBuildHash buildHashAction = new ComputeBuildHash() {
+            @Override
+            public void doIt() throws Exception {
+                super.doIt();
+                mContext.zooKeeper.mLibraryHashTable.put(buildContext.getPlatformKey(), buildContext.buildHash.get());
+            }
+        };
+        buildHashAction.libraryHash = buildContext.buildHash;
+        buildHashAction.mSourceDir = buildContext.sourceDir;
+        mContext.dependencyGraph.addAction(Utils.createActionName("hash", libraryPlatformKey.toString()), buildHashAction);
         preBuildDependencies.add(buildHashAction);
 
         //Check for installed Build
@@ -68,38 +103,26 @@ public class SemPass2 extends ZooKeeperBaseVisitor<Void> {
                 mContext.error("source dir does not exist: " + sourceDir.getAbsolutePath(), null);
             }
         }
+        buildContext.sourceDir.set(sourceDir);
 
-        buildHashAction.mSourceDir = sourceDir;
 
-        BuildCMakeLibAction cmakeBuildAction = new BuildCMakeLibAction();
-        checkBuildInstalledAction.runIfNotInstalled = cmakeBuildAction;
-        cmakeBuildAction.rootDir = sourceDir;
-        cmakeBuildAction.installDirCallable = new Callable<File>() {
+        ///////// Configure Build /////////////
+        ConfigCMakeAction cmakeConfigBuildAction = new ConfigCMakeAction(buildContext) {
             @Override
-            public File call() throws Exception {
-                HashCode buildHash = mContext.zooKeeper.getBuildHash(libNode.library, platform);
-                return mContext.zooKeeper.getInstallDir(libNode.library, platform, buildHash);
-            }
-        };
-        cmakeBuildAction.externalLibrariesCallable = new Callable<Iterable<BuildCMakeLibAction.ExternalLibrary>>() {
-            @Override
-            public Iterable<BuildCMakeLibAction.ExternalLibrary> call() throws Exception {
-                HashSet<BuildCMakeLibAction.ExternalLibrary> retval = new HashSet<BuildCMakeLibAction.ExternalLibrary>();
-
+            public void doIt() throws Exception {
                 for(Library library : Iterables.concat(libNode.compileLibDependencies, libNode.testLibDependencies)){
                     HashCode buildHash = mContext.zooKeeper.getBuildHash(library, platform);
                     File installDir = mContext.zooKeeper.getInstallDir(library, platform, buildHash);
-
-                    BuildCMakeLibAction.ExternalLibrary externLib = new BuildCMakeLibAction.ExternalLibrary();
-                    externLib.library = library;
-                    externLib.cmakeExportDir = new File(installDir, "cmake");
-                    retval.add(externLib);
+                    buildContext.mExternalLibDependencies.add(
+                            new CMakeBuildContext.ExternalLibrary(library, new File(installDir, "cmake")));
                 }
 
-                return retval;
+                super.doIt();
             }
         };
+        mContext.dependencyGraph.addAction(Utils.createActionName("config", libraryPlatformKey.toString()), cmakeConfigBuildAction);
 
+        checkBuildInstalledAction.runIfNotInstalled = cmakeBuildAction;
 
         /*
         String cmakeArgs = libNode.keyValuePairs.get(KEY_CMAKE_ARGS);
@@ -110,6 +133,8 @@ public class SemPass2 extends ZooKeeperBaseVisitor<Void> {
             }
         }
         */
+
+
 
         mContext.dependencyGraph.addAction(BuildCMakeLibAction.createActionName(libNode.library, platform), cmakeBuildAction);
         for(Action preBuild : preBuildDependencies) {
