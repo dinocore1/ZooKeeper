@@ -5,11 +5,8 @@ import com.devsmart.zookeeper.Action;
 import com.devsmart.zookeeper.Library;
 import com.devsmart.zookeeper.Utils;
 import com.devsmart.zookeeper.ast.Nodes;
-import com.google.common.base.Function;
 import com.google.common.base.Joiner;
-import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,7 +38,7 @@ public class GenerateCMakeFile implements Action {
             String versionStr = String.format("%d.%d.%d",
                     mLibrary.library.version.major,
                     mLibrary.library.version.minor,
-                    mLibrary.library.version.revision
+                    mLibrary.library.version.patch
             );
 
             writer.write("cmake_minimum_required(VERSION 3.2 FATAL_ERROR)");

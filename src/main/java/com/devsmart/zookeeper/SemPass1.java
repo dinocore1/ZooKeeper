@@ -27,7 +27,7 @@ public class SemPass1 extends ZooKeeperBaseVisitor<Nodes.Node> {
         Nodes.VersionNode retval = new Nodes.VersionNode();
         retval.version.major = Integer.parseInt(ctx.major.getText());
         retval.version.minor = Integer.parseInt(ctx.minor.getText());
-        retval.version.revision = Integer.parseInt(ctx.patch.getText());
+        retval.version.patch = Integer.parseInt(ctx.patch.getText());
 
         return putMap(ctx, retval);
     }

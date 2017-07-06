@@ -10,7 +10,7 @@ public class Version implements Comparable<Version> {
 
     public int major;
     public int minor;
-    public int revision;
+    public int patch;
 
     private static final Pattern REGEX = Pattern.compile("^([0-9]+)\\.([0-9]+)\\.([0-9]+)$");
 
@@ -21,7 +21,7 @@ public class Version implements Comparable<Version> {
             retval = new Version();
             retval.major = Integer.parseInt(m.group(1));
             retval.minor = Integer.parseInt(m.group(2));
-            retval.revision = Integer.parseInt(m.group(3));
+            retval.patch = Integer.parseInt(m.group(3));
         }
 
         return retval;
@@ -29,12 +29,12 @@ public class Version implements Comparable<Version> {
 
     @Override
     public int hashCode() {
-        return major ^ minor ^ revision;
+        return major ^ minor ^ patch;
     }
 
     @Override
     public String toString() {
-        return String.format("v%d.%d.%d", major, minor, revision);
+        return String.format("v%d.%d.%d", major, minor, patch);
     }
 
     @Override
@@ -42,7 +42,7 @@ public class Version implements Comparable<Version> {
         return ComparisonChain.start()
                 .compare(major, o.major)
                 .compare(minor, o.minor)
-                .compare(revision, o.revision)
+                .compare(patch, o.patch)
                 .result();
     }
 }
