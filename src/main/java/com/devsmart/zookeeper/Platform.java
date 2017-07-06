@@ -4,24 +4,18 @@ package com.devsmart.zookeeper;
 public class Platform {
 
     public enum OS {
-        LINUX("linux"),
-        MACOSX("osx"),
-        IOS("ios"),
-        WINDOWS("win"),
-        ANDROID("android"),
-        UNKNOWN("unknown");
-
-
-        public final String name;
-
-        OS(String name) {
-            this.name = name;
-        }
+        linux,
+        osx,
+        ios,
+        win,
+        android,
+        UNKNOWN;
     }
 
     public enum ARCH {
         x86,
         x86_64,
+        mips,
         arm,
         avr,
         UNKNOWN;

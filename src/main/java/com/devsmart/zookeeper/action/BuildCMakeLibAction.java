@@ -38,7 +38,7 @@ public class BuildCMakeLibAction implements Action {
     private File mBuildDir;
 
     public static String createActionName(Library lib) {
-        return "build" + Utils.captialFirstLetter(lib.name);
+        return Utils.createActionName("build", lib.name);
     }
 
     public static String createActionName(Library lib, Platform platform) {

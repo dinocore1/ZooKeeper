@@ -80,11 +80,11 @@ public class ZooKeeper {
         Platform.OS os;
         String OSString = System.getProperty("os.name", "generic").toLowerCase(Locale.ENGLISH);
         if (OSString.contains("mac") || OSString.contains("darwin")) {
-            os = Platform.OS.MACOSX;
+            os = Platform.OS.osx;
         } else if (OSString.contains("win")) {
-            os = Platform.OS.WINDOWS;
+            os = Platform.OS.win;
         } else if (OSString.contains("nux")) {
-            os = Platform.OS.LINUX;
+            os = Platform.OS.linux;
         } else {
             os = Platform.OS.UNKNOWN;
         }
