@@ -8,12 +8,12 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 
 
-public class CheckBuildInstalledAction implements Action {
+public class VerifyLibraryInstalledAction implements Action {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(CheckBuildInstalledAction.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(VerifyLibraryInstalledAction.class);
 
     public static String createActionName(Library library, Platform platform) {
-        return "checkInstall" + Utils.captialFirstLetter(library.toString()) + Utils.captialFirstLetter(platform.toString());
+        return Utils.createActionName("verifyInstall", new LibraryPlatformKey(library, platform).toString());
     }
 
     public final Library library;
@@ -22,7 +22,7 @@ public class CheckBuildInstalledAction implements Action {
     public Action runIfNotInstalled;
     private boolean mIsInstalled;
 
-    public CheckBuildInstalledAction(Library library, Platform platform, ZooKeeper zooKeeper) {
+    public VerifyLibraryInstalledAction(Library library, Platform platform, ZooKeeper zooKeeper) {
         this.library = library;
         this.platform = platform;
         this.zooKeeper = zooKeeper;

@@ -1,7 +1,7 @@
 package com.devsmart.zookeeper;
 
 
-import com.devsmart.zookeeper.action.CheckBuildInstalledAction;
+import com.devsmart.zookeeper.action.VerifyLibraryInstalledAction;
 import com.devsmart.zookeeper.action.ListAllActionsAction;
 import com.devsmart.zookeeper.action.PhonyAction;
 import com.devsmart.zookeeper.ast.Nodes;
@@ -122,7 +122,7 @@ public class ZooKeeper {
         PhonyAction checkAllLibsAction = new PhonyAction();
         mDependencyGraph.addAction("all", checkAllLibsAction);
         for(Library lib : mAllLibraries) {
-            Action checkLib = mDependencyGraph.getAction(CheckBuildInstalledAction.createActionName(lib, buildPlatform));
+            Action checkLib = mDependencyGraph.getAction(VerifyLibraryInstalledAction.createActionName(lib, buildPlatform));
             mDependencyGraph.addDependency(checkAllLibsAction, checkLib);
         }
 

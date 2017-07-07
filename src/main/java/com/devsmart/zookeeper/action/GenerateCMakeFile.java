@@ -18,10 +18,6 @@ public class GenerateCMakeFile implements Action {
     private static final Logger LOGGER = LoggerFactory.getLogger(GenerateCMakeFile.class);
     private static final ImmutableSet<String> SOURCE_POSTFIXES = ImmutableSet.of(".cpp", ".cc", ".c", ".h");
 
-    public static String createActionName(Library library) {
-        return "genCMake" + Utils.captialFirstLetter(library.name);
-    }
-
     public Nodes.LibNode mLibrary;
     public File mProjectRootDir;
     public File mOutputFile;

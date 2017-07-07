@@ -3,7 +3,7 @@ package com.devsmart.zookeeper;
 import com.google.common.collect.ComparisonChain;
 
 
-class LibraryPlatformKey implements Comparable<LibraryPlatformKey> {
+public class LibraryPlatformKey implements Comparable<LibraryPlatformKey> {
 
     public final Library lib;
     public final Platform platform;

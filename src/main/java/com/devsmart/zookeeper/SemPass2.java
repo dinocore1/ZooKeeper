@@ -9,10 +9,6 @@ import com.google.common.collect.Iterables;
 import com.google.common.hash.HashCode;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.regex.Pattern;
 
 public class SemPass2 extends ZooKeeperBaseVisitor<Void> {
@@ -55,15 +51,14 @@ public class SemPass2 extends ZooKeeperBaseVisitor<Void> {
 
     @Override
     public Void visitLibrary(ZooKeeperParser.LibraryContext ctx) {
-        List<Action> preBuildDependencies = new ArrayList<Action>();
         final Nodes.LibNode libNode = (Nodes.LibNode) mContext.nodeMap.get(ctx);
         final Platform platform = mContext.zooKeeper.getBuildPlatform();
         final LibraryPlatformKey libraryPlatformKey = new LibraryPlatformKey(libNode.library, platform);
         final CMakeBuildContext buildContext = new CMakeBuildContext(libNode.library, platform);
 
         File buildDir = new File(mContext.fileRoot, "builds");
-        buildDir = new File(buildDir, libNode.library.name);
-        buildDir = new File(buildDir, platform.toString());
+        buildDir = new File(buildDir, libraryPlatformKey.lib.name);
+        buildDir = new File(buildDir, libraryPlatformKey.platform.toString());
 
         buildContext.buildDir.set(buildDir);
 
@@ -72,42 +67,18 @@ public class SemPass2 extends ZooKeeperBaseVisitor<Void> {
             @Override
             public void doIt() throws Exception {
                 super.doIt();
-                mContext.zooKeeper.mLibraryHashTable.put(buildContext.getPlatformKey(), buildContext.buildHash.get());
+                final HashCode buildHash = buildContext.buildHash.get();
+                mContext.zooKeeper.mLibraryHashTable.put(buildContext.getPlatformKey(), buildHash);
+                buildContext.installDir.set(mContext.zooKeeper.getInstallDir(libraryPlatformKey.lib, libraryPlatformKey.platform, buildHash));
             }
         };
         buildHashAction.libraryHash = buildContext.buildHash;
         buildHashAction.mSourceDir = buildContext.sourceDir;
         mContext.dependencyGraph.addAction(Utils.createActionName("hash", libraryPlatformKey.toString()), buildHashAction);
-        preBuildDependencies.add(buildHashAction);
-
-        //Check for installed Build
-        final CheckBuildInstalledAction checkBuildInstalledAction = new CheckBuildInstalledAction(libNode.library, platform, mContext.zooKeeper);
-        mContext.dependencyGraph.addAction(CheckBuildInstalledAction.createActionName(libNode.library, platform), checkBuildInstalledAction);
-        mContext.dependencyGraph.addDependency(checkBuildInstalledAction, buildHashAction);
 
 
-        File sourceDir;
-        if(StringUtils.isEmptyString(libNode.src)){
-            sourceDir = new File("").getAbsoluteFile();
-        } else if(URL_REGEX.matcher(libNode.src).find()){
-            String httpUrl = libNode.src;
-            sourceDir = new File(mContext.fileRoot, "download");
-            sourceDir = new File(sourceDir, libNode.library.name+libNode.library.version);
-            DownloadAndUnzipAction downloadAction = new DownloadAndUnzipAction(httpUrl, sourceDir);
-            mContext.dependencyGraph.addAction(DownloadAndUnzipAction.createActionName(libNode.library), downloadAction);
-            preBuildDependencies.add(downloadAction);
-            mContext.dependencyGraph.addDependency(buildHashAction, downloadAction);
-        } else {
-            sourceDir = new File(libNode.src);
-            if(!sourceDir.exists()) {
-                mContext.error("source dir does not exist: " + sourceDir.getAbsolutePath(), null);
-            }
-        }
-        buildContext.sourceDir.set(sourceDir);
-
-
-        ///////// Configure Build /////////////
-        ConfigCMakeAction cmakeConfigBuildAction = new ConfigCMakeAction(buildContext) {
+        ///////// Configure Action /////////////
+        CMakeConfigAction cmakeConfigAction = new CMakeConfigAction(buildContext) {
             @Override
             public void doIt() throws Exception {
                 for(Library library : Iterables.concat(libNode.compileLibDependencies, libNode.testLibDependencies)){
@@ -120,9 +91,48 @@ public class SemPass2 extends ZooKeeperBaseVisitor<Void> {
                 super.doIt();
             }
         };
-        mContext.dependencyGraph.addAction(Utils.createActionName("config", libraryPlatformKey.toString()), cmakeConfigBuildAction);
+        mContext.dependencyGraph.addAction(CMakeConfigAction.createActionName(libraryPlatformKey), cmakeConfigAction);
+        mContext.dependencyGraph.addDependency(cmakeConfigAction, buildHashAction);
 
-        checkBuildInstalledAction.runIfNotInstalled = cmakeBuildAction;
+
+        File sourceDir;
+        if(StringUtils.isEmptyString(libNode.src)){
+            sourceDir = new File("").getAbsoluteFile();
+        } else if(URL_REGEX.matcher(libNode.src).find()){
+            String httpUrl = libNode.src;
+            sourceDir = new File(mContext.fileRoot, "download");
+            sourceDir = new File(sourceDir, libNode.library.name+libNode.library.version);
+            DownloadAndUnzipAction downloadAction = new DownloadAndUnzipAction(httpUrl, sourceDir);
+            mContext.dependencyGraph.addAction(Utils.createActionName("download", libNode.library.name), downloadAction);
+            mContext.dependencyGraph.addDependency(buildHashAction, downloadAction);
+            mContext.dependencyGraph.addDependency(cmakeConfigAction, downloadAction);
+        } else {
+            sourceDir = new File(libNode.src);
+            if(!sourceDir.exists()) {
+                mContext.error("source dir does not exist: " + sourceDir.getAbsolutePath(), null);
+            }
+        }
+        buildContext.sourceDir.set(sourceDir);
+
+
+        /////// Build Action //////////
+        CMakeBuildAction cmakeBuildAction = new CMakeBuildAction(buildContext);
+        mContext.dependencyGraph.addAction(Utils.createActionName("build", libraryPlatformKey.toString()), cmakeBuildAction);
+        mContext.dependencyGraph.addDependency(cmakeBuildAction, cmakeConfigAction);
+
+
+        /////// Install Action /////
+        CMakeInstallAction cmakeInstallAction = new CMakeInstallAction(buildContext);
+        mContext.dependencyGraph.addAction(CMakeInstallAction.createActionName(libraryPlatformKey), cmakeInstallAction);
+        mContext.dependencyGraph.addDependency(cmakeInstallAction, cmakeConfigAction);
+        mContext.dependencyGraph.addDependency(cmakeInstallAction, cmakeBuildAction);
+
+
+        ////// Verify Installed Action ////
+        final VerifyLibraryInstalledAction verifyLibraryInstalledAction = new VerifyLibraryInstalledAction(libNode.library, platform, mContext.zooKeeper);
+        mContext.dependencyGraph.addAction(VerifyLibraryInstalledAction.createActionName(libNode.library, platform), verifyLibraryInstalledAction);
+        mContext.dependencyGraph.addDependency(verifyLibraryInstalledAction, buildHashAction);
+        verifyLibraryInstalledAction.runIfNotInstalled = cmakeInstallAction;
 
         /*
         String cmakeArgs = libNode.keyValuePairs.get(KEY_CMAKE_ARGS);
@@ -136,18 +146,15 @@ public class SemPass2 extends ZooKeeperBaseVisitor<Void> {
 
 
 
-        mContext.dependencyGraph.addAction(BuildCMakeLibAction.createActionName(libNode.library, platform), cmakeBuildAction);
-        for(Action preBuild : preBuildDependencies) {
-            mContext.dependencyGraph.addDependency(cmakeBuildAction, preBuild);
-        }
-
         mContext.zooKeeper.mAllLibraries.add(libNode.library);
 
+
+        ///// Gen CMake File ////
         GenerateCMakeFile generateCMakeFileAction = new GenerateCMakeFile();
         generateCMakeFileAction.mProjectRootDir = sourceDir;
         generateCMakeFileAction.mLibrary = libNode;
         generateCMakeFileAction.mOutputFile = new File(sourceDir, "CMakeLists.txt");
-        mContext.dependencyGraph.addAction(GenerateCMakeFile.createActionName(libNode.library), generateCMakeFileAction);
+        mContext.dependencyGraph.addAction(Utils.createActionName("genCMake", libraryPlatformKey.lib.name), generateCMakeFileAction);
 
         return null;
     }
