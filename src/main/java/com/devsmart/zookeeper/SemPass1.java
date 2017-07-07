@@ -10,8 +10,6 @@ public class SemPass1 extends ZooKeeperBaseVisitor<Nodes.Node> {
 
     final CompilerContext mContext;
     private Nodes.LibNode mCurrentLibNode;
-    private Map<String, String> mCurrentKeyValuePairs;
-    private Map<String, ZooKeeperParser.KeyvalueContext> mCurrentKeyValueContext;
 
     public SemPass1(CompilerContext context) {
         mContext = context;
@@ -35,10 +33,9 @@ public class SemPass1 extends ZooKeeperBaseVisitor<Nodes.Node> {
     @Override
     public Nodes.Node visitLibrary(ZooKeeperParser.LibraryContext ctx) {
 
+        mCurrentLibNode = new Nodes.LibNode(ctx);
         Nodes.VersionNode versionNode = (Nodes.VersionNode) visit(ctx.version());
-
-        String name = ctx.name.getText();
-        mCurrentLibNode = new Nodes.LibNode(name, versionNode.version);
+        mCurrentLibNode.library = new Library(ctx.name.getText(), versionNode.version);
 
         visit(ctx.libraryBody());
 
@@ -47,7 +44,7 @@ public class SemPass1 extends ZooKeeperBaseVisitor<Nodes.Node> {
 
     @Override
     public Nodes.Node visitSource(ZooKeeperParser.SourceContext ctx) {
-        mCurrentLibNode.src = escapeStringLiteral(ctx.src.getText());
+        mCurrentLibNode.src = Nodes.escapeStringLiteral(ctx.src.getText());
         return super.visitSource(ctx);
     }
 
@@ -68,20 +65,25 @@ public class SemPass1 extends ZooKeeperBaseVisitor<Nodes.Node> {
         return super.visitDependList(ctx);
     }
 
-    private static String escapeStringLiteral(String input) {
-        input = input.substring(1, input.length()-1);
-        input = input.replaceAll("\\\\\"", "\"");
-        input = input.replace("\\\\", "\\");
-        return input;
+    @Override
+    public Nodes.Node visitCmakeArgs(ZooKeeperParser.CmakeArgsContext ctx) {
+        mCurrentLibNode.cmakeArgs = (Nodes.KeyValues) visit(ctx.keyvalues());
+
+        return super.visitCmakeArgs(ctx);
+    }
+
+    @Override
+    public Nodes.Node visitKeyvalues(ZooKeeperParser.KeyvaluesContext ctx) {
+        Nodes.KeyValues retval = new Nodes.KeyValues(ctx);
+        for(ZooKeeperParser.KeyvalueContext keyvalueCtx : ctx.keyvalue()) {
+            retval.keyValues.add((Nodes.KeyValue) visit(keyvalueCtx));
+        }
+
+        return putMap(ctx, retval);
     }
 
     @Override
     public Nodes.Node visitKeyvalue(ZooKeeperParser.KeyvalueContext ctx) {
-        String key = ctx.key.getText();
-        String value = escapeStringLiteral(ctx.value.getText());
-        mCurrentKeyValuePairs.put(key, value);
-        mCurrentKeyValueContext.put(key, ctx);
-
-        return putMap(ctx, new Nodes.KeyValue(key, value));
+        return putMap(ctx, new Nodes.KeyValue(ctx));
     }
 }

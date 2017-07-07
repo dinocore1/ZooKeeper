@@ -31,7 +31,7 @@ public class GenerateCMakeFileTest {
     @Test
     public void generateCMakeFileForLibrary() throws Exception {
         GenerateCMakeFile generateCMakeFile = new GenerateCMakeFile();
-        generateCMakeFile.mLibrary = new Nodes.LibNode("add", Version.fromString("0.1.0"));
+        //generateCMakeFile.mLibrary = new Nodes.LibNode("add", Version.fromString("0.1.0"));
 
         generateCMakeFile.mProjectRootDir = new File("example");
         generateCMakeFile.mProjectRootDir = new File(generateCMakeFile.mProjectRootDir, "library");

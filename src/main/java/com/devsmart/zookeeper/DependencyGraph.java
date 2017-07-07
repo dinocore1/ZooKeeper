@@ -1,6 +1,7 @@
 package com.devsmart.zookeeper;
 
 
+import com.google.common.base.Throwables;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import org.jgrapht.DirectedGraph;
@@ -63,8 +64,9 @@ public class DependencyGraph {
             LOGGER.info("running " + mActionName.inverse().get(action));
             action.doIt();
             actionState.hasRun = true;
-        }catch (Exception e) {
-            LOGGER.error("", e);
+        } catch (Exception e) {
+            //LOGGER.error("", e);
+            Throwables.propagate(e);
         }
     }
 }

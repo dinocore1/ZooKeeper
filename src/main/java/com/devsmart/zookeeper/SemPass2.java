@@ -91,6 +91,13 @@ public class SemPass2 extends ZooKeeperBaseVisitor<Void> {
                 super.doIt();
             }
         };
+        if(libNode.cmakeArgs != null) {
+            for(Nodes.KeyValue keyvalue : libNode.cmakeArgs.keyValues){
+                String arg = keyvalue.getKey()+"="+keyvalue.getValue();
+                buildContext.cMakeArgs.add(arg);
+                buildHashAction.mBuildParams.add("cmake:"+arg);
+            }
+        }
         mContext.dependencyGraph.addAction(CMakeConfigAction.createActionName(libraryPlatformKey), cmakeConfigAction);
         mContext.dependencyGraph.addDependency(cmakeConfigAction, buildHashAction);
 
@@ -133,17 +140,6 @@ public class SemPass2 extends ZooKeeperBaseVisitor<Void> {
         mContext.dependencyGraph.addAction(VerifyLibraryInstalledAction.createActionName(libNode.library, platform), verifyLibraryInstalledAction);
         mContext.dependencyGraph.addDependency(verifyLibraryInstalledAction, buildHashAction);
         verifyLibraryInstalledAction.runIfNotInstalled = cmakeInstallAction;
-
-        /*
-        String cmakeArgs = libNode.keyValuePairs.get(KEY_CMAKE_ARGS);
-        if(cmakeArgs != null) {
-            for(String arg : cmakeArgs.split(" ")) {
-                retval.cmakeArgs.add(arg);
-                buildHashAction.mBuildParams.add("cmake:" + arg);
-            }
-        }
-        */
-
 
 
         mContext.zooKeeper.mAllLibraries.add(libNode.library);

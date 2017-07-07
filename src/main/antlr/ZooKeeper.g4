@@ -16,6 +16,7 @@ version
 libraryBody
     : libraryBody dependencies
     | libraryBody source
+    | libraryBody cmakeArgs
     |
     ;
 
@@ -33,9 +34,12 @@ source
     : SRC src=STRING_LITERAL
     ;
 
+cmakeArgs
+    : CMAKE LPAREN keyvalues RPAREN
+    ;
+
 keyvalues
-    : keyvalues keyvalue
-    |
+    : keyvalue*
     ;
 
 keyvalue
@@ -48,6 +52,7 @@ LPAREN : '{' ;
 RPAREN : '}' ;
 DEPENDENCIES : 'dependencies' ;
 SRC : 'src' ;
+CMAKE : 'cmake' ;
 COMPILE : 'compile' ;
 TEST : 'test' ;
 STRING_LITERAL : '"' (~('"' | '\\' | '\r' | '\n') | '\\' ('"' | '\\'))* '"';
