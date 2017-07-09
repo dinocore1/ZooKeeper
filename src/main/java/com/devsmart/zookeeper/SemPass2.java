@@ -102,14 +102,13 @@ public class SemPass2 extends ZooKeeperBaseVisitor<Void> {
         mContext.dependencyGraph.addDependency(cmakeConfigAction, buildHashAction);
 
 
-        File sourceDir;
+        File sourceDir = null;
         if(StringUtils.isEmptyString(libNode.src)){
             sourceDir = new File("").getAbsoluteFile();
+            buildContext.sourceDir.set(sourceDir);
         } else if(URL_REGEX.matcher(libNode.src).find()){
             String httpUrl = libNode.src;
-            sourceDir = new File(mContext.fileRoot, "download");
-            sourceDir = new File(sourceDir, libNode.library.name+libNode.library.version);
-            DownloadAndUnzipAction downloadAction = new DownloadAndUnzipAction(httpUrl, sourceDir);
+            DownloadAndUnzipAction downloadAction = new DownloadAndUnzipAction(httpUrl, buildContext.sourceDir, mContext.zooKeeper);
             mContext.dependencyGraph.addAction(Utils.createActionName("download", libNode.library.name), downloadAction);
             mContext.dependencyGraph.addDependency(buildHashAction, downloadAction);
             mContext.dependencyGraph.addDependency(cmakeConfigAction, downloadAction);
@@ -118,9 +117,8 @@ public class SemPass2 extends ZooKeeperBaseVisitor<Void> {
             if(!sourceDir.exists()) {
                 mContext.error("source dir does not exist: " + sourceDir.getAbsolutePath(), null);
             }
+            buildContext.sourceDir.set(sourceDir);
         }
-        buildContext.sourceDir.set(sourceDir);
-
 
         /////// Build Action //////////
         CMakeBuildAction cmakeBuildAction = new CMakeBuildAction(buildContext);

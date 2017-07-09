@@ -5,22 +5,70 @@ import com.devsmart.zookeeper.action.VerifyLibraryInstalledAction;
 import com.devsmart.zookeeper.action.ListAllActionsAction;
 import com.devsmart.zookeeper.action.PhonyAction;
 import com.devsmart.zookeeper.ast.Nodes;
+import com.google.common.collect.ComparisonChain;
+import com.google.common.collect.Ordering;
 import com.google.common.hash.HashCode;
 import com.google.common.io.BaseEncoding;
+import com.google.common.primitives.SignedBytes;
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.apache.commons.cli.*;
+import org.jetbrains.annotations.NotNull;
+import org.mapdb.*;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Locale;
-import java.util.TreeMap;
+import java.util.*;
 
 public class ZooKeeper {
 
+    public static class DownloadCache implements Comparable<DownloadCache> {
+        public Date downloadTime;
+        public HashCode sourceHash;
+
+        @Override
+        public int compareTo(@NotNull DownloadCache o) {
+            return ComparisonChain
+                    .start()
+                    .compare(downloadTime, o.downloadTime)
+                    .compare(sourceHash.asBytes(), o.sourceHash.asBytes(), SignedBytes.lexicographicalComparator())
+                    .result();
+
+        }
+    }
+
+    public static class DownloadCacheSerializer implements Serializer<DownloadCache> {
+
+        @Override
+        public void serialize(@NotNull DataOutput2 out, @NotNull DownloadCache value) throws IOException {
+            out.packLong(value.downloadTime.getTime());
+
+            byte[] hashBytes = value.sourceHash.asBytes();
+            out.packInt(hashBytes.length);
+            out.write(hashBytes);
+        }
+
+        @Override
+        public DownloadCache deserialize(@NotNull DataInput2 input, int available) throws IOException {
+            DownloadCache retval = new DownloadCache();
+            retval.downloadTime = new Date(input.unpackLong());
+
+            byte[] hashBytes = new byte[input.unpackInt()];
+            input.readFully(hashBytes);
+            retval.sourceHash = HashCode.fromBytes(hashBytes);
+            return retval;
+        }
+
+        @Override
+        public int compare(DownloadCache first, DownloadCache second) {
+            return first.compareTo(second);
+        }
+    }
+
+    public final DB mDB;
+    public final HTreeMap<String, DownloadCache> mDownloadCache;
     public DependencyGraph mDependencyGraph = new DependencyGraph();
     public File mZooKeeperRoot;
     public ArrayList<Library> mAllLibraries = new ArrayList<Library>();
@@ -30,6 +78,16 @@ public class ZooKeeper {
         mZooKeeperRoot = new File(System.getProperty("user.home"));
         mZooKeeperRoot = new File(mZooKeeperRoot, ".zookeeper");
         mZooKeeperRoot.mkdirs();
+
+        File dbFile = new File(mZooKeeperRoot, "zookeeper.db");
+
+        mDB = DBMaker.fileDB(dbFile)
+                .closeOnJvmShutdown()
+                .checksumHeaderBypass()
+                .make();
+
+        mDownloadCache = mDB.hashMap("downloadCached", Serializer.STRING, new DownloadCacheSerializer())
+                .createOrOpen();
     }
 
     public Platform getBuildPlatform() {

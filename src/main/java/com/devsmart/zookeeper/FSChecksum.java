@@ -37,9 +37,11 @@ public class FSChecksum {
             computeFileHash(f);
         } else {
             File[] fileList = f.listFiles();
-            Arrays.sort(fileList, LEX_COMPARATOR);
-            for(File f1 : fileList) {
-                computeHash(f1);
+            if(fileList != null) {
+                Arrays.sort(fileList, LEX_COMPARATOR);
+                for (File f1 : fileList) {
+                    computeHash(f1);
+                }
             }
         }
     }
@@ -51,5 +53,6 @@ public class FSChecksum {
         while((bytesRead = fin.read(buffer, 0, buffer.length)) > 0) {
             mHasher.putBytes(buffer, 0, bytesRead);
         }
+        fin.close();
     }
 }
