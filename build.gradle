@@ -13,6 +13,7 @@ buildscript {
 apply plugin: 'java'
 apply plugin: 'maven'
 apply plugin: 'signing'
+apply plugin: 'application'
 apply from: file('gradle/idea.gradle')
 
 repositories {
@@ -20,6 +21,7 @@ repositories {
 }
 
 sourceCompatibility = 1.7
+mainClassName = "com.devsmart.zookeeper.ZooKeeper"
 
 ext.versions = [
         antlr: '4.5.1'
