@@ -1,6 +1,7 @@
 package com.devsmart.zookeeper;
 
 
+import com.google.common.collect.ImmutableSet;
 import com.google.common.hash.*;
 
 import java.io.File;
@@ -10,6 +11,8 @@ import java.util.Arrays;
 import java.util.Comparator;
 
 public class FSChecksum {
+
+    public static final ImmutableSet<String> IGNORE_DIRS = ImmutableSet.of(".git");
 
     private static final Comparator<File> LEX_COMPARATOR = new Comparator<File>() {
         @Override
@@ -36,11 +39,13 @@ public class FSChecksum {
         if(f.isFile()) {
             computeFileHash(f);
         } else {
-            File[] fileList = f.listFiles();
-            if(fileList != null) {
-                Arrays.sort(fileList, LEX_COMPARATOR);
-                for (File f1 : fileList) {
-                    computeHash(f1);
+            if(!IGNORE_DIRS.contains(f.getName())) {
+                File[] fileList = f.listFiles();
+                if (fileList != null) {
+                    Arrays.sort(fileList, LEX_COMPARATOR);
+                    for (File f1 : fileList) {
+                        computeHash(f1);
+                    }
                 }
             }
         }
