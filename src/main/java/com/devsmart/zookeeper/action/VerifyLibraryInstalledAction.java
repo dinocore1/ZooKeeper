@@ -34,7 +34,7 @@ public class VerifyLibraryInstalledAction implements Action {
         File installDir = zooKeeper.getInstallDir(library, platform, buildHash);
 
         mIsInstalled = installDir.exists() && installDir.isDirectory() && installDir.listFiles().length > 0;
-        LOGGER.info("checking if {}-{} is installed...{}", library, platform, mIsInstalled);
+        LOGGER.info("checking if {}-{} is installed...{}", library, platform, mIsInstalled ? "true (" + installDir.getAbsolutePath() + ")" : "false");
         if(!mIsInstalled && runIfNotInstalled != null) {
             zooKeeper.mDependencyGraph.runAction(runIfNotInstalled);
         }
