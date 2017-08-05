@@ -2,12 +2,19 @@ package com.devsmart.zookeeper.ast;
 
 
 import com.devsmart.zookeeper.Library;
+import com.devsmart.zookeeper.SourceLocation;
 import com.devsmart.zookeeper.Version;
 import com.devsmart.zookeeper.ZooKeeperParser;
+import com.google.common.base.Optional;
+import com.google.common.base.Predicate;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Iterators;
 import org.antlr.v4.runtime.Token;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 public class Nodes {
 
@@ -34,7 +41,7 @@ public class Nodes {
     public static class LibNode extends Node {
         public final ZooKeeperParser.LibraryContext mCtx;
         public Library library;
-        public String src;
+        public SourceLocation src;
         public final List<Library> compileLibDependencies = new ArrayList<Library>();
         public final List<Library> testLibDependencies = new ArrayList<Library>();
         public KeyValues cmakeArgs;
@@ -50,6 +57,32 @@ public class Nodes {
 
         public KeyValues(ZooKeeperParser.KeyvaluesContext ctx) {
             mCtx = ctx;
+        }
+
+        public boolean hasKey(final String key) {
+            return Iterables.tryFind(keyValues, new Predicate<KeyValue>() {
+                @Override
+                public boolean apply(KeyValue input) {
+                    return input.getKey().equals(key);
+                }
+            }).isPresent();
+        }
+
+        public String getValue(final String key) {
+            return Iterables.find(keyValues, new Predicate<KeyValue>() {
+                @Override
+                public boolean apply(KeyValue input) {
+                    return input.getKey().equals(key);
+                }
+            }).getValue();
+        }
+
+        public Map<String, String> asMap() {
+            TreeMap<String, String> retval = new TreeMap<String, String>();
+            for(KeyValue entry : keyValues) {
+                retval.put(entry.getKey(), entry.getValue());
+            }
+            return retval;
         }
     }
 

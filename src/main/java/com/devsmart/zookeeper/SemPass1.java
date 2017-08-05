@@ -1,12 +1,20 @@
 package com.devsmart.zookeeper;
 
 import com.devsmart.zookeeper.ast.Nodes;
+import com.devsmart.zookeeper.sourcelocation.DownloadSourceLocation;
+import com.devsmart.zookeeper.sourcelocation.GitRepositorySourceLocation;
+import com.devsmart.zookeeper.sourcelocation.LocalFileSystemLocation;
+import com.devsmart.zookeeper.sourcelocation.LocalZipSourceLocation;
 import org.antlr.v4.runtime.ParserRuleContext;
 
-import java.util.Map;
+import java.io.File;
+import java.util.regex.Pattern;
 
 
 public class SemPass1 extends ZooKeeperBaseVisitor<Nodes.Node> {
+
+    private static final Pattern URL_REGEX = Pattern.compile("^https?://");
+    private static final Pattern ZIP_REGEX = Pattern.compile("\\.zip$");
 
     final CompilerContext mContext;
     private Nodes.LibNode mCurrentLibNode;
@@ -44,8 +52,31 @@ public class SemPass1 extends ZooKeeperBaseVisitor<Nodes.Node> {
 
     @Override
     public Nodes.Node visitSource(ZooKeeperParser.SourceContext ctx) {
-        mCurrentLibNode.src = Nodes.escapeStringLiteral(ctx.src.getText());
+        String srcStr = Nodes.escapeStringLiteral(ctx.src.getText());
+
+        if(URL_REGEX.matcher(srcStr).find()) {
+            mCurrentLibNode.src = new DownloadSourceLocation(srcStr);
+        } else if(ZIP_REGEX.matcher(srcStr).find()){
+            mCurrentLibNode.src = new LocalZipSourceLocation(srcStr);
+        } else {
+            mCurrentLibNode.src = new LocalFileSystemLocation(new File(srcStr));
+        }
+
         return super.visitSource(ctx);
+    }
+
+    @Override
+    public Nodes.Node visitGitArgs(ZooKeeperParser.GitArgsContext ctx) {
+        Nodes.KeyValues gitArgs = (Nodes.KeyValues) visit(ctx.keyvalues());
+
+        if(! (gitArgs.hasKey("url") && gitArgs.hasKey("rev")) ) {
+            mContext.error("git args does not contain 'url' and 'rev'", ctx.start);
+        } else {
+            mCurrentLibNode.src = new GitRepositorySourceLocation(gitArgs.asMap());
+        }
+
+
+        return super.visitGitArgs(ctx);
     }
 
     @Override

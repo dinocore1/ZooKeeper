@@ -15,7 +15,7 @@ version
 
 libraryBody
     : libraryBody dependencies
-    | libraryBody source
+    | libraryBody sourceDirective
     | libraryBody cmakeArgs
     |
     ;
@@ -30,8 +30,17 @@ dependList
     |
     ;
 
+sourceDirective
+    : source
+    | gitArgs
+    ;
+
 source
     : SRC src=STRING_LITERAL
+    ;
+
+gitArgs
+    : GIT LPAREN keyvalues RPAREN
     ;
 
 cmakeArgs
@@ -53,6 +62,7 @@ RPAREN : '}' ;
 DEPENDENCIES : 'dependencies' ;
 SRC : 'src' ;
 CMAKE : 'cmake' ;
+GIT : 'git' ;
 COMPILE : 'compile' ;
 TEST : 'test' ;
 STRING_LITERAL : '"' (~('"' | '\\' | '\r' | '\n') | '\\' ('"' | '\\'))* '"';

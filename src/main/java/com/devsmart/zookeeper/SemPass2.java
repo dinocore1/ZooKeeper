@@ -1,19 +1,18 @@
 package com.devsmart.zookeeper;
 
 
-import com.devsmart.StringUtils;
 import com.devsmart.zookeeper.action.*;
 import com.devsmart.zookeeper.ast.Nodes;
+import com.devsmart.zookeeper.sourcelocation.DownloadSourceLocation;
+import com.devsmart.zookeeper.sourcelocation.GitRepositorySourceLocation;
+import com.devsmart.zookeeper.sourcelocation.LocalFileSystemLocation;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.hash.HashCode;
 
 import java.io.File;
-import java.util.regex.Pattern;
 
 public class SemPass2 extends ZooKeeperBaseVisitor<Void> {
-
-    private static final Pattern URL_REGEX = Pattern.compile("^https?://");
 
     static final String KEY_CMAKE_ARGS = "cmake_args";
 
@@ -103,21 +102,27 @@ public class SemPass2 extends ZooKeeperBaseVisitor<Void> {
 
 
         File sourceDir = null;
-        if(StringUtils.isEmptyString(libNode.src)){
+        if(libNode.src == null){
             sourceDir = new File("").getAbsoluteFile();
             buildContext.sourceDir.set(sourceDir);
-        } else if(URL_REGEX.matcher(libNode.src).find()){
-            String httpUrl = libNode.src;
+        } else if(libNode.src instanceof DownloadSourceLocation){
+            String httpUrl = ((DownloadSourceLocation) libNode.src).mUrl;
             DownloadAndUnzipAction downloadAction = new DownloadAndUnzipAction(httpUrl, buildContext.sourceDir, mContext.zooKeeper);
             mContext.dependencyGraph.addAction(Utils.createActionName("download", libNode.library.name), downloadAction);
             mContext.dependencyGraph.addDependency(buildHashAction, downloadAction);
             mContext.dependencyGraph.addDependency(cmakeConfigAction, downloadAction);
-        } else {
-            sourceDir = new File(libNode.src);
+        } else if(libNode.src instanceof LocalFileSystemLocation){
+            sourceDir = ((LocalFileSystemLocation) libNode.src).mSourceFolder;
             if(!sourceDir.exists()) {
                 mContext.error("source dir does not exist: " + sourceDir.getAbsolutePath(), null);
             }
             buildContext.sourceDir.set(sourceDir);
+        } else if(libNode.src instanceof GitRepositorySourceLocation) {
+            ConfigLocalGitRepoAction localGitRepoAction = new ConfigLocalGitRepoAction(libNode.library, (GitRepositorySourceLocation)libNode.src, buildContext.sourceDir, mContext.zooKeeper);
+            mContext.dependencyGraph.addAction(Utils.createActionName("clone", libNode.library.name), localGitRepoAction);
+            mContext.dependencyGraph.addDependency(buildHashAction, localGitRepoAction);
+            mContext.dependencyGraph.addDependency(cmakeConfigAction, localGitRepoAction);
+
         }
 
         /////// Build Action //////////
