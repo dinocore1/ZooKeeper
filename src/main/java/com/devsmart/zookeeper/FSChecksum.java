@@ -13,6 +13,7 @@ import java.util.Comparator;
 public class FSChecksum {
 
     public static final ImmutableSet<String> IGNORE_DIRS = ImmutableSet.of(".git");
+    public static final ImmutableSet<String> IGNORE_FILES = ImmutableSet.of("build.zoo");
 
     private static final Comparator<File> LEX_COMPARATOR = new Comparator<File>() {
         @Override
@@ -37,7 +38,9 @@ public class FSChecksum {
 
     private void computeHash(File f) throws IOException {
         if(f.isFile()) {
-            computeFileHash(f);
+            if(!IGNORE_FILES.contains(f.getName())) {
+                computeFileHash(f);
+            }
         } else {
             if(!IGNORE_DIRS.contains(f.getName())) {
                 File[] fileList = f.listFiles();
