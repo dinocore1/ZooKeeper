@@ -39,6 +39,17 @@ public class SemPass1 extends ZooKeeperBaseVisitor<Nodes.Node> {
     }
 
     @Override
+    public Nodes.Node visitPlatform(ZooKeeperParser.PlatformContext ctx) {
+        Nodes.PlatformNode retval = new Nodes.PlatformNode(ctx);
+        retval.platform = Platform.parse(ctx.name.getText());
+        retval.keyValues = (Nodes.KeyValues) visit(ctx.keyvalues());
+
+        mContext.platforms.add(retval.platform);
+
+        return putMap(ctx, retval);
+    }
+
+    @Override
     public Nodes.Node visitLibrary(ZooKeeperParser.LibraryContext ctx) {
 
         mCurrentLibNode = new Nodes.LibNode(ctx);
@@ -46,6 +57,8 @@ public class SemPass1 extends ZooKeeperBaseVisitor<Nodes.Node> {
         mCurrentLibNode.library = new Library(ctx.name.getText(), versionNode.version);
 
         visit(ctx.libraryBody());
+
+        mContext.libraries.add(mCurrentLibNode.library);
 
         return putMap(ctx, mCurrentLibNode);
     }

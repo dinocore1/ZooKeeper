@@ -1,7 +1,12 @@
 package com.devsmart.zookeeper;
 
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 public class Platform {
+
+    private static final Pattern REGEX = Pattern.compile("(.*)-(.*)");
 
     public enum OS {
         linux,
@@ -21,16 +26,26 @@ public class Platform {
         UNKNOWN;
     }
 
-    public final OS os;
-    public final ARCH arch;
+    public final String os;
+    public final String arch;
 
     public static Platform parse(String platformStr) {
-        return null;
+        Platform retval = null;
+        Matcher m = REGEX.matcher(platformStr);
+        if(m.find()) {
+            retval = new Platform(m.group(1), m.group(2));
+        }
+
+        return retval;
+    }
+
+    Platform(String os, String arch) {
+        this.os = os;
+        this.arch = arch;
     }
 
     Platform(OS os, ARCH arch) {
-        this.os = os;
-        this.arch = arch;
+        this(os.name(), arch.name());
     }
 
     @Override
@@ -50,6 +65,6 @@ public class Platform {
         }
 
         Platform other = (Platform) obj;
-        return os == other.os && arch == other.arch;
+        return os.equals(other.os) && arch.equals(other.arch);
     }
 }

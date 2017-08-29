@@ -1,9 +1,19 @@
 grammar ZooKeeper;
 
 file
-    : library+
+    : compileContext
     ;
 
+compileContext
+    : compileContext platform
+    | compileContext library
+    | compileContext COMMENT
+    |
+    ;
+
+platform
+    : PLATFORM name=ID LPAREN keyvalues RPAREN
+    ;
 
 library
     : LIB name=ID version LPAREN libraryBody RPAREN
@@ -55,6 +65,7 @@ keyvalue
     : key=ID value=STRING_LITERAL
     ;
 
+PLATFORM : 'platform' ;
 LIB : 'lib' ;
 DOT : '.' ;
 LPAREN : '{' ;
@@ -69,4 +80,5 @@ STRING_LITERAL : '"' (~('"' | '\\' | '\r' | '\n') | '\\' ('"' | '\\'))* '"';
 
 NUM : [0-9]+ ;
 ID : [a-zA-Z0-9\-_]+ ;
+COMMENT: '/*' .*? '*/' -> skip ;
 WS : [ \t\r\n]+ -> skip ;

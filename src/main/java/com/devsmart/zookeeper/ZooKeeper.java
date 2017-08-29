@@ -1,12 +1,11 @@
 package com.devsmart.zookeeper;
 
 
-import com.devsmart.zookeeper.action.VerifyLibraryInstalledAction;
 import com.devsmart.zookeeper.action.ListAllActionsAction;
 import com.devsmart.zookeeper.action.PhonyAction;
+import com.devsmart.zookeeper.action.VerifyLibraryInstalledAction;
 import com.devsmart.zookeeper.ast.Nodes;
 import com.google.common.collect.ComparisonChain;
-import com.google.common.collect.Ordering;
 import com.google.common.hash.HashCode;
 import com.google.common.io.BaseEncoding;
 import com.google.common.primitives.SignedBytes;
@@ -20,7 +19,10 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.Locale;
+import java.util.TreeMap;
 
 public class ZooKeeper {
 
@@ -90,7 +92,7 @@ public class ZooKeeper {
                 .createOrOpen();
     }
 
-    public Platform getBuildPlatform() {
+    public Platform getNativeBuildPlatform() {
         return getNativePlatform();
     }
 
@@ -167,16 +169,7 @@ public class ZooKeeper {
             return false;
         }
 
-        SemPass3 semPass3 = new SemPass3(compilerContext);
-        semPass3.visit(root);
-
-
-        if(compilerContext.hasErrors()) {
-            compilerContext.reportMessages(System.err);
-            return false;
-        }
-
-        Platform buildPlatform = getBuildPlatform();
+        Platform buildPlatform = getNativeBuildPlatform();
         PhonyAction checkAllLibsAction = new PhonyAction();
         mDependencyGraph.addAction("all", checkAllLibsAction);
         for(Library lib : mAllLibraries) {

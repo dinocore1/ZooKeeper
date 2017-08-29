@@ -1,10 +1,7 @@
 package com.devsmart.zookeeper.ast;
 
 
-import com.devsmart.zookeeper.Library;
-import com.devsmart.zookeeper.SourceLocation;
-import com.devsmart.zookeeper.Version;
-import com.devsmart.zookeeper.ZooKeeperParser;
+import com.devsmart.zookeeper.*;
 import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
@@ -36,6 +33,16 @@ public class Nodes {
     public static class VersionNode extends Node {
         public final Version version = new Version();
 
+    }
+
+    public static class PlatformNode extends Node {
+        public final ZooKeeperParser.PlatformContext mCtx;
+        public Platform platform;
+        public KeyValues keyValues;
+
+        public PlatformNode(ZooKeeperParser.PlatformContext ctx) {
+            mCtx = ctx;
+        }
     }
 
     public static class LibNode extends Node {

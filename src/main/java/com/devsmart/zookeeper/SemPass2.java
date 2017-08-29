@@ -11,6 +11,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.hash.HashCode;
 
 import java.io.File;
+import java.util.ArrayList;
 
 public class SemPass2 extends ZooKeeperBaseVisitor<Void> {
 
@@ -23,9 +24,17 @@ public class SemPass2 extends ZooKeeperBaseVisitor<Void> {
     }
 
     private final CompilerContext mContext;
+    private ArrayList<Nodes.LibNode> mLibraries = new ArrayList<Nodes.LibNode>();
+    private ArrayList<Nodes.PlatformNode> mPlatforms = new ArrayList<Nodes.PlatformNode>();
 
     public SemPass2(CompilerContext compilerContext) {
         mContext = compilerContext;
+
+        Nodes.PlatformNode nativePlatform = new Nodes.PlatformNode(null);
+        nativePlatform.platform = mContext.zooKeeper.getNativeBuildPlatform();
+        nativePlatform.keyValues = null;
+
+        mPlatforms.add(nativePlatform);
     }
 
     private class ActionBuilder {
@@ -49,9 +58,24 @@ public class SemPass2 extends ZooKeeperBaseVisitor<Void> {
     }
 
     @Override
-    public Void visitLibrary(ZooKeeperParser.LibraryContext ctx) {
-        final Nodes.LibNode libNode = (Nodes.LibNode) mContext.nodeMap.get(ctx);
-        final Platform platform = mContext.zooKeeper.getBuildPlatform();
+    public Void visitFile(ZooKeeperParser.FileContext ctx) {
+        super.visitChildren(ctx);
+
+        for(Nodes.PlatformNode platformNode : mPlatforms) {
+            for(Nodes.LibNode libNode : mLibraries) {
+                createLibraryPlatformCombo(libNode, platformNode);
+            }
+
+            for(Nodes.LibNode libNode : mLibraries) {
+                addTransientLibraryDependencies(libNode, platformNode);
+            }
+        }
+
+        return null;
+    }
+
+    private void createLibraryPlatformCombo(final Nodes.LibNode libNode, final Nodes.PlatformNode platformNode) {
+        final Platform  platform = platformNode.platform;
         final LibraryPlatformKey libraryPlatformKey = new LibraryPlatformKey(libNode.library, platform);
         final CMakeBuildContext buildContext = new CMakeBuildContext(libNode.library, platform);
 
@@ -74,6 +98,13 @@ public class SemPass2 extends ZooKeeperBaseVisitor<Void> {
         buildHashAction.libraryHash = buildContext.buildHash;
         buildHashAction.mSourceDir = buildContext.sourceDir;
         mContext.dependencyGraph.addAction(Utils.createActionName("hash", libraryPlatformKey.toString()), buildHashAction);
+        if(platformNode.keyValues != null) {
+            for (Nodes.KeyValue keyvalue : platformNode.keyValues.keyValues) {
+                String arg = keyvalue.getKey() + "=" + keyvalue.getValue();
+                buildContext.cMakeArgs.add(arg);
+                buildHashAction.mBuildParams.add("cmake:" + arg);
+            }
+        }
 
 
         ///////// Configure Action /////////////
@@ -154,6 +185,37 @@ public class SemPass2 extends ZooKeeperBaseVisitor<Void> {
         generateCMakeFileAction.mLibrary = libNode;
         generateCMakeFileAction.mOutputFile = new File(sourceDir, "CMakeLists.txt");
         mContext.dependencyGraph.addAction(Utils.createActionName("genCMake", libraryPlatformKey.lib.name), generateCMakeFileAction);
+    }
+
+
+    private void addTransientLibraryDependencies(final Nodes.LibNode libNode, final Nodes.PlatformNode platformNode) {
+        final Platform platform = platformNode.platform;
+        final LibraryPlatformKey key = new LibraryPlatformKey(libNode.library, platform);
+
+        Action libConfigAction = mContext.dependencyGraph.getAction(CMakeConfigAction.createActionName(key));
+
+        for(Library library : Iterables.concat(libNode.compileLibDependencies, libNode.testLibDependencies)) {
+            Action secureDependencyAction = mContext.dependencyGraph.getAction(VerifyLibraryInstalledAction.createActionName(library, platform));
+            if(secureDependencyAction != null) {
+                mContext.dependencyGraph.addDependency(libConfigAction, secureDependencyAction);
+            } else {
+                mContext.error("could not find build definition for: " + library, libNode.mCtx.libraryBody().dependencies().getStart());
+            }
+        }
+    }
+
+    @Override
+    public Void visitPlatform(ZooKeeperParser.PlatformContext ctx) {
+        final Nodes.PlatformNode platformNode = (Nodes.PlatformNode) mContext.nodeMap.get(ctx);
+        mPlatforms.add(platformNode);
+
+        return null;
+    }
+
+    @Override
+    public Void visitLibrary(ZooKeeperParser.LibraryContext ctx) {
+        final Nodes.LibNode libNode = (Nodes.LibNode) mContext.nodeMap.get(ctx);
+        mLibraries.add(libNode);
 
         return null;
     }

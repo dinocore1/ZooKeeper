@@ -50,6 +50,8 @@ public class CompilerContext {
     public File fileRoot;
     public ZooKeeper zooKeeper;
     public DependencyGraph dependencyGraph;
+    public final ArrayList<Platform> platforms = new ArrayList<Platform>();
+    public final ArrayList<Library> libraries = new ArrayList<Library>();
     public final List<CompileMessage> compileMessages = new ArrayList<CompileMessage>();
     public final Map<ParserRuleContext, Nodes.Node> nodeMap = new HashMap<ParserRuleContext, Nodes.Node>();
 
