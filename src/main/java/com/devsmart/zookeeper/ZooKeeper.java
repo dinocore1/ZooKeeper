@@ -26,6 +26,8 @@ import java.util.TreeMap;
 
 public class ZooKeeper {
 
+    public static final String VAR_CMAKE_EXE = "CMAKE_EXE";
+
     public static class DownloadCache implements Comparable<DownloadCache> {
         public Date downloadTime;
         public HashCode sourceHash;
@@ -70,6 +72,7 @@ public class ZooKeeper {
     }
 
     public final DB mDB;
+    public final VM mVM = new VM();
     public final HTreeMap<String, DownloadCache> mDownloadCache;
     public DependencyGraph mDependencyGraph = new DependencyGraph();
     public File mZooKeeperRoot;
@@ -90,6 +93,11 @@ public class ZooKeeper {
 
         mDownloadCache = mDB.hashMap("downloadCached", Serializer.STRING, new DownloadCacheSerializer())
                 .createOrOpen();
+
+        mVM.setVar(VAR_CMAKE_EXE, "cmake");
+
+        mVM.setVar(System.getenv());
+        mVM.setVar("PROJECT_DIR", new File("").getAbsolutePath());
     }
 
     public Platform getNativeBuildPlatform() {
@@ -144,6 +152,7 @@ public class ZooKeeper {
         CompilerContext compilerContext = new CompilerContext();
         compilerContext.dependencyGraph = mDependencyGraph;
         compilerContext.fileRoot = mZooKeeperRoot;
+        compilerContext.VM = mVM;
         compilerContext.zooKeeper = this;
 
         ZooKeeperLexer lexer = new ZooKeeperLexer(inputStream);

@@ -9,6 +9,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class BuildContext {
 
+    public final ZooKeeper zookeeper;
     public final Library library;
     public final Platform platform;
 
@@ -17,9 +18,14 @@ public class BuildContext {
     public AtomicReference<File> buildDir = Atomics.newReference();
     public AtomicReference<File> installDir = Atomics.newReference();
 
-    public BuildContext(Library library, Platform platform) {
+    public BuildContext(ZooKeeper zooKeeper, Library library, Platform platform) {
+        this.zookeeper = zooKeeper;
         this.library = library;
         this.platform = platform;
+    }
+
+    public String resolveVar(String var) {
+        return zookeeper.mVM.resolveVar(var);
     }
 
     public LibraryPlatformKey getPlatformKey() {

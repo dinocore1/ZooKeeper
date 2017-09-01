@@ -12,6 +12,7 @@ import com.google.common.hash.HashCode;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public class SemPass2 extends ZooKeeperBaseVisitor<Void> {
 
@@ -26,6 +27,7 @@ public class SemPass2 extends ZooKeeperBaseVisitor<Void> {
     private final CompilerContext mContext;
     private ArrayList<Nodes.LibNode> mLibraries = new ArrayList<Nodes.LibNode>();
     private ArrayList<Nodes.PlatformNode> mPlatforms = new ArrayList<Nodes.PlatformNode>();
+    private HashMap<LibraryPlatformKey, CMakeBuildContext> mBuildContextMap = new HashMap<LibraryPlatformKey, CMakeBuildContext>();
 
     public SemPass2(CompilerContext compilerContext) {
         mContext = compilerContext;
@@ -67,6 +69,7 @@ public class SemPass2 extends ZooKeeperBaseVisitor<Void> {
             }
 
             for(Nodes.LibNode libNode : mLibraries) {
+                resolveBuildParams(libNode, platformNode);
                 addTransientLibraryDependencies(libNode, platformNode);
             }
         }
@@ -74,10 +77,36 @@ public class SemPass2 extends ZooKeeperBaseVisitor<Void> {
         return null;
     }
 
+    private void resolveBuildParams(Nodes.LibNode libNode, Nodes.PlatformNode platformNode) {
+        final Platform  platform = platformNode.platform;
+        final LibraryPlatformKey libraryPlatformKey = new LibraryPlatformKey(libNode.library, platform);
+        final CMakeBuildContext buildContext = mBuildContextMap.get(libraryPlatformKey);
+
+        ComputeBuildHash buildHashAction = (ComputeBuildHash) mContext.dependencyGraph.getAction(Utils.createActionName("hash", libraryPlatformKey.toString()));
+
+        if(libNode.cmakeArgs != null) {
+            for(Nodes.KeyValue keyvalue : libNode.cmakeArgs.keyValues){
+                String arg = keyvalue.getKey()+"="+mContext.VM.interpretString(keyvalue.getValue());
+                buildContext.cMakeArgs.add(arg);
+                buildHashAction.mBuildParams.add("cmake:"+arg);
+            }
+        }
+
+        if(platformNode.keyValues != null) {
+            for (Nodes.KeyValue keyvalue : platformNode.keyValues.keyValues) {
+                String arg = keyvalue.getKey() + "=" + mContext.VM.interpretString(keyvalue.getValue());
+                buildContext.cMakeArgs.add(arg);
+                buildHashAction.mBuildParams.add("cmake:" + arg);
+            }
+        }
+
+    }
+
     private void createLibraryPlatformCombo(final Nodes.LibNode libNode, final Nodes.PlatformNode platformNode) {
         final Platform  platform = platformNode.platform;
         final LibraryPlatformKey libraryPlatformKey = new LibraryPlatformKey(libNode.library, platform);
-        final CMakeBuildContext buildContext = new CMakeBuildContext(libNode.library, platform);
+        final CMakeBuildContext buildContext = new CMakeBuildContext(mContext.zooKeeper, libNode.library, platform);
+        mBuildContextMap.put(libraryPlatformKey, buildContext);
 
         File buildDir = new File(mContext.fileRoot, "builds");
         buildDir = new File(buildDir, libraryPlatformKey.lib.name);
@@ -98,13 +127,6 @@ public class SemPass2 extends ZooKeeperBaseVisitor<Void> {
         buildHashAction.libraryHash = buildContext.buildHash;
         buildHashAction.mSourceDir = buildContext.sourceDir;
         mContext.dependencyGraph.addAction(Utils.createActionName("hash", libraryPlatformKey.toString()), buildHashAction);
-        if(platformNode.keyValues != null) {
-            for (Nodes.KeyValue keyvalue : platformNode.keyValues.keyValues) {
-                String arg = keyvalue.getKey() + "=" + keyvalue.getValue();
-                buildContext.cMakeArgs.add(arg);
-                buildHashAction.mBuildParams.add("cmake:" + arg);
-            }
-        }
 
 
         ///////// Configure Action /////////////
@@ -121,13 +143,6 @@ public class SemPass2 extends ZooKeeperBaseVisitor<Void> {
                 super.doIt();
             }
         };
-        if(libNode.cmakeArgs != null) {
-            for(Nodes.KeyValue keyvalue : libNode.cmakeArgs.keyValues){
-                String arg = keyvalue.getKey()+"="+keyvalue.getValue();
-                buildContext.cMakeArgs.add(arg);
-                buildHashAction.mBuildParams.add("cmake:"+arg);
-            }
-        }
         mContext.dependencyGraph.addAction(CMakeConfigAction.createActionName(libraryPlatformKey), cmakeConfigAction);
         mContext.dependencyGraph.addDependency(cmakeConfigAction, buildHashAction);
 

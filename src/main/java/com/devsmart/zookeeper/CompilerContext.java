@@ -54,6 +54,7 @@ public class CompilerContext {
     public final ArrayList<Library> libraries = new ArrayList<Library>();
     public final List<CompileMessage> compileMessages = new ArrayList<CompileMessage>();
     public final Map<ParserRuleContext, Nodes.Node> nodeMap = new HashMap<ParserRuleContext, Nodes.Node>();
+    public VM VM;
 
 
     public CompileMessage error(String msg, Token location) {

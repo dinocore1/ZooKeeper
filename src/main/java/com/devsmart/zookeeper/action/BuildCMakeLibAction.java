@@ -2,10 +2,7 @@ package com.devsmart.zookeeper.action;
 
 
 import com.devsmart.ThreadUtils;
-import com.devsmart.zookeeper.Action;
-import com.devsmart.zookeeper.Library;
-import com.devsmart.zookeeper.Platform;
-import com.devsmart.zookeeper.Utils;
+import com.devsmart.zookeeper.*;
 import com.google.common.base.CaseFormat;
 import com.google.common.io.BaseEncoding;
 import org.slf4j.Logger;
@@ -71,7 +68,7 @@ public class BuildCMakeLibAction implements Action {
 
     void doConfig() throws Exception {
         List<String> commandLine = new ArrayList<String>();
-        commandLine.add("cmake");
+        //commandLine.add(ZooKeeper.mCMakeCommand);
         commandLine.add(rootDir.getAbsolutePath());
 
         for(String arg : cmakeArgs) {
@@ -107,7 +104,7 @@ public class BuildCMakeLibAction implements Action {
 
     void doInstall() throws Exception {
         ArrayList<String> commandLine = new ArrayList<String>();
-        commandLine.add("cmake");
+        //commandLine.add(ZooKeeper.mCMakeCommand);
         commandLine.add("--build");
         commandLine.add(mBuildDir.getAbsolutePath());
         commandLine.add("--target");

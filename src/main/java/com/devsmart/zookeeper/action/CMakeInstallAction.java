@@ -29,7 +29,7 @@ public class CMakeInstallAction implements Action {
         final File buildDir = context.buildDir.get();
 
         ArrayList<String> commandLine = new ArrayList<String>();
-        commandLine.add("cmake");
+        commandLine.add(context.resolveVar(ZooKeeper.VAR_CMAKE_EXE));
         commandLine.add("--build");
         commandLine.add(buildDir.getAbsolutePath());
         commandLine.add("--target");

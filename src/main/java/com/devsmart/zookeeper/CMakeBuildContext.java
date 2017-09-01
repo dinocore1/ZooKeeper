@@ -35,7 +35,7 @@ public class CMakeBuildContext extends BuildContext {
     public final LinkedHashSet<ExternalLibrary> mExternalLibDependencies = new LinkedHashSet<ExternalLibrary>();
     public final LinkedHashSet<String> cMakeArgs = new LinkedHashSet<String>();
 
-    public CMakeBuildContext(Library library, Platform platform) {
-        super(library, platform);
+    public CMakeBuildContext(ZooKeeper zooKeeper, Library library, Platform platform) {
+        super(zooKeeper, library, platform);
     }
 }

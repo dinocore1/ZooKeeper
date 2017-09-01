@@ -2,10 +2,7 @@ package com.devsmart.zookeeper.action;
 
 import com.devsmart.IOUtils;
 import com.devsmart.ThreadUtils;
-import com.devsmart.zookeeper.Action;
-import com.devsmart.zookeeper.CMakeBuildContext;
-import com.devsmart.zookeeper.LibraryPlatformKey;
-import com.devsmart.zookeeper.Utils;
+import com.devsmart.zookeeper.*;
 import com.google.common.base.Joiner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,7 +34,7 @@ public class CMakeConfigAction implements Action {
         buildDir.mkdirs();
 
         List<String> commandLine = new ArrayList<String>();
-        commandLine.add("cmake");
+        commandLine.add(buildContext.resolveVar(ZooKeeper.VAR_CMAKE_EXE));
         commandLine.add(buildContext.sourceDir.get().getAbsolutePath());
 
         for (String arg : buildContext.cMakeArgs) {
