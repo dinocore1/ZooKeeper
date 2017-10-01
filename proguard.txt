@@ -20,7 +20,14 @@
 -dontwarn org.codehaus.janino.**
 -dontwarn org.codehaus.commons.compiler.CompileException
 
+-dontwarn com.jcraft.jsch.jcraft.Compression
+-dontwarn org.apache.commons.logging.impl.**
 
 -keep class com.devsmart.zookeeper.ZooKeeper {
  public static void main(java.lang.String[]);
 }
+
+-keep class net.jpountz.xxhash.** { *; }
+
+######## MapDB Stuff ###########
+-keep class kotlin.** { *; }

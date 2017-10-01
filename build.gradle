@@ -90,7 +90,6 @@ task javadocJar(type: Jar, dependsOn: javadoc) {
     from 'build/docs/javadoc'
 }
 
-/*
 jar {
     manifest {
         attributes 'Implementation-Title': 'ZooKeeper',
@@ -99,20 +98,20 @@ jar {
     }
 
     baseName = 'ZooKeeper'
-    //from {
-    //  configurations.compile.collect {
-    //    it.isDirectory() ? it : zipTree(it)
-    //  }
-    //}
+    from {
+      configurations.compile.collect {
+        it.isDirectory() ? it : zipTree(it)
+      }
+    }
+    exclude 'META-INF/*.RSA', 'META-INF/*.SF','META-INF/*.DSA'
 
 }
-*/
 
 task proguard(type: proguard.gradle.ProGuardTask) {
     configuration 'proguard.txt'
 
     injars jar.outputs
-    injars files(configurations.compile.collect())
+    //injars files(configurations.compile.collect())
     //libraryjars files(configurations.compile.collect())
     outjars 'build/libs/zookeeper-proguard.jar'
     libraryjars "${System.getProperty('java.home')}/lib/rt.jar"
