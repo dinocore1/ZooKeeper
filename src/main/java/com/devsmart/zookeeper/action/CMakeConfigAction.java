@@ -21,6 +21,7 @@ public class CMakeConfigAction implements Action {
     }
 
     public final CMakeBuildContext buildContext;
+    public String mGenerator;
 
     public CMakeConfigAction(CMakeBuildContext buildContext) {
         this.buildContext = buildContext;
@@ -36,6 +37,10 @@ public class CMakeConfigAction implements Action {
         List<String> commandLine = new ArrayList<String>();
         commandLine.add(buildContext.resolveVar(ZooKeeper.VAR_CMAKE_EXE));
         commandLine.add(buildContext.sourceDir.get().getAbsolutePath());
+
+        if(mGenerator != null) {
+            commandLine.add("-G" + mGenerator);
+        }
 
         for (String arg : buildContext.cMakeArgs) {
             commandLine.add("-D" + arg);

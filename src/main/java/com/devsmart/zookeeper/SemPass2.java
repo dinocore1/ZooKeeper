@@ -143,6 +143,10 @@ public class SemPass2 extends ZooKeeperBaseVisitor<Void> {
                 super.doIt();
             }
         };
+
+        if(Platform.WIN64.equals(libraryPlatformKey.platform)) {
+            cmakeConfigAction.mGenerator = "Visual Studio 14 2015 Win64";
+        }
         mContext.dependencyGraph.addAction(CMakeConfigAction.createActionName(libraryPlatformKey), cmakeConfigAction);
         mContext.dependencyGraph.addDependency(cmakeConfigAction, buildHashAction);
 

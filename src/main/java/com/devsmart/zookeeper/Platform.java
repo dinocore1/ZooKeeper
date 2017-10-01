@@ -26,6 +26,8 @@ public class Platform {
         UNKNOWN;
     }
 
+    public static final Platform WIN64 = Platform.parse("win-x86_64");
+
     public final String os;
     public final String arch;
 
