@@ -34,6 +34,8 @@ public class CMakeInstallAction implements Action {
         commandLine.add(buildDir.getAbsolutePath());
         commandLine.add("--target");
         commandLine.add("install");
+        commandLine.add("--config");
+        commandLine.add("Release");
 
         Process childProcess;
         ProcessBuilder builder = new ProcessBuilder()
