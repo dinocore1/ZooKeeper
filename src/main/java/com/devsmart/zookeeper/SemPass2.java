@@ -188,6 +188,11 @@ public class SemPass2 extends ZooKeeperBaseVisitor<Void> {
         mContext.dependencyGraph.addDependency(cmakeInstallAction, cmakeBuildAction);
 
 
+        /////// Archive Action ////
+        ArchiveAction archiveAction = new ArchiveAction(buildContext);
+        mContext.dependencyGraph.addAction(ArchiveAction.createActionName(libraryPlatformKey), archiveAction);
+        mContext.dependencyGraph.addDependency(archiveAction, cmakeInstallAction);
+
         ////// Verify Installed Action ////
         final VerifyLibraryInstalledAction verifyLibraryInstalledAction = new VerifyLibraryInstalledAction(libNode.library, platform, mContext.zooKeeper);
         mContext.dependencyGraph.addAction(VerifyLibraryInstalledAction.createActionName(libNode.library, platform), verifyLibraryInstalledAction);
