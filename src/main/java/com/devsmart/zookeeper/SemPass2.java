@@ -86,7 +86,7 @@ public class SemPass2 extends ZooKeeperBaseVisitor<Void> {
 
         if(libNode.cmakeArgs != null) {
             for(Nodes.KeyValue keyvalue : libNode.cmakeArgs.keyValues){
-                String arg = keyvalue.getKey()+"="+mContext.VM.interpretString(keyvalue.getValue());
+                String arg = keyvalue.getKey()+"="+keyvalue.getValue();
                 buildContext.cMakeArgs.add(arg);
                 buildHashAction.mBuildParams.add("cmake:"+arg);
             }
@@ -121,7 +121,13 @@ public class SemPass2 extends ZooKeeperBaseVisitor<Void> {
                 super.doIt();
                 final HashCode buildHash = buildContext.buildHash.get();
                 mContext.zooKeeper.mLibraryHashTable.put(buildContext.getPlatformKey(), buildHash);
-                buildContext.installDir.set(mContext.zooKeeper.getInstallDir(libraryPlatformKey.lib, libraryPlatformKey.platform, buildHash));
+                File installDir = mContext.zooKeeper.getInstallDir(libraryPlatformKey.lib, libraryPlatformKey.platform, buildHash);
+                buildContext.installDir.set(installDir);
+
+
+                String installDirKey = String.format("%s_INSTALL_DIR", buildContext.library.name);
+                installDirKey = installDirKey.toUpperCase();
+                buildContext.zookeeper.mVM.setVar(installDirKey, installDir.getAbsolutePath());
             }
         };
         buildHashAction.libraryHash = buildContext.buildHash;

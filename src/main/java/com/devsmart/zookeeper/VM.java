@@ -20,6 +20,7 @@ public class VM {
         while(m.find()) {
             final String var = m.group(1);
             String value = resolveVar(var);
+            value = Matcher.quoteReplacement(value);
             m.appendReplacement(sb, value);
         }
         m.appendTail(sb);

@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 
 public class CMakeConfigAction implements Action {
@@ -43,7 +44,7 @@ public class CMakeConfigAction implements Action {
         }
 
         for (String arg : buildContext.cMakeArgs) {
-            commandLine.add("-D" + arg);
+            commandLine.add("-D" + buildContext.zookeeper.mVM.interpretString(arg));
         }
 
         commandLine.add("-DCMAKE_INSTALL_PREFIX=" + buildContext.installDir.get().getAbsolutePath() + "");
