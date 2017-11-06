@@ -17,6 +17,7 @@ public class BuildContext {
     public AtomicReference<File> sourceDir = Atomics.newReference();
     public AtomicReference<File> buildDir = Atomics.newReference();
     public AtomicReference<File> installDir = Atomics.newReference();
+    public String mPath;
 
     public BuildContext(ZooKeeper zooKeeper, Library library, Platform platform) {
         this.zookeeper = zooKeeper;

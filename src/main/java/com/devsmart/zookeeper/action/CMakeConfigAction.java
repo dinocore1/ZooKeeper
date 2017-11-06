@@ -65,6 +65,15 @@ public class CMakeConfigAction implements Action {
                 .redirectOutput(ProcessBuilder.Redirect.PIPE)
                 .directory(buildDir);
 
+        Map<String, String> env = builder.environment();
+
+
+        if(buildContext.mPath != null) {
+            env.put("PATH", buildContext.mPath);
+        }
+
+        //env.put("Path", "C:\\Users\\pauls\\.zookeeper\\toolchains\\mingw64\\bin");
+
         childProcess = builder.start();
 
         ThreadUtils.IOThreads.execute(Utils.createInputStreamLogAppender(childProcess.getInputStream(), LOGGER));

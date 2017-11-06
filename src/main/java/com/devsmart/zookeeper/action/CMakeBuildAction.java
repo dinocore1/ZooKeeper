@@ -41,6 +41,13 @@ public class CMakeBuildAction implements Action {
                 .directory(buildDir);
 
 
+        Map<String, String> env = builder.environment();
+        if(context.mPath != null) {
+            env.put("PATH", context.mPath);
+        }
+
+        //env.put("Path", "C:\\Users\\pauls\\.zookeeper\\toolchains\\mingw32\\bin");
+
         childProcess = builder.start();
         ThreadUtils.IOThreads.execute(Utils.createInputStreamLogAppender(childProcess.getInputStream(), LOGGER));
         childProcess.waitFor();

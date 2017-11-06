@@ -94,9 +94,13 @@ public class SemPass2 extends ZooKeeperBaseVisitor<Void> {
 
         if(platformNode.keyValues != null) {
             for (Nodes.KeyValue keyvalue : platformNode.keyValues.keyValues) {
-                String arg = keyvalue.getKey() + "=" + mContext.VM.interpretString(keyvalue.getValue());
-                buildContext.cMakeArgs.add(arg);
-                buildHashAction.mBuildParams.add("cmake:" + arg);
+                if("PATH".equalsIgnoreCase(keyvalue.getKey())) {
+                    buildContext.mPath = keyvalue.getValue();
+                } else {
+                    String arg = keyvalue.getKey() + "=" + mContext.VM.interpretString(keyvalue.getValue());
+                    buildContext.cMakeArgs.add(arg);
+                    buildHashAction.mBuildParams.add("cmake:" + arg);
+                }
             }
         }
 
@@ -150,9 +154,10 @@ public class SemPass2 extends ZooKeeperBaseVisitor<Void> {
             }
         };
 
-        if(Platform.WIN64.equals(libraryPlatformKey.platform)) {
-            cmakeConfigAction.mGenerator = "Visual Studio 14 2015 Win64";
-        }
+        //if(Platform.WIN64.equals(libraryPlatformKey.platform)) {
+        //    cmakeConfigAction.mGenerator = "Visual Studio 14 2015 Win64";
+        //}
+        //cmakeConfigAction.mGenerator = "MinGW Makefiles";
         mContext.dependencyGraph.addAction(CMakeConfigAction.createActionName(libraryPlatformKey), cmakeConfigAction);
         mContext.dependencyGraph.addDependency(cmakeConfigAction, buildHashAction);
 
