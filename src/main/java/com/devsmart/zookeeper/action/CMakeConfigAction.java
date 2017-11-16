@@ -50,13 +50,22 @@ public class CMakeConfigAction implements Action {
         commandLine.add("-DCMAKE_INSTALL_PREFIX=" + buildContext.installDir.get().getAbsolutePath() + "");
 
         for (CMakeBuildContext.ExternalLibrary externalLibrary : buildContext.mExternalLibDependencies) {
-            commandLine.add(String.format("-D%s_DIR=%s",
-                    externalLibrary.library.name,
-                    externalLibrary.cmakeExportDir.getAbsolutePath()
-            ));
+
+            String cmakeConfigFile = String.format("%sConfig.cmake", externalLibrary.library.name);
+
+            String dependencyInstallDirVar = String.format("%s_INSTALL_DIR", externalLibrary.library.name.toUpperCase());
+            File installDir = new File(buildContext.zookeeper.mVM.resolveVar(dependencyInstallDirVar));
+
+            File cmakeConfigDir = getDirContiningFile(cmakeConfigFile, installDir);
+            if(cmakeConfigDir != null) {
+                commandLine.add(String.format("-D%s_DIR=%s",
+                        externalLibrary.library.name,
+                        cmakeConfigDir.getAbsolutePath()
+                ));
+            }
         }
 
-        LOGGER.debug("running cmake config process: {}", Joiner.on(' ').join(commandLine));
+        LOGGER.info("running cmake config process: {}", Joiner.on(' ').join(commandLine));
 
         Process childProcess;
         ProcessBuilder builder = new ProcessBuilder()
@@ -83,5 +92,20 @@ public class CMakeConfigAction implements Action {
         if (exitCode != 0) {
             throw new Exception("cmake config process ended with code: " + exitCode);
         }
+    }
+
+    private File getDirContiningFile(String filename, File dir) {
+        for(File f : dir.listFiles()) {
+            if(filename.equalsIgnoreCase(f.getName())) {
+                return dir;
+            } else if(f.isDirectory()) {
+                File retval = getDirContiningFile(filename, f);
+                if(retval != null) {
+                    return retval;
+                }
+            }
+        }
+
+        return null;
     }
 }

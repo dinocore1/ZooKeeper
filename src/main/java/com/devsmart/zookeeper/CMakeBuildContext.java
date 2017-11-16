@@ -9,11 +9,9 @@ public class CMakeBuildContext extends BuildContext {
     public static class ExternalLibrary {
 
         public final Library library;
-        public final File cmakeExportDir;
 
-        public ExternalLibrary(Library library, File cmakeExportDir) {
+        public ExternalLibrary(Library library) {
             this.library = library;
-            this.cmakeExportDir = cmakeExportDir;
         }
 
         @Override
@@ -23,12 +21,12 @@ public class CMakeBuildContext extends BuildContext {
             }
 
             ExternalLibrary other = (ExternalLibrary) o;
-            return library.equals(other.library) && cmakeExportDir.equals(other.cmakeExportDir);
+            return library.equals(other.library);
         }
 
         @Override
         public int hashCode() {
-            return library.hashCode() ^ cmakeExportDir.hashCode();
+            return library.hashCode();
         }
     }
 

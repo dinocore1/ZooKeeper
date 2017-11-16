@@ -147,7 +147,7 @@ public class SemPass2 extends ZooKeeperBaseVisitor<Void> {
                     HashCode buildHash = mContext.zooKeeper.getBuildHash(library, platform);
                     File installDir = mContext.zooKeeper.getInstallDir(library, platform, buildHash);
                     buildContext.mExternalLibDependencies.add(
-                            new CMakeBuildContext.ExternalLibrary(library, new File(installDir, "cmake")));
+                            new CMakeBuildContext.ExternalLibrary(library));
                 }
 
                 super.doIt();
