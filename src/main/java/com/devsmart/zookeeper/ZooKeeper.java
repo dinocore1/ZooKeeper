@@ -1,10 +1,6 @@
 package com.devsmart.zookeeper;
 
 
-import com.devsmart.zookeeper.action.ListAllActionsAction;
-import com.devsmart.zookeeper.action.PhonyAction;
-import com.devsmart.zookeeper.action.VerifyLibraryInstalledAction;
-import com.devsmart.zookeeper.ast.Nodes;
 import com.google.common.collect.ComparisonChain;
 import com.google.common.hash.HashCode;
 import com.google.common.io.BaseEncoding;
@@ -162,16 +158,16 @@ public class ZooKeeper {
 
         ZooKeeperParser.FileContext root = parser.file();
 
-        SemPass1 semPass1 = new SemPass1(compilerContext);
-        Nodes.Node fileNode = semPass1.visitFile(root);
+        //SemPass1 semPass1 = new SemPass1(compilerContext);
+        //Nodes.Node fileNode = semPass1.visitFile(root);
 
         if(compilerContext.hasErrors()) {
             compilerContext.reportMessages(System.err);
             return false;
         }
 
-        SemPass2 semPass2 = new SemPass2(compilerContext);
-        semPass2.visit(root);
+        //SemPass2 semPass2 = new SemPass2(compilerContext);
+        //semPass2.visit(root);
 
         if(compilerContext.hasErrors()) {
             compilerContext.reportMessages(System.err);

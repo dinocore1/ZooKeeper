@@ -1,83 +1,65 @@
 grammar ZooKeeper;
 
 file
-    : compileContext
+    : libraryMetadataDef
+    | exeBuildDef
+    | libraryBuildDef
     ;
 
-compileContext
-    : compileContext platform
-    | compileContext library
-    | compileContext COMMENT
-    |
+libraryMetadataDef
+    : LIB name=ID version object
     ;
 
-platform
-    : PLATFORM name=ID LPAREN keyvalues RPAREN
+exeBuildDef
+    : BUILD EXE name=ID version object
     ;
 
-library
-    : LIB name=ID version LPAREN libraryBody RPAREN
+libraryBuildDef
+    : BUILD LIB name=ID version object
+    ;
+
+value
+    : string
+    | array
+    | object
+    ;
+
+string
+    : STRING_LITERAL
+    ;
+
+object
+    : LPAREN keyValueEntries RPAREN
+    ;
+
+keyValueEntries
+    : ( key=ID COLON value )*
+    ;
+
+array
+    : LBRACE arrayEntries RBRACE
+    ;
+
+
+arrayEntries
+    : ( value ( COMMA value )* )?
     ;
 
 version
     : major=NUM DOT minor=NUM DOT patch=NUM
     ;
 
-libraryBody
-    : libraryBody dependencies
-    | libraryBody sourceDirective
-    | libraryBody cmakeArgs
-    |
-    ;
-
-dependencies
-    : DEPENDENCIES LPAREN dependList RPAREN
-    ;
-
-dependList
-    : dependList COMPILE ID version
-    | dependList TEST ID version
-    |
-    ;
-
-sourceDirective
-    : source
-    | gitArgs
-    ;
-
-source
-    : SRC src=STRING_LITERAL
-    ;
-
-gitArgs
-    : GIT LPAREN keyvalues RPAREN
-    ;
-
-cmakeArgs
-    : CMAKE LPAREN keyvalues RPAREN
-    ;
-
-keyvalues
-    : keyvalue*
-    ;
-
-keyvalue
-    : key=ID value=STRING_LITERAL
-    ;
-
-PLATFORM : 'platform' ;
+BUILD : 'build' ;
+EXE : 'exe' ;
 LIB : 'lib' ;
 DOT : '.' ;
+COLON : ':' ;
+COMMA : ',' ;
 LPAREN : '{' ;
 RPAREN : '}' ;
-DEPENDENCIES : 'dependencies' ;
-SRC : 'src' ;
-CMAKE : 'cmake' ;
-GIT : 'git' ;
-COMPILE : 'compile' ;
-TEST : 'test' ;
+LBRACE : '[' ;
+RBRACE : ']' ;
 STRING_LITERAL : '"' (~('"' | '\\' | '\r' | '\n') | '\\' ('"' | '\\'))* '"';
-
 NUM : [0-9]+ ;
 ID : [a-zA-Z0-9\-_]+ ;
 COMMENT: '/*' .*? '*/' -> skip ;
