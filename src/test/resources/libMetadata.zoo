@@ -1,0 +1,8 @@
+
+lib mylib 0.2.3 {
+
+  config: "x86:win:release"
+  dependencies: [
+    ""
+  ]
+}

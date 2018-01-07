@@ -31,5 +31,10 @@ public class Nodes {
 
     }
 
+    public static class LibraryDefNode extends Node {
+        public String libName;
+        public VersionNode versionNode;
+    }
+
 
 }

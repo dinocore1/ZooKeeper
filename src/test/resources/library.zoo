@@ -1,14 +1,12 @@
 
-lib gtest 1.8.0 {
-  src "https://github.com/google/googletest/archive/release-1.8.0.zip"
-}
-
 /* this is a comment
 */
 
-lib example 0.1.0 {
+build lib example 0.1.0 {
 
-  dependencies {
-    test gtest 1.8.0
-  }
+
+
+  dependencies: [
+    ""
+  ]
 }
