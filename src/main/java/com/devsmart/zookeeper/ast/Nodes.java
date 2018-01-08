@@ -1,9 +1,13 @@
 package com.devsmart.zookeeper.ast;
 
 
+import com.devsmart.ArrayTable;
 import com.devsmart.zookeeper.*;
 import com.google.common.base.Joiner;
+import com.google.common.collect.ComparisonChain;
+import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
 import java.util.*;
 
 public class Nodes {
@@ -22,6 +26,10 @@ public class Nodes {
     public static class VersionNode extends Node {
         public final Version version = new Version();
 
+        @Override
+        public String toString() {
+            return version.toString();
+        }
     }
 
     public static class LibraryDefNode extends Node {
@@ -37,10 +45,12 @@ public class Nodes {
     }
 
     public static abstract class ValueNode extends Node {
+        public boolean isString() {
+            return false;
+        }
         public boolean isArray() {
             return false;
         }
-
         public boolean isObject() {
             return false;
         }
@@ -51,6 +61,11 @@ public class Nodes {
 
         public StringNode(String s) {
             this.value = s;
+        }
+
+        @Override
+        public boolean isString() {
+            return true;
         }
 
         @Override
@@ -75,7 +90,9 @@ public class Nodes {
         public String toString() {
             Joiner joiner = Joiner.on(", ");
             StringBuilder builder = new StringBuilder();
+            builder.append('[');
             joiner.appendTo(builder, array);
+            builder.append(']');
             return builder.toString();
         }
     }
@@ -88,28 +105,59 @@ public class Nodes {
 
         }
 
+        public Iterable<ValueNode> get(String key) {
+            return entries.get(key);
+        }
+
         @Override
         public boolean isObject() {
             return true;
         }
+
+
     }
+
+    private static final ArrayTable.MultikeyBinarySearch BINARY_SEARCH = new ArrayTable.MultikeyBinarySearch.Builder()
+            .addObj(0, new ArrayTable.StringRowComparator(0).getComparator())
+            .build();
 
     public static class KeyValueEntriesNode extends Node {
 
-        final ArrayList<String> mKeys = new ArrayList<String>();
-        final ArrayList<ValueNode> mValues = new ArrayList<ValueNode>();
+        final ArrayTable mValues = ArrayTable.createWithColumnTypes(String.class, ValueNode.class);
 
         public void add(String key, ValueNode value) {
-            mKeys.add(key);
-            mValues.add(value);
+
+            int i;
+            synchronized (BINARY_SEARCH) {
+                BINARY_SEARCH.setKey(0, key);
+                i = BINARY_SEARCH.search(mValues);
+            }
+
+            if(i < 0) {
+                i = -i - 1;
+            }
+            mValues.insertAt(i, key, value);
         }
 
-        public Map<String, ValueNode> getMap() {
-            HashMap<String, ValueNode> retval = new HashMap<String, ValueNode>();
-            for(int i=0;i<mKeys.size();i++) {
-                retval.put(mKeys.get(i), mValues.get(i));
+        public Iterable<ValueNode> get(String key) {
+            int i;
+            synchronized (BINARY_SEARCH) {
+                BINARY_SEARCH.setKey(0, key);
+                i = BINARY_SEARCH.search(mValues);
             }
-            return retval;
+
+            if(i < 0) {
+                return Collections.emptyList();
+            } else {
+                ArrayList<ValueNode> retval = new ArrayList<ValueNode>(3);
+
+                while(mValues.getObject(i, 0).equals(key)) {
+                    ValueNode value = mValues.getObject(i, 1);
+                    retval.add(value);
+                    i++;
+                }
+                return retval;
+            }
         }
     }
 

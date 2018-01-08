@@ -6,6 +6,7 @@ import com.devsmart.zookeeper.action.PhonyAction;
 import com.devsmart.zookeeper.action.VerifyLibraryInstalledAction;
 import com.devsmart.zookeeper.ast.Nodes;
 import com.google.common.collect.ComparisonChain;
+import com.google.common.collect.Iterables;
 import com.google.common.hash.HashCode;
 import com.google.common.io.BaseEncoding;
 import com.google.common.primitives.SignedBytes;
@@ -19,10 +20,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.Locale;
-import java.util.TreeMap;
+import java.util.*;
 
 public class ZooKeeper {
 
@@ -170,12 +168,8 @@ public class ZooKeeper {
             return false;
         }
 
-        //SemPass2 semPass2 = new SemPass2(compilerContext);
-        //semPass2.visit(root);
-
-        if(compilerContext.hasErrors()) {
-            compilerContext.reportMessages(System.err);
-            return false;
+        if(fileNode instanceof Nodes.BuildLibraryDefNode) {
+            doBuildLibrary((Nodes.BuildLibraryDefNode) fileNode);
         }
 
         Platform buildPlatform = getNativeBuildPlatform();
@@ -189,6 +183,37 @@ public class ZooKeeper {
         mDependencyGraph.addAction("listActions", new ListAllActionsAction(this));
 
         return true;
+    }
+
+    private void doBuildLibrary(Nodes.BuildLibraryDefNode librayDef) throws Exception {
+
+        BuildLibrary buildLibrary = new BuildLibrary(librayDef.libName, librayDef.versionNode.version);
+        File rootSrcDir = new File(".");
+        rootSrcDir = new File(rootSrcDir, "src");
+        librayDef.objectNode.entries.add("src", new Nodes.StringNode(rootSrcDir.getCanonicalPath()));
+        findAllSrcFiles(buildLibrary.sourceFiles, librayDef.objectNode.get("src"));
+
+
+    }
+
+    private void findAllSrcFiles(Collection<File> sourceFiles, Iterable<Nodes.ValueNode> values) {
+        for(Nodes.ValueNode srcDir : values){
+            if(srcDir.isString()) {
+                findAllSrcFiles(sourceFiles, new File(srcDir.toString()));
+            } else if(srcDir.isArray()) {
+                findAllSrcFiles(sourceFiles, ((Nodes.ArrayNode) srcDir).array);
+            }
+        }
+    }
+
+    private void findAllSrcFiles(Collection<File> sourceFiles, File rootDir) {
+        for(File f : rootDir.listFiles()) {
+            if(f.isFile() && f.getName().endsWith(".cpp")) {
+                sourceFiles.add(f);
+            } else if(f.isDirectory()) {
+                findAllSrcFiles(sourceFiles, f);
+            }
+        }
     }
 
     public boolean compileFile(File file) throws IOException {
