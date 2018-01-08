@@ -33,17 +33,14 @@ object
     ;
 
 keyValueEntries
-    : ( key=ID COLON value )*
+    : keyValueEntries key=ID COLON value
+    |
     ;
 
 array
-    : LBRACE arrayEntries RBRACE
+    : LBRACE ( value ( COMMA value )* )? RBRACE
     ;
 
-
-arrayEntries
-    : ( value ( COMMA value )* )?
-    ;
 
 version
     : major=NUM DOT minor=NUM DOT patch=NUM
