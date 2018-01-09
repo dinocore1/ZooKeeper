@@ -72,6 +72,7 @@ public class ZooKeeper {
     public final DB mDB;
     public final VM mVM = new VM();
     public final HTreeMap<String, DownloadCache> mDownloadCache;
+    public BuildManager mBuildManager;
     public DependencyGraph mDependencyGraph = new DependencyGraph();
     public File mZooKeeperRoot;
     public ArrayList<Library> mAllLibraries = new ArrayList<Library>();
@@ -96,6 +97,10 @@ public class ZooKeeper {
 
         mVM.setVar(System.getenv());
         mVM.setVar("PROJECT_DIR", new File("").getAbsolutePath());
+
+        mBuildManager = new BuildManager();
+        mBuildManager.mVM = mVM;
+        mBuildManager.mDependencyGraph = mDependencyGraph;
     }
 
     public Platform getNativeBuildPlatform() {
@@ -169,7 +174,7 @@ public class ZooKeeper {
         }
 
         if(fileNode instanceof Nodes.BuildLibraryDefNode) {
-            doBuildLibrary((Nodes.BuildLibraryDefNode) fileNode);
+            mBuildManager.addBuildLibrary((Nodes.BuildLibraryDefNode) fileNode);
         }
 
         Platform buildPlatform = getNativeBuildPlatform();
@@ -183,37 +188,6 @@ public class ZooKeeper {
         mDependencyGraph.addAction("listActions", new ListAllActionsAction(this));
 
         return true;
-    }
-
-    private void doBuildLibrary(Nodes.BuildLibraryDefNode librayDef) throws Exception {
-
-        BuildLibrary buildLibrary = new BuildLibrary(librayDef.libName, librayDef.versionNode.version);
-        File rootSrcDir = new File(".");
-        rootSrcDir = new File(rootSrcDir, "src");
-        librayDef.objectNode.entries.add("src", new Nodes.StringNode(rootSrcDir.getCanonicalPath()));
-        findAllSrcFiles(buildLibrary.sourceFiles, librayDef.objectNode.get("src"));
-
-
-    }
-
-    private void findAllSrcFiles(Collection<File> sourceFiles, Iterable<Nodes.ValueNode> values) {
-        for(Nodes.ValueNode srcDir : values){
-            if(srcDir.isString()) {
-                findAllSrcFiles(sourceFiles, new File(srcDir.toString()));
-            } else if(srcDir.isArray()) {
-                findAllSrcFiles(sourceFiles, ((Nodes.ArrayNode) srcDir).array);
-            }
-        }
-    }
-
-    private void findAllSrcFiles(Collection<File> sourceFiles, File rootDir) {
-        for(File f : rootDir.listFiles()) {
-            if(f.isFile() && f.getName().endsWith(".cpp")) {
-                sourceFiles.add(f);
-            } else if(f.isDirectory()) {
-                findAllSrcFiles(sourceFiles, f);
-            }
-        }
     }
 
     public boolean compileFile(File file) throws IOException {
