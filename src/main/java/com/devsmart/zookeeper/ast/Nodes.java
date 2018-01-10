@@ -151,7 +151,7 @@ public class Nodes {
             } else {
                 ArrayList<ValueNode> retval = new ArrayList<ValueNode>(3);
 
-                while(mValues.getObject(i, 0).equals(key)) {
+                while(i < mValues.rows() &&  mValues.getObject(i, 0).equals(key)) {
                     ValueNode value = mValues.getObject(i, 1);
                     retval.add(value);
                     i++;

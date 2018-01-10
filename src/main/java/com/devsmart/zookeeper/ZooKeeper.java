@@ -25,6 +25,7 @@ import java.util.*;
 public class ZooKeeper {
 
     public static final String VAR_CMAKE_EXE = "CMAKE_EXE";
+    public static final String PROJECT_DIR = "PROJECT_DIR";
 
     public static class DownloadCache implements Comparable<DownloadCache> {
         public Date downloadTime;
@@ -96,11 +97,10 @@ public class ZooKeeper {
         mVM.setVar(VAR_CMAKE_EXE, "cmake");
 
         mVM.setVar(System.getenv());
-        mVM.setVar("PROJECT_DIR", new File("").getAbsolutePath());
+        mVM.setVar(PROJECT_DIR, new File("").getAbsolutePath());
 
         mBuildManager = new BuildManager();
-        mBuildManager.mVM = mVM;
-        mBuildManager.mDependencyGraph = mDependencyGraph;
+        mBuildManager.mZooKeeper = this;
     }
 
     public Platform getNativeBuildPlatform() {
