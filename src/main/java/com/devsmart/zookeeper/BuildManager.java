@@ -5,7 +5,10 @@ import com.devsmart.zookeeper.ast.Nodes;
 import com.devsmart.zookeeper.tasks.BuildArtifact;
 import com.devsmart.zookeeper.tasks.MkDirBuildTask;
 import com.devsmart.zookeeper.tasks.ProcessBuildTask;
+import com.google.common.base.Function;
+import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
+import com.google.common.collect.Lists;
 import com.google.gson.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -74,9 +77,12 @@ public class BuildManager {
             buildDir = new File(buildDir, platform.toString());
             buildDir = new File(buildDir, "debug");
 
+            MkDirBuildTask mkDirBuildTask = new MkDirBuildTask(buildDir);
+            mZooKeeper.mDependencyGraph.addTask(mkDirBuildTask);
 
             ProcessBuildTask linkerTask = new ProcessBuildTask();
             mZooKeeper.mDependencyGraph.addTask(linkerTask, "buildDebug");
+            mZooKeeper.mDependencyGraph.addDependency(linkerTask, mkDirBuildTask);
 
             ArrayList<File> sourceFiles = new ArrayList<File>();
             findAllSrcFiles(sourceFiles, rootSrcDir);
@@ -102,6 +108,7 @@ public class BuildManager {
                     config.createDebugCompileTask(compileTask, mZooKeeper);
 
                     mZooKeeper.mDependencyGraph.addTask(compileTask);
+                    mZooKeeper.mDependencyGraph.addDependency(compileTask, mkDirBuildTask);
                     mZooKeeper.mDependencyGraph.addDependency(linkerTask, compileTask);
 
                     linkerTask.inputFiles.add(outputFile);
@@ -119,7 +126,12 @@ public class BuildManager {
 
                 mZooKeeper.mVM.setVar(CompilerConfig.OUTPUT, exeFile.getAbsolutePath());
 
-
+                mZooKeeper.mVM.setVar(CompilerConfig.INPUT, Joiner.on("").join(Lists.transform(linkerTask.inputFiles, new Function<File, String>() {
+                    @Override
+                    public String apply(File input) {
+                        return input.getAbsolutePath();
+                    }
+                })));
 
                 config.createLinkerTask(linkerTask, mZooKeeper);
 

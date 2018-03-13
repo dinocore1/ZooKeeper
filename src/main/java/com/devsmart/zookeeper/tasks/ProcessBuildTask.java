@@ -2,6 +2,7 @@ package com.devsmart.zookeeper.tasks;
 
 
 import com.devsmart.ThreadUtils;
+import com.google.common.base.Joiner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -10,6 +11,7 @@ import java.io.File;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 public class ProcessBuildTask extends BuildArtifact {
@@ -17,12 +19,15 @@ public class ProcessBuildTask extends BuildArtifact {
     private static final Logger LOGGER = LoggerFactory.getLogger(ProcessBuildTask.class);
 
 
-    public ArrayList<String> commandLine = new ArrayList<String>();
+    public List<String> commandLine = new ArrayList<String>();
     public File mExeDir;
 
     @Override
     public boolean run() {
         try {
+
+            LOGGER.info("run: {}", Joiner.on(" ").join(commandLine));
+
             ProcessBuilder builder = new ProcessBuilder()
                     .command(commandLine)
                     .redirectErrorStream(true)

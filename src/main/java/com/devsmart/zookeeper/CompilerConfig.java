@@ -1,9 +1,14 @@
 package com.devsmart.zookeeper;
 
 
+import com.devsmart.StringUtils;
 import com.devsmart.zookeeper.tasks.ProcessBuildTask;
+import com.google.common.base.Function;
 import com.google.common.base.Joiner;
+import com.google.common.base.Predicate;
+import com.google.common.collect.Collections2;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -11,6 +16,7 @@ import com.google.gson.JsonPrimitive;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 public class CompilerConfig {
@@ -52,11 +58,53 @@ public class CompilerConfig {
 
             cmdline = zooKeeper.mVM.interpretString(cmdline);
 
-            compileTask.commandLine.addAll(Arrays.asList(cmdline.split(" ")));
+            setCmdline(compileTask, cmdline);
 
         } finally {
             zooKeeper.mVM.pop();
         }
+
+
+    }
+
+    public void createLinkerTask(ProcessBuildTask linkerTask, ZooKeeper zooKeeper) {
+        JsonElement element;
+
+        String exeLinkerFlags = pre("", mCfg.get("exeLinkerFlags"));
+
+
+        zooKeeper.mVM.push();
+        try {
+
+            zooKeeper.mVM.setVar("flags", exeLinkerFlags);
+
+            String cmdline = mCfg.get("exeLinkerCmd").getAsString();
+
+            cmdline = zooKeeper.mVM.interpretString(cmdline);
+
+            setCmdline(linkerTask, cmdline);
+
+        } finally {
+            zooKeeper.mVM.pop();
+        }
+    }
+
+    private void setCmdline(ProcessBuildTask task, String cmdLine) {
+        Collection<String> collection = Collections2.transform(Arrays.asList(cmdLine.split(" ")), new Function<String, String>() {
+            @Override
+            public String apply(String input) {
+                return input.trim();
+            }
+        });
+
+        collection = Collections2.filter(collection, new Predicate<String>() {
+            @Override
+            public boolean apply(String input) {
+                return !StringUtils.isEmptyString(input);
+            }
+        });
+
+        task.commandLine.addAll(collection);
 
 
     }
@@ -86,9 +134,5 @@ public class CompilerConfig {
             }
         }
         return string.trim();
-    }
-
-    public void createLinkerTask(ProcessBuildTask linkerTask, ZooKeeper zooKeeper) {
-
     }
 }
