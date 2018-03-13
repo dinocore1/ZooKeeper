@@ -57,7 +57,7 @@ public class ExePlan {
         AllDoneFuture(ExecutorService executorService, BuildTask target, ArrayList<Future<Boolean>> children) {
             mExecutorService = executorService;
             mLocalTarget = target;
-            mChildren = children
+            mChildren = children;
         }
 
         @Override

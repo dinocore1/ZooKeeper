@@ -7,8 +7,10 @@ import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Map;
 
 public class ProcessBuildTask extends BuildArtifact {
 
@@ -21,15 +23,25 @@ public class ProcessBuildTask extends BuildArtifact {
     @Override
     public boolean run() {
         try {
-            Process process = new ProcessBuilder(commandLine)
+            ProcessBuilder builder = new ProcessBuilder()
+                    .command(commandLine)
                     .redirectErrorStream(true)
                     .redirectOutput(ProcessBuilder.Redirect.PIPE)
                     .directory(mExeDir)
-                    .start();
+            ;
 
-            ThreadUtils.IOThreads.execute(createStreamTask(process));
+            Map<String, String> env = builder.environment();
 
-            final int exitCode = process.waitFor();
+            //String path = "C:\\Users\\pauls\\.zookeeper\\toolchains\\mingw64\\bin;" + env.get("Path");
+            //env.clear();
+            //env.put("Path", path);
+
+            Process childProcess = builder.start();
+
+            InputStream inputStream = childProcess.getInputStream();
+            ThreadUtils.IOThreads.execute(createStreamTask(inputStream));
+
+            final int exitCode = childProcess.waitFor();
 
             return exitCode == 0;
 
@@ -40,12 +52,12 @@ public class ProcessBuildTask extends BuildArtifact {
 
     }
 
-    private Runnable createStreamTask(final Process process) {
+    private Runnable createStreamTask(final InputStream inputStream) {
         return new Runnable() {
             @Override
             public void run() {
                 try {
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
 
                     String line;
                     while((line = reader.readLine()) != null) {

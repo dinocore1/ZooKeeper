@@ -66,12 +66,13 @@ public class BuildManager {
         buildDir = new File(buildDir, platform.toString());
         buildDir = new File(buildDir, "debug");
 
-        File exeFile = new File(buildDir, exeDef.exeName);
+        File exeFile = new File(buildDir, exeDef.exeName + ".exe");
 
         ProcessBuildTask linkTask = new ProcessBuildTask();
-        linkTask.commandLine.add("c++");
+        linkTask.commandLine.add("C:\\Users\\pauls\\.zookeeper\\toolchains\\mingw64\\bin\\c++");
         linkTask.commandLine.add("-o");
         linkTask.commandLine.add(exeFile.getAbsolutePath());
+        linkTask.mExeDir = new File("C:\\Users\\pauls\\.zookeeper\\toolchains\\mingw64\\bin");
         linkTask.outputFiles.add(exeFile);
 
         mZooKeeper.mDependencyGraph.addTask(linkTask, "buildDebug");
@@ -97,11 +98,13 @@ public class BuildManager {
 
             buildTask.outputFiles.add(outputFile);
 
-            buildTask.commandLine.add("c++");
+            buildTask.commandLine.add("C:\\Users\\pauls\\.zookeeper\\toolchains\\mingw64\\bin\\c++");
             buildTask.commandLine.add("-o");
             buildTask.commandLine.add(outputFile.getAbsolutePath());
             buildTask.commandLine.add("-c");
             buildTask.commandLine.add(srcFile.getAbsolutePath());
+
+            buildTask.mExeDir = new File("C:\\Users\\pauls\\.zookeeper\\toolchains\\mingw64\\bin");
 
             mZooKeeper.mDependencyGraph.addTask(buildTask);
 

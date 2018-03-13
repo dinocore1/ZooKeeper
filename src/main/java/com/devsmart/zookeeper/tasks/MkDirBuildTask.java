@@ -13,6 +13,11 @@ public class MkDirBuildTask implements BuildTask {
 
     @Override
     public boolean run() {
-        return dir.mkdirs();
+        if(!dir.exists()) {
+            return dir.mkdirs();
+        } else {
+            return true;
+        }
+
     }
 }
