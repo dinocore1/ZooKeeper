@@ -72,8 +72,9 @@ public class BuildManager {
         linkTask.commandLine.add("c++");
         linkTask.commandLine.add("-o");
         linkTask.commandLine.add(exeFile.getAbsolutePath());
+        linkTask.outputFiles.add(exeFile);
 
-        mZooKeeper.mDependencyGraph.addTask(linkTask);
+        mZooKeeper.mDependencyGraph.addTask(linkTask, "buildDebug");
 
         ArrayList<File> sourceFiles = new ArrayList<File>();
         findAllSrcFiles(sourceFiles, rootSrcDir);

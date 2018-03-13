@@ -22,54 +22,52 @@ public class ExePlan {
     public boolean run(int maxThreads) throws ExecutionException, InterruptedException {
         ExecutorService executorService = Executors.newFixedThreadPool(maxThreads);
 
-        Future<Boolean> future = run(executorService, mTarget);
+        Future<Boolean> future = createFuture(executorService, mTarget);
         return future.get();
     }
 
-    Future<Boolean> run(ExecutorService executorService, final BuildTask target) {
-
-        Set<DefaultEdge> childTasks = mDependencyGraph.outgoingEdgesOf(mTarget);
-
-        if(childTasks.isEmpty()) {
-            return executorService.submit(new Callable<Boolean>(){
+    Future<Boolean> createFuture(ExecutorService executorService, final BuildTask target) {
+        Set<DefaultEdge> outEdges = mDependencyGraph.outgoingEdgesOf(target);
+        if(outEdges.isEmpty()) {
+            return executorService.submit(new Callable<Boolean>() {
                 @Override
                 public Boolean call() throws Exception {
                     return target.run();
                 }
             });
         } else {
-            return new AllDoneFuture(executorService, childTasks);
+            ArrayList<Future<Boolean>> children = new ArrayList<>(outEdges.size());
+            for(DefaultEdge edge : outEdges) {
+                BuildTask childTask = mDependencyGraph.getEdgeTarget(edge);
+                children.add(createFuture(executorService, childTask));
+            }
+            return new AllDoneFuture(executorService, target, children);
         }
     }
 
     private class AllDoneFuture implements Future<Boolean> {
 
-        private final ArrayList<Future<Boolean>> mChildTasks;
+        private final ExecutorService mExecutorService;
+        private final BuildTask mLocalTarget;
+        private final ArrayList<Future<Boolean>> mChildren;
+
         private boolean mIsDone = false;
         private boolean mIsCanceled = false;
 
-        AllDoneFuture(ExecutorService executorService, Set<DefaultEdge> childTasks) {
-            mChildTasks = new ArrayList<>(childTasks.size());
-            for(DefaultEdge edge : childTasks) {
-                BuildTask childTask = mDependencyGraph.getEdgeTarget(edge);
-                mChildTasks.add(ExePlan.this.run(executorService, childTask));
-            }
+        AllDoneFuture(ExecutorService executorService, BuildTask target, ArrayList<Future<Boolean>> children) {
+            mExecutorService = executorService;
+            mLocalTarget = target;
+            mChildren = children
         }
 
         @Override
-        public boolean cancel(boolean mayInterruptIfRunning) {
+        public synchronized boolean cancel(boolean mayInterruptIfRunning) {
             mIsCanceled = true;
-            for(Future<Boolean> childTask : mChildTasks) {
-                boolean couldChildBeCanceled = childTask.cancel(mayInterruptIfRunning);
-                if(!couldChildBeCanceled) {
-                    return false;
-                }
-            }
             return true;
         }
 
         @Override
-        public boolean isCancelled() {
+        public synchronized boolean isCancelled() {
             return mIsCanceled;
         }
 
@@ -81,13 +79,21 @@ public class ExePlan {
         @Override
         public Boolean get() throws InterruptedException, ExecutionException {
             try {
-                for (Future<Boolean> childTask : mChildTasks) {
-                    boolean childSuccess = childTask.get();
+
+                for (Future<Boolean> childFuture : mChildren) {
+                    boolean childSuccess = childFuture.get();
                     if (!childSuccess) {
                         return false;
                     }
                 }
-                return true;
+
+                return mExecutorService.submit(new Callable<Boolean>() {
+                    @Override
+                    public Boolean call() {
+                        return mLocalTarget.run();
+                    }
+                }).get();
+
             } finally {
                 mIsDone = true;
             }
@@ -96,13 +102,21 @@ public class ExePlan {
         @Override
         public Boolean get(long timeout, @NotNull TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
             try {
-                for (Future<Boolean> childTask : mChildTasks) {
-                    boolean childSuccess = childTask.get(timeout, unit);
+
+                for (Future<Boolean> childFuture : mChildren) {
+                    boolean childSuccess = childFuture.get(timeout, unit);
                     if (!childSuccess) {
                         return false;
                     }
                 }
-                return true;
+
+                return mExecutorService.submit(new Callable<Boolean>() {
+                    @Override
+                    public Boolean call() {
+                        return mLocalTarget.run();
+                    }
+                }).get(timeout, unit);
+
             } finally {
                 mIsDone = true;
             }

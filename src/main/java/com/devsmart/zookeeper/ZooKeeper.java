@@ -230,7 +230,9 @@ public class ZooKeeper {
             for(String target : unparsedArgs) {
                 BuildTask task = zoo.mDependencyGraph.getTask(target);
                 if(task != null) {
-                    //TODO run build
+                    ExePlan exeplan = zoo.mDependencyGraph.createExePlan(task);
+                    boolean success = exeplan.run(1);
+                    System.out.println("Build " + (success ? "success" : "failed"));
                 } else {
                     System.err.println("no target with name: " + target);
                 }
