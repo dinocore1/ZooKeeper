@@ -1,29 +1,35 @@
 package com.devsmart.zookeeper;
 
 
+import com.devsmart.IOUtils;
 import com.devsmart.zookeeper.action.PhonyAction;
 import com.devsmart.zookeeper.ast.Nodes;
 import com.devsmart.zookeeper.tasks.BuildTask;
 import com.google.common.collect.ComparisonChain;
 import com.google.common.hash.HashCode;
 import com.google.common.io.BaseEncoding;
+import com.google.common.io.Resources;
 import com.google.common.primitives.SignedBytes;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.apache.commons.cli.*;
 import org.jetbrains.annotations.NotNull;
 import org.mapdb.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Locale;
 import java.util.TreeMap;
 
 public class ZooKeeper {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ZooKeeper.class);
 
     public static final String VAR_CMAKE_EXE = "CMAKE_EXE";
     public static final String PROJECT_DIR = "PROJECT_DIR";
@@ -80,10 +86,40 @@ public class ZooKeeper {
     public ArrayList<Library> mAllLibraries = new ArrayList<Library>();
     public TreeMap<LibraryPlatformKey, HashCode> mLibraryHashTable = new TreeMap<LibraryPlatformKey, HashCode>();
 
+    void readCompilerConfig() {
+        File compilerDir = new File(mZooKeeperRoot, "compilers");
+        if(!compilerDir.exists()) {
+            compilerDir.mkdirs();
+            try {
+                File cfgFile = new File(compilerDir, "gcc-linux.cfg");
+                IOUtils.pump(Resources.getResource("gcc-linux.cfg").openStream(), new FileOutputStream(cfgFile));
+            } catch (IOException e) {
+                LOGGER.error("", e);
+            }
+        }
+
+        Gson gson = new GsonBuilder().create();
+        for(File compilerCfg : compilerDir.listFiles()) {
+
+            try {
+                FileReader reader = new FileReader(compilerCfg);
+                JsonObject cfg = gson.fromJson(reader, JsonObject.class);
+
+                mBuildManager.addCompiler(cfg);
+
+            } catch (Exception e) {
+                LOGGER.error("", e);
+            }
+
+        }
+    }
+
     ZooKeeper() {
         mZooKeeperRoot = new File(System.getProperty("user.home"));
         mZooKeeperRoot = new File(mZooKeeperRoot, ".zookeeper");
         mZooKeeperRoot.mkdirs();
+
+        readCompilerConfig();
 
         File dbFile = new File(mZooKeeperRoot, "zookeeper.db");
 

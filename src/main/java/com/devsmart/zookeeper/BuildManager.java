@@ -6,6 +6,7 @@ import com.devsmart.zookeeper.tasks.BuildArtifact;
 import com.devsmart.zookeeper.tasks.MkDirBuildTask;
 import com.devsmart.zookeeper.tasks.ProcessBuildTask;
 import com.google.common.base.Throwables;
+import com.google.gson.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -153,6 +154,10 @@ public class BuildManager {
                 sourceFiles.add(rootDir);
             }
         }
+
+    }
+
+    public void addCompiler(JsonObject cfg) {
 
     }
 }
