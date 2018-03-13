@@ -2,7 +2,7 @@
 
 build lib add 0.1.0 {
 
-  src: "../../neato"
+  src: "src"
 
   dependencies: [
     "gtest:1.8.0"

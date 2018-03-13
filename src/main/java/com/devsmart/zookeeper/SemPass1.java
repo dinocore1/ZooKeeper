@@ -50,6 +50,16 @@ public class SemPass1 extends ZooKeeperBaseVisitor<Nodes.Node> {
     }
 
     @Override
+    public Nodes.Node visitExeBuildDef(ZooKeeperParser.ExeBuildDefContext ctx) {
+        Nodes.BuildExeDefNode retval = new Nodes.BuildExeDefNode();
+        retval.exeName = ctx.name.getText();
+        retval.versionNode = (Nodes.VersionNode) visit(ctx.version());
+        retval.objectNode = (Nodes.ObjectNode) visit(ctx.object());
+
+        return putMap(ctx, retval);
+    }
+
+    @Override
     public Nodes.Node visitString(ZooKeeperParser.StringContext ctx) {
         String value = ctx.STRING_LITERAL().getText();
         Nodes.StringNode stringNode = new Nodes.StringNode(Nodes.escapeStringLiteral(value));

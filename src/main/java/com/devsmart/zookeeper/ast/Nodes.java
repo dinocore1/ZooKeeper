@@ -38,6 +38,12 @@ public class Nodes {
         public ObjectNode objectNode;
     }
 
+    public static class BuildExeDefNode extends Node {
+        public String exeName;
+        public VersionNode versionNode;
+        public ObjectNode objectNode;
+    }
+
     public static class BuildLibraryDefNode extends Node {
         public String libName;
         public VersionNode versionNode;
