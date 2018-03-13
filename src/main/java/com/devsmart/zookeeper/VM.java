@@ -1,6 +1,7 @@
 package com.devsmart.zookeeper;
 
 
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.regex.Matcher;
@@ -10,7 +11,49 @@ public class VM {
 
     private static final Pattern VARABLE_REFERENCE = Pattern.compile("\\$\\{([a-zA-Z_]+)\\}");
 
-    private final TreeMap<String, String> mVarables = new TreeMap<String, String>();
+
+    public static class Scope {
+
+        Scope mParent;
+        final TreeMap<String, String> mVarables = new TreeMap<String, String>();
+
+        public String resolve(String varName) {
+            String value = mVarables.get(varName);
+            if(value != null) {
+                return value;
+            } else if(mParent != null) {
+                return mParent.resolve(varName);
+            } else {
+                return "";
+            }
+        }
+
+        public void setVar(String varName, String value) {
+            mVarables.put(varName, value);
+        }
+    }
+
+    private Scope mScope;
+
+    public VM() {
+        mScope = new Scope();
+    }
+
+    public Scope push() {
+        Scope newScope = new Scope();
+        newScope.mParent = mScope;
+        mScope = newScope;
+        return newScope;
+    }
+
+    public Scope pop() {
+        Scope retval = mScope;
+        if(mScope.mParent != null) {
+            mScope = mScope.mParent;
+        }
+
+        return retval;
+    }
 
 
     public String interpretString(String input) {
@@ -29,18 +72,14 @@ public class VM {
     }
 
     public String resolveVar(String varName) {
-        String value = mVarables.get(varName);
-        if(value == null) {
-            value = "";
-        }
-        return value;
+        return mScope.resolve(varName);
     }
 
     public void setVar(String varName, String value) {
-        mVarables.put(varName, value);
+        mScope.setVar(varName, value);
     }
 
     public void setVar(Map<String, String> varMap) {
-        mVarables.putAll(varMap);
+        mScope.mVarables.putAll(varMap);
     }
 }

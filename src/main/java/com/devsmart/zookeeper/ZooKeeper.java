@@ -119,8 +119,6 @@ public class ZooKeeper {
         mZooKeeperRoot = new File(mZooKeeperRoot, ".zookeeper");
         mZooKeeperRoot.mkdirs();
 
-        readCompilerConfig();
-
         File dbFile = new File(mZooKeeperRoot, "zookeeper.db");
 
         mDB = DBMaker.fileDB(dbFile)
@@ -138,6 +136,8 @@ public class ZooKeeper {
 
         mBuildManager = new BuildManager();
         mBuildManager.mZooKeeper = this;
+
+        readCompilerConfig();
     }
 
     public Platform getNativeBuildPlatform() {

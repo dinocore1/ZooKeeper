@@ -11,9 +11,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
+import java.util.TreeSet;
 import java.util.regex.Pattern;
 
 public class BuildManager {
@@ -21,6 +22,7 @@ public class BuildManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(BuildManager.class);
 
     public ZooKeeper mZooKeeper;
+    private List<CompilerConfig> mCompilerCfg = new ArrayList<>();
 
     public void addBuildLibrary(Nodes.BuildLibraryDefNode librayDef) {
 
@@ -60,66 +62,74 @@ public class BuildManager {
     public void addBuildExe(Nodes.BuildExeDefNode exeDef) {
         Platform platform = mZooKeeper.getNativeBuildPlatform();
 
-        final File projectDir = new File(mZooKeeper.mVM.resolveVar(ZooKeeper.PROJECT_DIR));
-        final File rootSrcDir = new File(projectDir, "src");
+        CompilerConfig config = mCompilerCfg.get(0);
 
-        File buildDir = new File(projectDir, "build");
-        buildDir = new File(buildDir, platform.toString());
-        buildDir = new File(buildDir, "debug");
+        mZooKeeper.mVM.push();
+        try {
 
-        File exeFile = new File(buildDir, exeDef.exeName + ".exe");
+            final File projectDir = new File(mZooKeeper.mVM.resolveVar(ZooKeeper.PROJECT_DIR));
+            final File rootSrcDir = new File(projectDir, "src");
 
-        ProcessBuildTask linkTask = new ProcessBuildTask();
-        linkTask.commandLine.add("C:\\Users\\pauls\\.zookeeper\\toolchains\\mingw64\\bin\\c++");
-        linkTask.commandLine.add("-o");
-        linkTask.commandLine.add(exeFile.getAbsolutePath());
-        linkTask.mExeDir = new File("C:\\Users\\pauls\\.zookeeper\\toolchains\\mingw64\\bin");
-        linkTask.outputFiles.add(exeFile);
-
-        mZooKeeper.mDependencyGraph.addTask(linkTask, "buildDebug");
-
-        ArrayList<File> sourceFiles = new ArrayList<File>();
-        findAllSrcFiles(sourceFiles, rootSrcDir);
-
-        for(File srcFile : sourceFiles) {
-
-            ProcessBuildTask buildTask = new ProcessBuildTask();
-            buildTask.inputFiles.add(srcFile);
+            File buildDir = new File(projectDir, "build");
+            buildDir = new File(buildDir, platform.toString());
+            buildDir = new File(buildDir, "debug");
 
 
+            ProcessBuildTask linkerTask = new ProcessBuildTask();
+            mZooKeeper.mDependencyGraph.addTask(linkerTask, "buildDebug");
 
-            final String srcFileStr = srcFile.toPath().toAbsolutePath().normalize().toString();
-            int i = commonPrefix(srcFileStr, rootSrcDir.getAbsolutePath());
-            String outputFilename = srcFileStr.substring(i+1);
-            outputFilename = REGEX_FILE_SEP.matcher(outputFilename).replaceAll("_");
-            outputFilename = outputFilename + ".o";
+            ArrayList<File> sourceFiles = new ArrayList<File>();
+            findAllSrcFiles(sourceFiles, rootSrcDir);
+
+            for(File srcFile : sourceFiles) {
+
+                //Create compile task for each source
+                mZooKeeper.mVM.push();
+                try {
+
+                    mZooKeeper.mVM.setVar(CompilerConfig.INPUT, srcFile.getAbsolutePath());
+
+                    final String srcFileStr = srcFile.toPath().toAbsolutePath().normalize().toString();
+                    int i = commonPrefix(srcFileStr, rootSrcDir.getAbsolutePath());
+                    String outputFilename = srcFileStr.substring(i+1);
+                    outputFilename = REGEX_FILE_SEP.matcher(outputFilename).replaceAll("_");
+                    outputFilename = outputFilename + ".o";
+
+                    final File outputFile = new File(buildDir, outputFilename);
+                    mZooKeeper.mVM.setVar(CompilerConfig.OUTPUT, outputFile.getAbsolutePath());
+
+                    ProcessBuildTask compileTask = new ProcessBuildTask();
+                    config.createDebugCompileTask(compileTask, mZooKeeper);
+
+                    mZooKeeper.mDependencyGraph.addTask(compileTask);
+                    mZooKeeper.mDependencyGraph.addDependency(linkerTask, compileTask);
+
+                    linkerTask.inputFiles.add(outputFile);
 
 
-            final File outputFile = new File(buildDir, outputFilename);
+                } finally {
+                    mZooKeeper.mVM.pop();
+                }
+            }
 
-            buildTask.outputFiles.add(outputFile);
+            //Create Linker task
+            mZooKeeper.mVM.push();
+            try {
+                File exeFile = new File(buildDir, exeDef.exeName);
 
-            buildTask.commandLine.add("C:\\Users\\pauls\\.zookeeper\\toolchains\\mingw64\\bin\\c++");
-            buildTask.commandLine.add("-o");
-            buildTask.commandLine.add(outputFile.getAbsolutePath());
-            buildTask.commandLine.add("-c");
-            buildTask.commandLine.add(srcFile.getAbsolutePath());
-
-            buildTask.mExeDir = new File("C:\\Users\\pauls\\.zookeeper\\toolchains\\mingw64\\bin");
-
-            mZooKeeper.mDependencyGraph.addTask(buildTask);
-
-            MkDirBuildTask mkOutputDirTask = new MkDirBuildTask(outputFile.getParentFile());
-            mZooKeeper.mDependencyGraph.addTask(mkOutputDirTask);
-            mZooKeeper.mDependencyGraph.addDependency(buildTask, mkOutputDirTask);
-
-            linkTask.inputFiles.add(outputFile);
-            mZooKeeper.mDependencyGraph.addDependency(linkTask, buildTask);
-        }
+                mZooKeeper.mVM.setVar(CompilerConfig.OUTPUT, exeFile.getAbsolutePath());
 
 
-        for(File objFile : linkTask.inputFiles) {
-            linkTask.commandLine.add(objFile.getAbsolutePath());
+
+                config.createLinkerTask(linkerTask, mZooKeeper);
+
+
+            } finally {
+                mZooKeeper.mVM.pop();
+            }
+
+        } finally {
+            mZooKeeper.mVM.pop();
         }
 
     }
@@ -158,6 +168,6 @@ public class BuildManager {
     }
 
     public void addCompiler(JsonObject cfg) {
-
+        mCompilerCfg.add(new CompilerConfig(cfg));
     }
 }
