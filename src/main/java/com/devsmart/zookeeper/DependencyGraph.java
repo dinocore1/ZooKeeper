@@ -42,10 +42,7 @@ public class DependencyGraph {
     }
 
     public ExePlan createExePlan(BuildTask task) {
-        ExePlan retval = new ExePlan();
-
-        mGraph.outgoingEdgesOf(task);
-
+        ExePlan retval = new ExePlan(mGraph, task);
         return retval;
     }
 }
