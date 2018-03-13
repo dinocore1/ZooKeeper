@@ -269,12 +269,9 @@ public class ZooKeeper {
                     ExePlan exeplan = zoo.mDependencyGraph.createExePlan(task);
                     boolean success = exeplan.run(1);
                     System.out.println("Build " + (success ? "success" : "failed"));
-                    while(true) {
-                        Thread.sleep(1000);
+                    if(!success) {
+                        System.exit(-1);
                     }
-                    //if(!success) {
-                    //    System.exit(-1);
-                    //}
                 } else {
                     System.err.println("no target with name: " + target);
                 }
