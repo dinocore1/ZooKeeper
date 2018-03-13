@@ -7,9 +7,7 @@ import com.google.common.collect.Iterables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 
 
 public class ListAllActionsAction implements Action {
@@ -24,7 +22,7 @@ public class ListAllActionsAction implements Action {
 
     @Override
     public void doIt() {
-        String[] actionNames = Iterables.toArray(mZooKeeper.mDependencyGraph.getActionNames(), String.class);
+        String[] actionNames = Iterables.toArray(mZooKeeper.mDependencyGraph.getTaskNames(), String.class);
         Arrays.sort(actionNames);
         LOGGER.info(Joiner.on(' ').join(actionNames));
 

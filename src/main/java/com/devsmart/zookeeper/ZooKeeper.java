@@ -1,12 +1,10 @@
 package com.devsmart.zookeeper;
 
 
-import com.devsmart.zookeeper.action.ListAllActionsAction;
 import com.devsmart.zookeeper.action.PhonyAction;
-import com.devsmart.zookeeper.action.VerifyLibraryInstalledAction;
 import com.devsmart.zookeeper.ast.Nodes;
+import com.devsmart.zookeeper.tasks.BuildTask;
 import com.google.common.collect.ComparisonChain;
-import com.google.common.collect.Iterables;
 import com.google.common.hash.HashCode;
 import com.google.common.io.BaseEncoding;
 import com.google.common.primitives.SignedBytes;
@@ -20,7 +18,10 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.Locale;
+import java.util.TreeMap;
 
 public class ZooKeeper {
 
@@ -177,15 +178,14 @@ public class ZooKeeper {
             mBuildManager.addBuildLibrary((Nodes.BuildLibraryDefNode) fileNode);
         }
 
-        Platform buildPlatform = getNativeBuildPlatform();
-        PhonyAction checkAllLibsAction = new PhonyAction();
-        mDependencyGraph.addAction("all", checkAllLibsAction);
-        for(Library lib : mAllLibraries) {
-            Action checkLib = mDependencyGraph.getAction(VerifyLibraryInstalledAction.createActionName(lib, buildPlatform));
-            mDependencyGraph.addDependency(checkAllLibsAction, checkLib);
+        if(fileNode instanceof Nodes.BuildExeDefNode) {
+            mBuildManager.addBuildExe((Nodes.BuildExeDefNode) fileNode);
+
         }
 
-        mDependencyGraph.addAction("listActions", new ListAllActionsAction(this));
+        Platform buildPlatform = getNativeBuildPlatform();
+        PhonyAction checkAllLibsAction = new PhonyAction();
+
 
         return true;
     }
@@ -228,9 +228,9 @@ public class ZooKeeper {
 
             String[] unparsedArgs = cmdline.getArgs();
             for(String target : unparsedArgs) {
-                Action action = zoo.mDependencyGraph.getAction(target);
-                if(action != null) {
-                    zoo.mDependencyGraph.runAction(action);
+                BuildTask task = zoo.mDependencyGraph.getTask(target);
+                if(task != null) {
+                    //TODO run build
                 } else {
                     System.err.println("no target with name: " + target);
                 }

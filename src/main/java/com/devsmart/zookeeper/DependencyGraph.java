@@ -1,72 +1,51 @@
 package com.devsmart.zookeeper;
 
 
-import com.google.common.base.Throwables;
+import com.devsmart.zookeeper.tasks.BuildTask;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.experimental.dag.DirectedAcyclicGraph;
 import org.jgrapht.graph.DefaultEdge;
-import org.jgrapht.traverse.DepthFirstIterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.HashMap;
 
 public class DependencyGraph {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DependencyGraph.class);
 
-    private class State {
-        boolean hasRun = false;
+
+    private DirectedGraph<BuildTask, DefaultEdge> mGraph = new DirectedAcyclicGraph<BuildTask, DefaultEdge>(DefaultEdge.class);
+    //private CycleDetector<BuildTask, DefaultEdge> mCycleDetector = new CycleDetector<BuildTask, DefaultEdge>(mGraph);
+    private BiMap<String, BuildTask> mTaskNames = HashBiMap.create();
+
+    public BuildTask getTask(String name) {
+        return mTaskNames.get(name);
     }
 
-    private HashMap<Action, State> mActionState = new HashMap<Action, State>();
-    private DirectedGraph<Action, DefaultEdge> mGraph = new DirectedAcyclicGraph<Action, DefaultEdge>(DefaultEdge.class);
-    //private CycleDetector<Action, DefaultEdge> mCycleDetector = new CycleDetector<Action, DefaultEdge>(mGraph);
-    private BiMap<String, Action> mActionName = HashBiMap.create();
-    private Action mRootAction;
-
-    public Action getAction(String name) {
-        return mActionName.get(name);
+    public Iterable<String> getTaskNames() {
+        return mTaskNames.keySet();
     }
 
-    public Iterable<String> getActionNames() {
-        return mActionName.keySet();
+    public void addTask(BuildTask action, String name) {
+        mTaskNames.put(name, action);
+        addTask(action);
     }
 
-    public void addAction(String name, Action action) {
-        mActionName.put(name, action);
-        addAction(action);
-    }
-
-    public void addAction(Action action) {
-        mActionState.put(action, new State());
+    public void addTask(BuildTask action) {
         mGraph.addVertex(action);
     }
 
-    public void addDependency(Action thiz, Action that) {
+    public void addDependency(BuildTask thiz, BuildTask that) {
         mGraph.addEdge(thiz, that);
         //return mCycleDetector.detectCycles();
     }
 
-    public void runAction(Action action) {
-        for(DefaultEdge e : mGraph.outgoingEdgesOf(action)) {
-            Action dependency = mGraph.getEdgeTarget(e);
-            State actionState = mActionState.get(dependency);
-            if(!actionState.hasRun) {
-                runAction(dependency);
-            }
-        }
+    public ExePlan createExePlan(BuildTask task) {
+        ExePlan retval = new ExePlan();
 
-        State actionState = mActionState.get(action);
-        try {
-            LOGGER.info("running " + mActionName.inverse().get(action));
-            action.doIt();
-            actionState.hasRun = true;
-        } catch (Exception e) {
-            //LOGGER.error("", e);
-            Throwables.propagate(e);
-        }
+        mGraph.outgoingEdgesOf(task);
+
+        return retval;
     }
 }
