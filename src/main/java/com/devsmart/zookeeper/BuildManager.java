@@ -8,6 +8,7 @@ import com.devsmart.zookeeper.tasks.ProcessBuildTask;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.gson.JsonObject;
 import org.slf4j.Logger;
@@ -105,7 +106,8 @@ public class BuildManager {
                     mZooKeeper.mVM.setVar(CompilerConfig.OUTPUT, outputFile.getAbsolutePath());
 
                     ProcessBuildTask compileTask = new ProcessBuildTask();
-                    config.createDebugCompileTask(compileTask, mZooKeeper);
+
+                    config.configCompileTask(compileTask, mZooKeeper, ImmutableList.of("debug", "exe"));
 
                     mZooKeeper.mDependencyGraph.addTask(compileTask);
                     mZooKeeper.mDependencyGraph.addDependency(compileTask, mkDirBuildTask);
@@ -133,7 +135,7 @@ public class BuildManager {
                     }
                 })));
 
-                config.createLinkerTask(linkerTask, mZooKeeper);
+                config.configLinkTask(linkerTask, mZooKeeper, ImmutableList.of("debug", "exe"));
 
 
             } finally {
