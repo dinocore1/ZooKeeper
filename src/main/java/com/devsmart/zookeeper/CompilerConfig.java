@@ -56,9 +56,11 @@ public class CompilerConfig {
         try {
 
             String workingDir = overideOption(WORKING_DIR, mCfg, tags);
-            workingDir = zooKeeper.mVM.interpretString(workingDir);
-            zooKeeper.mVM.setVar(WORKING_DIR, workingDir);
-            task.mExeDir = new File(workingDir);
+            if(workingDir != null) {
+                workingDir = zooKeeper.mVM.interpretString(workingDir);
+                zooKeeper.mVM.setVar(WORKING_DIR, workingDir);
+                task.mExeDir = new File(workingDir);
+            }
 
             zooKeeper.mVM.setVar("flags", appendOption("compileFlags", mCfg, tags));
 
@@ -81,9 +83,11 @@ public class CompilerConfig {
         try {
 
             String workingDir = overideOption(WORKING_DIR, mCfg, tags);
-            workingDir = zooKeeper.mVM.interpretString(workingDir);
-            zooKeeper.mVM.setVar(WORKING_DIR, workingDir);
-            task.mExeDir = new File(workingDir);
+            if(workingDir != null) {
+                workingDir = zooKeeper.mVM.interpretString(workingDir);
+                zooKeeper.mVM.setVar(WORKING_DIR, workingDir);
+                task.mExeDir = new File(workingDir);
+            }
 
             zooKeeper.mVM.setVar("flags", appendOption("linkFlags", mCfg, tags));
 
