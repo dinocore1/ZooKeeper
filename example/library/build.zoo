@@ -1,5 +1,5 @@
 
 
-build lib mylib 0.0.1 {
+build sharedlib mylib 0.0.1 {
 
 }

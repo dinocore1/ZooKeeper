@@ -9,6 +9,7 @@ import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.gson.JsonObject;
 import org.slf4j.Logger;
@@ -25,43 +26,117 @@ public class BuildManager {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BuildManager.class);
 
+    private static Pattern REGEX_FILE_SEP = Pattern.compile("/|\\\\");
+
     public ZooKeeper mZooKeeper;
     private List<CompilerConfig> mCompilerCfg = new ArrayList<>();
 
+    private String toIncludeList(List<File> includeDirs) {
+        StringBuilder builder = new StringBuilder();
+        for(File f : includeDirs) {
+            builder.append("-I");
+            builder.append(f.getAbsolutePath());
+            builder.append(" ");
+        }
+
+        return builder.toString();
+    }
+
     public void addBuildLibrary(Nodes.BuildLibraryDefNode librayDef) {
+        Platform platform = mZooKeeper.getNativeBuildPlatform();
 
+        CompilerConfig config = mCompilerCfg.get(0);
+
+        mZooKeeper.mVM.push();
         try {
-
-            BuildLibrary buildLibrary = new BuildLibrary(librayDef.libName, librayDef.versionNode.version);
 
             final File projectDir = new File(mZooKeeper.mVM.resolveVar(ZooKeeper.PROJECT_DIR));
             final File rootSrcDir = new File(projectDir, "src");
-            final File buildDir = new File(projectDir, "build");
-            librayDef.objectNode.entries.add("src", new Nodes.StringNode(rootSrcDir.getCanonicalPath()));
-            findAllSrcFiles(buildLibrary.sourceFiles, librayDef.objectNode.get("src"));
 
-            for(File srcFile : buildLibrary.sourceFiles) {
+            File buildDir = new File(projectDir, "build");
+            buildDir = new File(buildDir, platform.toString());
+            buildDir = new File(buildDir, "debug");
+            mZooKeeper.mVM.setVar(CompilerConfig.OUT_DIR, buildDir.getAbsolutePath());
 
-                final String srcFileStr = srcFile.toPath().toAbsolutePath().normalize().toString();
-                int i = commonPrefix(srcFileStr, rootSrcDir.getAbsolutePath());
-                String outputPath = srcFileStr.substring(i);
+            MkDirBuildTask mkDirBuildTask = new MkDirBuildTask(buildDir);
+            mZooKeeper.mDependencyGraph.addTask(mkDirBuildTask);
 
-                File outputFile = new File(buildDir, outputPath + ".o");
-
-                //Action compileAction = compiler.createCompileToObjectAction(srcFile);
-
+            ProcessBuildTask linkerTask = new ProcessBuildTask();
+            mZooKeeper.mDependencyGraph.addTask(linkerTask, "buildDebug");
+            mZooKeeper.mDependencyGraph.addDependency(linkerTask, mkDirBuildTask);
 
 
+            //includes
+            ArrayList<File> includeDirs = new ArrayList<File>();
+            includeDirs.add(rootSrcDir);
+            includeDirs.add(new File(projectDir, "include"));
+
+            String includeStr = toIncludeList(includeDirs);
+
+            ArrayList<File> sourceFiles = new ArrayList<File>();
+            findAllSrcFiles(sourceFiles, rootSrcDir);
+
+            for(File srcFile : sourceFiles) {
+
+                //Create compile task for each source
+                mZooKeeper.mVM.push();
+                try {
+
+                    mZooKeeper.mVM.setVar(CompilerConfig.INPUT, srcFile.getAbsolutePath());
+                    mZooKeeper.mVM.setVar(CompilerConfig.INCLUDES, includeStr);
+
+                    final String srcFileStr = srcFile.toPath().toAbsolutePath().normalize().toString();
+                    int i = commonPrefix(srcFileStr, rootSrcDir.getAbsolutePath());
+                    String outputFilename = srcFileStr.substring(i+1);
+                    outputFilename = REGEX_FILE_SEP.matcher(outputFilename).replaceAll("_");
+                    outputFilename = outputFilename + ".o";
+
+                    final File outputFile = new File(buildDir, outputFilename);
+                    mZooKeeper.mVM.setVar(CompilerConfig.OUTPUT, outputFile.getAbsolutePath());
+
+                    ProcessBuildTask compileTask = new ProcessBuildTask();
+
+                    config.configCompileTask(compileTask, mZooKeeper, ImmutableList.of("debug", "sharedLib"));
+
+                    mZooKeeper.mDependencyGraph.addTask(compileTask);
+                    mZooKeeper.mDependencyGraph.addDependency(compileTask, mkDirBuildTask);
+                    mZooKeeper.mDependencyGraph.addDependency(linkerTask, compileTask);
+
+                    linkerTask.inputFiles.add(outputFile);
+
+
+                } finally {
+                    mZooKeeper.mVM.pop();
+                }
             }
 
+            //Create Linker task
+            mZooKeeper.mVM.push();
+            try {
+                mZooKeeper.mVM.setVar(CompilerConfig.OUTPUT_NAME, librayDef.libName);
+                String libFilename = librayDef.libName + (platform.os.contains("win") ? ".dll" : ".so");
+                File exeFile = new File(buildDir, libFilename);
 
-        } catch (Exception e) {
-            LOGGER.error("", e);
-            Throwables.propagate(e);
+                mZooKeeper.mVM.setVar(CompilerConfig.OUTPUT, exeFile.getAbsolutePath());
+
+                mZooKeeper.mVM.setVar(CompilerConfig.INPUT, Joiner.on("").join(Lists.transform(linkerTask.inputFiles, new Function<File, String>() {
+                    @Override
+                    public String apply(File input) {
+                        return input.getAbsolutePath();
+                    }
+                })));
+
+                config.configLinkTask(linkerTask, mZooKeeper, ImmutableList.of("debug", "sharedLib"));
+
+
+            } finally {
+                mZooKeeper.mVM.pop();
+            }
+
+        } finally {
+            mZooKeeper.mVM.pop();
         }
     }
-
-    private static Pattern REGEX_FILE_SEP = Pattern.compile("/|\\\\");
 
     public void addBuildExe(Nodes.BuildExeDefNode exeDef) {
         Platform platform = mZooKeeper.getNativeBuildPlatform();
@@ -124,6 +199,7 @@ public class BuildManager {
             //Create Linker task
             mZooKeeper.mVM.push();
             try {
+                mZooKeeper.mVM.setVar(CompilerConfig.OUTPUT_NAME, exeDef.exeName);
                 File exeFile = new File(buildDir, exeDef.exeName);
 
                 mZooKeeper.mVM.setVar(CompilerConfig.OUTPUT, exeFile.getAbsolutePath());

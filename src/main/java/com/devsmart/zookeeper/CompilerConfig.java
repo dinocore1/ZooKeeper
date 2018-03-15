@@ -5,6 +5,7 @@ import com.devsmart.StringUtils;
 import com.devsmart.zookeeper.tasks.ProcessBuildTask;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.collect.*;
 import com.google.gson.JsonArray;
@@ -37,6 +38,9 @@ public class CompilerConfig {
     public static final String INPUT = "input";
     public static final String OUTPUT = "output";
     public static final String WORKING_DIR = "workingDir";
+    public static final String OUTPUT_NAME = "output_name";
+    public static final String INCLUDES = "includes";
+    public static final String OUT_DIR = "output_dir";
 
 
     private final JsonObject mCfg;
@@ -89,9 +93,10 @@ public class CompilerConfig {
                 task.mExeDir = new File(workingDir);
             }
 
-            zooKeeper.mVM.setVar("flags", appendOption("linkFlags", mCfg, tags));
+            zooKeeper.mVM.setVar("flags", zooKeeper.mVM.interpretString(appendOption("linkFlags", mCfg, tags)));
 
             String cmdLine = overideOption("linkCmd", mCfg, tags);
+            Preconditions.checkState(cmdLine != null, "no linkCmd defined");
 
             cmdLine = zooKeeper.mVM.interpretString(cmdLine);
 

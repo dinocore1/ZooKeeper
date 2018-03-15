@@ -15,7 +15,7 @@ exeBuildDef
     ;
 
 libraryBuildDef
-    : BUILD LIB name=ID version object
+    : BUILD SHAREDLIB name=ID version object
     ;
 
 value
@@ -48,7 +48,7 @@ version
 
 BUILD : 'build' ;
 EXE : 'exe' ;
-LIB : 'lib' ;
+SHAREDLIB : 'sharedlib' ;
 DOT : '.' ;
 COLON : ':' ;
 COMMA : ',' ;
