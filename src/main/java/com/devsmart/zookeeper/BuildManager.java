@@ -157,6 +157,14 @@ public class BuildManager {
             mZooKeeper.mDependencyGraph.addTask(copyExportIncludeDir);
             mZooKeeper.mDependencyGraph.addDependency(installLocal, copyExportIncludeDir);
 
+            //Create precompiled template file task
+            PrecompiledLibTemplateTask genTemplateTask = new PrecompiledLibTemplateTask();
+            genTemplateTask.mLibDef = librayDef;
+            genTemplateTask.mOutputFile = new File(localInstallDir, "lib.zoo");
+            genTemplateTask.mPlatform = platform;
+            mZooKeeper.mDependencyGraph.addTask(genTemplateTask);
+            mZooKeeper.mDependencyGraph.addDependency(installLocal, genTemplateTask);
+
 
         } finally {
             mZooKeeper.mVM.pop();
