@@ -35,6 +35,8 @@ public class Platform {
             return ".dll";
         } else if(platform.os.equalsIgnoreCase(OS.linux.name()) || platform.os.equalsIgnoreCase(OS.android.name())) {
             return ".so";
+        } else if(platform.os.equalsIgnoreCase(OS.osx.name())) {
+            return ".dylib";
         } else {
             return null;
         }

@@ -2,9 +2,7 @@ package com.devsmart.zookeeper;
 
 
 import com.devsmart.zookeeper.ast.Nodes;
-import com.devsmart.zookeeper.tasks.BuildArtifact;
-import com.devsmart.zookeeper.tasks.MkDirBuildTask;
-import com.devsmart.zookeeper.tasks.ProcessBuildTask;
+import com.devsmart.zookeeper.tasks.*;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
@@ -65,11 +63,12 @@ public class BuildManager {
             mZooKeeper.mDependencyGraph.addTask(linkerTask, "buildDebug");
             mZooKeeper.mDependencyGraph.addDependency(linkerTask, mkDirBuildTask);
 
+            File exportIncludeDir = new File(projectDir, "include");
 
             //includes
             ArrayList<File> includeDirs = new ArrayList<File>();
             includeDirs.add(rootSrcDir);
-            includeDirs.add(new File(projectDir, "include"));
+            includeDirs.add(exportIncludeDir);
 
             String includeStr = toIncludeList(includeDirs);
 
@@ -110,14 +109,16 @@ public class BuildManager {
                 }
             }
 
+            File libFile;
+
             //Create Linker task
             mZooKeeper.mVM.push();
             try {
                 mZooKeeper.mVM.setVar(CompilerConfig.OUTPUT_NAME, librayDef.libName);
                 String libFilename = librayDef.libName + Platform.getLibraryExtention(platform);
-                File exeFile = new File(buildDir, libFilename);
+                libFile = new File(buildDir, libFilename);
 
-                mZooKeeper.mVM.setVar(CompilerConfig.OUTPUT, exeFile.getAbsolutePath());
+                mZooKeeper.mVM.setVar(CompilerConfig.OUTPUT, libFile.getAbsolutePath());
 
                 mZooKeeper.mVM.setVar(CompilerConfig.INPUT, Joiner.on("").join(Lists.transform(linkerTask.inputFiles, new Function<File, String>() {
                     @Override
@@ -132,6 +133,30 @@ public class BuildManager {
             } finally {
                 mZooKeeper.mVM.pop();
             }
+
+            //Create installer task
+            PhonyBuildTask installLocal = new PhonyBuildTask();
+            mZooKeeper.mDependencyGraph.addTask(installLocal, "installLocalDebug");
+            mZooKeeper.mDependencyGraph.addDependency(installLocal, linkerTask);
+
+            File localInstallDir = new File(mZooKeeper.mVM.resolveVar(ZooKeeper.ZOOKEEPER_HOME));
+            localInstallDir = new File(localInstallDir, "install");
+            localInstallDir = new File(localInstallDir, librayDef.libName);
+            localInstallDir = new File(localInstallDir, platform.toString());
+            localInstallDir = new File(localInstallDir, librayDef.versionNode.toString());
+
+            MkDirBuildTask mkdir = new MkDirBuildTask(localInstallDir);
+            mZooKeeper.mDependencyGraph.addTask(mkdir);
+
+            CopyTask copyLibFile = new CopyTask(libFile, new File(localInstallDir, librayDef.libName + Platform.getLibraryExtention(platform)));
+            mZooKeeper.mDependencyGraph.addTask(copyLibFile);
+            mZooKeeper.mDependencyGraph.addDependency(copyLibFile, mkdir);
+            mZooKeeper.mDependencyGraph.addDependency(installLocal, copyLibFile);
+
+            CopyTask copyExportIncludeDir = new CopyTask(exportIncludeDir, new File(localInstallDir, "include"));
+            mZooKeeper.mDependencyGraph.addTask(copyExportIncludeDir);
+            mZooKeeper.mDependencyGraph.addDependency(installLocal, copyExportIncludeDir);
+
 
         } finally {
             mZooKeeper.mVM.pop();
