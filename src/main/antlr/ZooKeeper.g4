@@ -1,12 +1,12 @@
 grammar ZooKeeper;
 
 file
-    : libraryMetadataDef
-    | exeBuildDef
+    : exeBuildDef
     | libraryBuildDef
+    | precompiledLibDef
     ;
 
-libraryMetadataDef
+precompiledLibDef
     : LIB name=ID version object
     ;
 

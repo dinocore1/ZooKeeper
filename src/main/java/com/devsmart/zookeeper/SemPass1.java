@@ -30,16 +30,6 @@ public class SemPass1 extends ZooKeeperBaseVisitor<Nodes.Node> {
     }
 
     @Override
-    public Nodes.Node visitLibraryMetadataDef(ZooKeeperParser.LibraryMetadataDefContext ctx) {
-        Nodes.LibraryDefNode retval = new Nodes.LibraryDefNode();
-        retval.libName = ctx.name.getText();
-        retval.versionNode = (Nodes.VersionNode) visit(ctx.version());
-        retval.objectNode = (Nodes.ObjectNode) visit(ctx.object());
-
-        return putMap(ctx, retval);
-    }
-
-    @Override
     public Nodes.Node visitLibraryBuildDef(ZooKeeperParser.LibraryBuildDefContext ctx) {
         Nodes.BuildLibraryDefNode retval = new Nodes.BuildLibraryDefNode();
         retval.libName = ctx.name.getText();
@@ -53,6 +43,16 @@ public class SemPass1 extends ZooKeeperBaseVisitor<Nodes.Node> {
     public Nodes.Node visitExeBuildDef(ZooKeeperParser.ExeBuildDefContext ctx) {
         Nodes.BuildExeDefNode retval = new Nodes.BuildExeDefNode();
         retval.exeName = ctx.name.getText();
+        retval.versionNode = (Nodes.VersionNode) visit(ctx.version());
+        retval.objectNode = (Nodes.ObjectNode) visit(ctx.object());
+
+        return putMap(ctx, retval);
+    }
+
+    @Override
+    public Nodes.Node visitPrecompiledLibDef(ZooKeeperParser.PrecompiledLibDefContext ctx) {
+        Nodes.PrecompiledLibraryDefNode retval = new Nodes.PrecompiledLibraryDefNode();
+        retval.libName = ctx.name.getText();
         retval.versionNode = (Nodes.VersionNode) visit(ctx.version());
         retval.objectNode = (Nodes.ObjectNode) visit(ctx.object());
 

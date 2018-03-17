@@ -32,7 +32,7 @@ public class Nodes {
         }
     }
 
-    public static class LibraryDefNode extends Node {
+    public static class PrecompiledLibraryDefNode extends Node {
         public String libName;
         public VersionNode versionNode;
         public ObjectNode objectNode;
