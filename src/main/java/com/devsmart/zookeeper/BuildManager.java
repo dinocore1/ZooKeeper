@@ -114,7 +114,7 @@ public class BuildManager {
             mZooKeeper.mVM.push();
             try {
                 mZooKeeper.mVM.setVar(CompilerConfig.OUTPUT_NAME, librayDef.libName);
-                String libFilename = librayDef.libName + (platform.os.contains("win") ? ".dll" : ".so");
+                String libFilename = librayDef.libName + Platform.getLibraryExtention(platform);
                 File exeFile = new File(buildDir, libFilename);
 
                 mZooKeeper.mVM.setVar(CompilerConfig.OUTPUT, exeFile.getAbsolutePath());

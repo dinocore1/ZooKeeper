@@ -21,12 +21,25 @@ public class Platform {
         x86,
         x86_64,
         mips,
-        arm,
+        armv7a,
         avr,
         UNKNOWN;
     }
 
     public static final Platform WIN64 = Platform.parse("win-x86_64");
+
+
+    public static String getLibraryExtention(Platform platform) {
+
+        if(platform.os.equalsIgnoreCase(OS.win.name())) {
+            return ".dll";
+        } else if(platform.os.equalsIgnoreCase(OS.linux.name()) || platform.os.equalsIgnoreCase(OS.android.name())) {
+            return ".so";
+        } else {
+            return null;
+        }
+    }
+
 
     public final String os;
     public final String arch;
