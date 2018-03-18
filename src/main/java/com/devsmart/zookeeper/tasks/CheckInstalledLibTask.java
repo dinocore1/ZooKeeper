@@ -1,10 +1,14 @@
 package com.devsmart.zookeeper.tasks;
 
+import com.devsmart.zookeeper.CompilerContext;
 import com.devsmart.zookeeper.Library;
 import com.devsmart.zookeeper.Platform;
 import com.devsmart.zookeeper.ZooKeeper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.File;
+import java.io.IOException;
 
 public class CheckInstalledLibTask implements BuildTask {
 
@@ -13,6 +17,7 @@ public class CheckInstalledLibTask implements BuildTask {
     public final ZooKeeper mZookeeper;
     public Library library;
     public Platform platform;
+    private File mFoundLib;
 
     public CheckInstalledLibTask(ZooKeeper zooKeeper, Library depLib, Platform platform) {
         mZookeeper = zooKeeper;
@@ -23,9 +28,31 @@ public class CheckInstalledLibTask implements BuildTask {
     @Override
     public boolean run() {
 
+        if(mFoundLib == null) {
 
 
+            File localInstallDir = mZookeeper.getLocalInstallDir(library, platform);
+            File zooFile = new File(localInstallDir, "lib.zoo");
 
-        return false;
+            if (zooFile.exists()) {
+                try {
+                    CompilerContext ctx = mZookeeper.createCompilerContext();
+                    if(!mZookeeper.compileFile(zooFile, ctx)){
+                        return false;
+                    }
+
+                    return true;
+                } catch (IOException e) {
+                    LOGGER.error("", e);
+                    return false;
+                }
+
+
+            }
+
+            return false;
+        } else {
+            return true;
+        }
     }
 }

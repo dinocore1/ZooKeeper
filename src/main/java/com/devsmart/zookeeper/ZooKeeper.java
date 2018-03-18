@@ -142,6 +142,18 @@ public class ZooKeeper {
         readCompilerConfig();
     }
 
+    public File getLocalInstallDir() {
+        return new File(mZooKeeperRoot, "install");
+    }
+
+    public File getLocalInstallDir(Library library, Platform platform) {
+        File localInstallDir = getLocalInstallDir();
+        localInstallDir = new File(localInstallDir, library.name);
+        localInstallDir = new File(localInstallDir, platform.toString());
+        localInstallDir = new File(localInstallDir, library.version.toString());
+        return localInstallDir;
+    }
+
     public Platform getNativeBuildPlatform() {
         return getNativePlatform();
     }
@@ -190,13 +202,7 @@ public class ZooKeeper {
         return new Platform(os, arch);
     }
 
-    public boolean compileInputStream(ANTLRInputStream inputStream) {
-        CompilerContext compilerContext = new CompilerContext();
-        compilerContext.dependencyGraph = mDependencyGraph;
-        compilerContext.fileRoot = mZooKeeperRoot;
-        compilerContext.VM = mVM;
-        compilerContext.zooKeeper = this;
-
+    public boolean compileInputStream(ANTLRInputStream inputStream, CompilerContext compilerContext) {
         ZooKeeperLexer lexer = new ZooKeeperLexer(inputStream);
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         ZooKeeperParser parser = new ZooKeeperParser(tokens);
@@ -205,27 +211,40 @@ public class ZooKeeper {
         ZooKeeperParser.FileContext root = parser.file();
 
         SemPass1 semPass1 = new SemPass1(compilerContext);
-        Nodes.Node fileNode = semPass1.visitFile(root);
+        compilerContext.rootNode = semPass1.visitFile(root);
 
         if(compilerContext.hasErrors()) {
             compilerContext.reportMessages(System.err);
             return false;
         }
 
-        if(fileNode instanceof Nodes.BuildLibraryDefNode) {
-            mBuildManager.addBuildLibrary((Nodes.BuildLibraryDefNode) fileNode);
+        if(compilerContext.rootNode instanceof Nodes.PrecompiledLibraryDefNode) {
+            mBuildManager.addPrecompiledLibrary((Nodes.PrecompiledLibraryDefNode) compilerContext.rootNode);
         }
 
-        if(fileNode instanceof Nodes.BuildExeDefNode) {
-            mBuildManager.addBuildExe((Nodes.BuildExeDefNode) fileNode);
-
+        if(compilerContext.rootNode instanceof Nodes.BuildLibraryDefNode) {
+            mBuildManager.addBuildLibrary((Nodes.BuildLibraryDefNode) compilerContext.rootNode);
         }
 
-        Platform buildPlatform = getNativeBuildPlatform();
-        PhonyAction checkAllLibsAction = new PhonyAction();
-
+        if(compilerContext.rootNode instanceof Nodes.BuildExeDefNode) {
+            mBuildManager.addBuildExe((Nodes.BuildExeDefNode) compilerContext.rootNode);
+        }
 
         return true;
+    }
+
+    public CompilerContext createCompilerContext() {
+        CompilerContext compilerContext = new CompilerContext();
+        compilerContext.dependencyGraph = mDependencyGraph;
+        compilerContext.fileRoot = mZooKeeperRoot;
+        compilerContext.VM = mVM;
+        compilerContext.zooKeeper = this;
+        return compilerContext;
+    }
+
+    public boolean compileInputStream(ANTLRInputStream inputStream) {
+        CompilerContext compilerContext = createCompilerContext();
+        return compileInputStream(inputStream, compilerContext);
     }
 
     public boolean compileFile(File file) throws IOException {
@@ -233,6 +252,13 @@ public class ZooKeeper {
         ANTLRInputStream inputStream = new ANTLRInputStream(fin);
         inputStream.name = file.getAbsolutePath();
         return compileInputStream(inputStream);
+    }
+
+    public boolean compileFile(File file, CompilerContext context) throws IOException {
+        FileInputStream fin = new FileInputStream(file);
+        ANTLRInputStream inputStream = new ANTLRInputStream(fin);
+        inputStream.name = file.getAbsolutePath();
+        return compileInputStream(inputStream, context);
     }
 
     public boolean compile(InputStream in) throws IOException {

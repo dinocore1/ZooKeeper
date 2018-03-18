@@ -41,10 +41,23 @@ public class BuildManager {
         return builder.toString();
     }
 
+    public void addPrecompiledLibrary(Nodes.PrecompiledLibraryDefNode node) {
+        Library library = new Library(node.libName, node.versionNode.version);
+
+
+        String platformStr = Iterables.getFirst(node.objectNode.get(Const.PLATFORM), null).toString();
+        Platform platform = Platform.parse(platformStr);
+
+
+
+    }
+
     public void addBuildLibrary(Nodes.BuildLibraryDefNode librayDef) {
         Platform platform = mZooKeeper.getNativeBuildPlatform();
 
         CompilerConfig config = mCompilerCfg.get(0);
+
+        Library library = new Library(librayDef.libName, librayDef.versionNode.version);
 
         mZooKeeper.mVM.push();
         try {
@@ -140,11 +153,7 @@ public class BuildManager {
             mZooKeeper.mDependencyGraph.addTask(installLocal, "installLocalDebug");
             mZooKeeper.mDependencyGraph.addDependency(installLocal, linkerTask);
 
-            File localInstallDir = new File(mZooKeeper.mVM.resolveVar(ZooKeeper.ZOOKEEPER_HOME));
-            localInstallDir = new File(localInstallDir, "install");
-            localInstallDir = new File(localInstallDir, librayDef.libName);
-            localInstallDir = new File(localInstallDir, platform.toString());
-            localInstallDir = new File(localInstallDir, librayDef.versionNode.toString());
+            File localInstallDir = mZooKeeper.getLocalInstallDir(library, platform);
 
             MkDirBuildTask mkdir = new MkDirBuildTask(localInstallDir);
             mZooKeeper.mDependencyGraph.addTask(mkdir);
@@ -221,9 +230,10 @@ public class BuildManager {
         PhonyBuildTask checkAllLibs = new PhonyBuildTask();
         mZooKeeper.mDependencyGraph.addTask(checkAllLibs);
 
-        for(Library depLib : getDepends(exeDef.objectNode)) {
+        Iterable<Library> dependicies = getDepends(exeDef.objectNode);
+        for(Library depLib : dependicies) {
             CheckInstalledLibTask checkInstalled = new CheckInstalledLibTask(mZooKeeper, depLib, platform);
-            mZooKeeper.mDependencyGraph.addTask(checkAllLibs);
+            mZooKeeper.mDependencyGraph.addTask(checkInstalled);
             mZooKeeper.mDependencyGraph.addDependency(checkAllLibs, checkInstalled);
         }
 
@@ -272,6 +282,7 @@ public class BuildManager {
                     mZooKeeper.mDependencyGraph.addTask(compileTask);
                     mZooKeeper.mDependencyGraph.addDependency(compileTask, mkDirBuildTask);
                     mZooKeeper.mDependencyGraph.addDependency(linkerTask, compileTask);
+                    mZooKeeper.mDependencyGraph.addDependency(compileTask, checkAllLibs);
 
                     linkerTask.inputFiles.add(outputFile);
 
@@ -295,6 +306,8 @@ public class BuildManager {
                         return input.getAbsolutePath();
                     }
                 })));
+
+
 
                 config.configLinkTask(linkerTask, mZooKeeper, ImmutableList.of("debug", "exe"));
 

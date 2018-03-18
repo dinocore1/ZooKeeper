@@ -46,6 +46,7 @@ version
     : major=NUM DOT minor=NUM DOT patch=NUM
     ;
 
+LIB : 'lib' ;
 BUILD : 'build' ;
 EXE : 'exe' ;
 SHAREDLIB : 'sharedlib' ;
