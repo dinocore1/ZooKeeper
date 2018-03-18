@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.TreeSet;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class BuildManager {
@@ -171,10 +172,61 @@ public class BuildManager {
         }
     }
 
+    private static final Function<String, Library> TO_LIB = new Function<String, Library>() {
+
+        private final Pattern REGEX = Pattern.compile("([a-zA-Z_]+):(\\d+\\.\\d+\\.\\d+)");
+
+        @Override
+        public Library apply(String input) {
+            Library retval = null;
+            Matcher m = REGEX.matcher(input);
+            if(m.find()) {
+                String name = m.group(1);
+                Version version = Version.fromString(m.group(2));
+                retval = new Library(name, version);
+            }
+
+            return retval;
+        }
+    };
+
+    private void concatDependList(List<Library> list, Nodes.ValueNode node) {
+        if(node.isString()) {
+            list.add(TO_LIB.apply(node.toString()));
+        } else if(node.isArray()) {
+            Nodes.ArrayNode arrayNode = (Nodes.ArrayNode) node;
+            Iterables.addAll(list, Iterables.transform(arrayNode.array, new Function<Nodes.ValueNode, Library>(){
+                @Override
+                public Library apply(Nodes.ValueNode input) {
+                    return TO_LIB.apply(input.toString());
+                }
+            }));
+        }
+    }
+
+    private Iterable<Library> getDepends(Nodes.ObjectNode objectNode) {
+        ArrayList<Library> retval = new ArrayList<>();
+        for(Nodes.ValueNode value : objectNode.get(Const.DEPENDENCIES)) {
+            concatDependList(retval, value);
+        }
+
+        return retval;
+    }
+
     public void addBuildExe(Nodes.BuildExeDefNode exeDef) {
         Platform platform = mZooKeeper.getNativeBuildPlatform();
 
         CompilerConfig config = mCompilerCfg.get(0);
+
+        PhonyBuildTask checkAllLibs = new PhonyBuildTask();
+        mZooKeeper.mDependencyGraph.addTask(checkAllLibs);
+
+        for(Library depLib : getDepends(exeDef.objectNode)) {
+            CheckInstalledLibTask checkInstalled = new CheckInstalledLibTask(mZooKeeper, depLib, platform);
+            mZooKeeper.mDependencyGraph.addTask(checkAllLibs);
+            mZooKeeper.mDependencyGraph.addDependency(checkAllLibs, checkInstalled);
+        }
+
 
         mZooKeeper.mVM.push();
         try {

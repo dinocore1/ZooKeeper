@@ -2,4 +2,8 @@
 
 build exe helloworld 0.0.1 {
 
+  dependencies: [
+    "mylib:0.0.1"
+  ]
+
 }
