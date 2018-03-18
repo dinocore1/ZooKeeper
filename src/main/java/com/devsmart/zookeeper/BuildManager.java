@@ -14,10 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -29,6 +26,7 @@ public class BuildManager {
 
     public ZooKeeper mZooKeeper;
     private List<CompilerConfig> mCompilerCfg = new ArrayList<>();
+    HashMap<LibraryPlatformKey, CompileModifier> mPrecompiledLibraries = new HashMap<>;
 
     private String toIncludeList(List<File> includeDirs) {
         StringBuilder builder = new StringBuilder();
@@ -41,12 +39,13 @@ public class BuildManager {
         return builder.toString();
     }
 
-    public void addPrecompiledLibrary(Nodes.PrecompiledLibraryDefNode node) {
+    public void addPrecompiledLibrary(CompilerContext compilerContext, Nodes.PrecompiledLibraryDefNode node) {
         Library library = new Library(node.libName, node.versionNode.version);
-
-
         String platformStr = Iterables.getFirst(node.objectNode.get(Const.PLATFORM), null).toString();
         Platform platform = Platform.parse(platformStr);
+
+        LibraryPlatformKey key = new LibraryPlatformKey(library, platform);
+        mLibraries.put(key, new CompileModifier())
 
 
 

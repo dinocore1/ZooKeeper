@@ -47,7 +47,7 @@ public class CompilerContext {
         }
     }
 
-    public File fileRoot;
+    public File localDir;
     public ZooKeeper zooKeeper;
     public DependencyGraph dependencyGraph;
     public final ArrayList<Platform> platforms = new ArrayList<Platform>();

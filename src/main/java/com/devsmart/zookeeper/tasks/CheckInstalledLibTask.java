@@ -37,6 +37,7 @@ public class CheckInstalledLibTask implements BuildTask {
             if (zooFile.exists()) {
                 try {
                     CompilerContext ctx = mZookeeper.createCompilerContext();
+                    ctx.localDir = localInstallDir;
                     if(!mZookeeper.compileFile(zooFile, ctx)){
                         return false;
                     }

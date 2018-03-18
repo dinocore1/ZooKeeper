@@ -2,7 +2,6 @@ package com.devsmart.zookeeper;
 
 
 import com.devsmart.IOUtils;
-import com.devsmart.zookeeper.action.PhonyAction;
 import com.devsmart.zookeeper.ast.Nodes;
 import com.devsmart.zookeeper.tasks.BuildTask;
 import com.google.common.collect.ComparisonChain;
@@ -219,7 +218,7 @@ public class ZooKeeper {
         }
 
         if(compilerContext.rootNode instanceof Nodes.PrecompiledLibraryDefNode) {
-            mBuildManager.addPrecompiledLibrary((Nodes.PrecompiledLibraryDefNode) compilerContext.rootNode);
+            mBuildManager.addPrecompiledLibrary(compilerContext, (Nodes.PrecompiledLibraryDefNode) compilerContext.rootNode);
         }
 
         if(compilerContext.rootNode instanceof Nodes.BuildLibraryDefNode) {
@@ -236,14 +235,14 @@ public class ZooKeeper {
     public CompilerContext createCompilerContext() {
         CompilerContext compilerContext = new CompilerContext();
         compilerContext.dependencyGraph = mDependencyGraph;
-        compilerContext.fileRoot = mZooKeeperRoot;
         compilerContext.VM = mVM;
         compilerContext.zooKeeper = this;
         return compilerContext;
     }
 
-    public boolean compileInputStream(ANTLRInputStream inputStream) {
+    public boolean compileInputStream(ANTLRInputStream inputStream, File localDir) {
         CompilerContext compilerContext = createCompilerContext();
+        compilerContext.localDir = localDir;
         return compileInputStream(inputStream, compilerContext);
     }
 
@@ -251,7 +250,7 @@ public class ZooKeeper {
         FileInputStream fin = new FileInputStream(file);
         ANTLRInputStream inputStream = new ANTLRInputStream(fin);
         inputStream.name = file.getAbsolutePath();
-        return compileInputStream(inputStream);
+        return compileInputStream(inputStream, file.getParentFile());
     }
 
     public boolean compileFile(File file, CompilerContext context) throws IOException {
@@ -261,10 +260,12 @@ public class ZooKeeper {
         return compileInputStream(inputStream, context);
     }
 
+    /*
     public boolean compile(InputStream in) throws IOException {
         ANTLRInputStream inputStream = new ANTLRInputStream(in);
         return compileInputStream(inputStream);
     }
+    */
 
     public static void main(String[] args) {
 
