@@ -1,0 +1,28 @@
+
+import com.devsmart.zookeeper.CompileTemplate
+import com.devsmart.zookeeper.CompileTemplateBuilder
+
+
+
+def compile(Closure cl) {
+    def builder = CompileTemplateBuilder.make(cl)
+
+}
+
+def installDir = "this/is/the/install/bin"
+
+compile {
+
+  flags '-Wall'
+
+  debug {
+    flags '-g', '-O0'
+  }
+
+  release {
+    flags '-O3'
+  }
+
+  cmd "$installDir/c++", flags, ['-o', output], ['-c', input]
+
+}
