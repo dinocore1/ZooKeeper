@@ -43,20 +43,15 @@ class CompileTemplateBuilder {
         }
     }
 
-    Closure getFlags() {
-        return { flags }
-    }
-
-    Closure getIncludes() {
-        return { includes }
-    }
-
     static def prefix(String pre, List l) {
         return { l.collect({"$pre$it"}) }
     }
 
-    static def prefix(String pre, Closure cl) {
-        return { cl().collect({"$pre$it"}) }
+    static def prefix(String pre, Closure<List> cl) {
+        return { CompileTarget t ->
+            List l = cl(t)
+            l.collect({"$pre$it"})
+        }
     }
 
     static CompileTemplateBuilder make(Closure cl) {
