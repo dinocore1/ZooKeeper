@@ -43,6 +43,22 @@ class CompileTemplateBuilder {
         }
     }
 
+    Closure getFlags() {
+        return { flags }
+    }
+
+    Closure getIncludes() {
+        return { includes }
+    }
+
+    static def prefix(String pre, List l) {
+        return { l.collect({"$pre$it"}) }
+    }
+
+    static def prefix(String pre, Closure cl) {
+        return { cl().collect({"$pre$it"}) }
+    }
+
     static CompileTemplateBuilder make(Closure cl) {
         CompileTemplateBuilder builder = new CompileTemplateBuilder()
         Closure code = cl.rehydrate(builder.mBase, builder, this)

@@ -6,7 +6,7 @@ import com.devsmart.zookeeper.CompileTemplateBuilder
 
 def compile(Closure cl) {
     def builder = CompileTemplateBuilder.make(cl)
-
+    templates.add(builder)
 }
 
 def installDir = "this/is/the/install/bin"
@@ -23,6 +23,6 @@ compile {
     flags '-O3'
   }
 
-  cmd "$installDir/c++", flags, ['-o', output], ['-c', input]
+  cmd "$installDir/c++", flags, prefix("-I", includes), ['-o', output], ['-c', input]
 
 }
