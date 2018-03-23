@@ -2,9 +2,9 @@ package com.devsmart.zookeeper
 
 class CompileTarget {
 
-    File input
-    File output
-    List<File> includes
-    List<String> flags
+    public final List<File> input = []
+    public final List<File> output = []
+    public final List<File> includes = []
+    public final List<String> flags = []
 
 }

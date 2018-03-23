@@ -24,11 +24,9 @@ compile {
 
 link {
 
-  exe {
-    cmd 'c++', flags, ['-o', output], input
-  }
-
   sharedlib {
     flags '-shared'
   }
+
+  cmd 'c++', flags, ['-o', output], input
 }

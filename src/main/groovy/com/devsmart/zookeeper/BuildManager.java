@@ -254,10 +254,23 @@ public class BuildManager {
             mZooKeeper.mDependencyGraph.addTask(linkerTask, "buildDebug");
             mZooKeeper.mDependencyGraph.addDependency(linkerTask, mkDirBuildTask);
 
+            File exportIncludeDir = new File(projectDir, "include");
+
+            //includes
+            ArrayList<File> includeDirs = new ArrayList<File>();
+            includeDirs.add(rootSrcDir);
+            includeDirs.add(exportIncludeDir);
+
             ArrayList<File> sourceFiles = new ArrayList<File>();
             findAllSrcFiles(sourceFiles, rootSrcDir);
 
             for(File srcFile : sourceFiles) {
+
+
+                CompileTarget target = new CompileTarget();
+                target.includes.addAll(includeDirs);
+                target.input = srcFile;
+
 
                 //Create compile task for each source
                 mZooKeeper.mVM.push();
@@ -273,6 +286,9 @@ public class BuildManager {
 
                     final File outputFile = new File(buildDir, outputFilename);
                     mZooKeeper.mVM.setVar(CompilerConfig.OUTPUT, outputFile.getAbsolutePath());
+
+                    target.output = outputFile;
+
 
                     ProcessBuildTask compileTask = new ProcessBuildTask();
 
