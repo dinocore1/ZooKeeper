@@ -1,13 +1,4 @@
 
-import com.devsmart.zookeeper.CompileTemplate
-import com.devsmart.zookeeper.CompileTemplateBuilder
-
-
-
-def compile(Closure cl) {
-    def builder = CompileTemplateBuilder.make(cl)
-    templates.add(builder)
-}
 
 def installDir = "this/is/the/install/bin"
 

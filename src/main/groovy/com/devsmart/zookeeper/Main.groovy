@@ -9,27 +9,17 @@ class Main {
 
     static void main(String[] args) {
         try {
-            List<String> classpath = new ArrayList<>();
-            classpath.add("com.devsmart.zookeeper");
-            CompilerConfiguration cc = new CompilerConfiguration();
-            //cc.setScriptBaseClass( Main.class.getName() );
-            cc.setClasspathList(classpath);
-
-
 
             ArrayList<CompileTemplateBuilder> templates = new ArrayList<>();
-
             Binding binding = new Binding();
             binding.setVariable("templates", templates);
 
-            GroovyShell shell = new GroovyShell(Main.class.getClassLoader(), binding, cc);
 
+            CompilerConfiguration cc = new CompilerConfiguration()
+            cc.scriptBaseClass = 'com.devsmart.zookeeper.ZooKeeperDSL'
 
-            Script script = shell.parse(Resources.getResource("test.txt").toURI());
-
-
-            Object result = script.run();
-
+            GroovyShell shell = new GroovyShell(ZooKeeperDSL.class.classLoader, binding, cc);
+            Object result = shell.evaluate(Resources.getResource("test.txt").toURI())
 
             CompileTemplate template = templates.get(0).getDebugVariant();
 
