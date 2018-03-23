@@ -101,24 +101,21 @@ public class ZooKeeper {
             }
         }
 
-        ArrayList<CompileTemplateBuilder> templates = new ArrayList<CompileTemplateBuilder>();
-        Binding binding = new Binding();
-        binding.setVariable("templates", templates);
-
-
-        CompilerConfiguration cc = new CompilerConfiguration();
-        cc.setScriptBaseClass("com.devsmart.zookeeper.ZooKeeperDSL");
-
-        GroovyShell shell = new GroovyShell(ZooKeeperDSL.class.getClassLoader(), binding, cc);
-
         for(File compilerCfg : compilerDir.listFiles()) {
 
             try {
 
+                Binding binding = new Binding();
+                CompilerConfiguration cc = new CompilerConfiguration();
+                cc.setScriptBaseClass("com.devsmart.zookeeper.ZooKeeperDSL");
+
+                GroovyShell shell = new GroovyShell(ZooKeeperDSL.class.getClassLoader(), binding, cc);
+
                 shell.evaluate(compilerCfg);
 
+                CompileTemplateBuilder compile = (CompileTemplateBuilder) binding.getProperty("compileBuilder");
+
                 //mBuildManager.addCompiler(templates.get(0));
-                templates.clear();
 
             } catch (Exception e) {
                 LOGGER.error("", e);

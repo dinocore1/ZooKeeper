@@ -35,6 +35,10 @@ class CompileTemplate {
         mFlags.addAll(flags)
     }
 
+    def flags(String flag) {
+        mFlags.add(flag)
+    }
+
     def cmd(Object... cmd) {
         mCommandLine = cmd.flatten()
     }

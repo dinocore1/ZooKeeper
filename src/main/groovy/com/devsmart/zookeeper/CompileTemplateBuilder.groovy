@@ -40,7 +40,7 @@ class CompileTemplateBuilder {
         mExeVariant = new CompileTemplate()
 
         cl.resolveStrategy = Closure.DELEGATE_ONLY
-        cl.delegate = mReleaseVariant
+        cl.delegate = mExeVariant
         cl()
     }
 
@@ -48,7 +48,7 @@ class CompileTemplateBuilder {
         mSharedLibVariant = new CompileTemplate()
 
         cl.resolveStrategy = Closure.DELEGATE_ONLY
-        cl.delegate = mReleaseVariant
+        cl.delegate = mSharedLibVariant
         cl()
     }
 

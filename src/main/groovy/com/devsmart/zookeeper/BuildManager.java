@@ -269,7 +269,7 @@ public class BuildManager {
 
                 CompileTarget target = new CompileTarget();
                 target.includes.addAll(includeDirs);
-                target.input = srcFile;
+                target.input.add(srcFile);
 
 
                 //Create compile task for each source
@@ -287,7 +287,7 @@ public class BuildManager {
                     final File outputFile = new File(buildDir, outputFilename);
                     mZooKeeper.mVM.setVar(CompilerConfig.OUTPUT, outputFile.getAbsolutePath());
 
-                    target.output = outputFile;
+                    target.output.add(outputFile);
 
 
                     ProcessBuildTask compileTask = new ProcessBuildTask();
