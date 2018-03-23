@@ -1,0 +1,34 @@
+
+name 'gcc'
+language 'c++'
+
+compile {
+
+  flags '-std=c++11'
+
+  debug {
+    flags '-Wall', '-g', '-O0'
+  }
+
+  release {
+    flags '-O3'
+  }
+
+  sharedlib {
+    flags '-fPIC'
+  }
+
+  cmd 'c++', flags, prefix('-I', includes), ['-o', output], ['-c', input]
+
+}
+
+link {
+
+  exe {
+    cmd 'c++', flags, ['-o', output], input
+  }
+
+  sharedlib {
+    flags '-shared'
+  }
+}

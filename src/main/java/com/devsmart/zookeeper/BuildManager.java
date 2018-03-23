@@ -5,16 +5,17 @@ import com.devsmart.zookeeper.ast.Nodes;
 import com.devsmart.zookeeper.tasks.*;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-import com.google.gson.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -26,7 +27,7 @@ public class BuildManager {
 
     public ZooKeeper mZooKeeper;
     private List<CompilerConfig> mCompilerCfg = new ArrayList<>();
-    HashMap<LibraryPlatformKey, CompileModifier> mPrecompiledLibraries = new HashMap<>;
+    HashMap<LibraryPlatformKey, CompileModifier> mPrecompiledLibraries = new HashMap<LibraryPlatformKey, CompileModifier>();
 
     private String toIncludeList(List<File> includeDirs) {
         StringBuilder builder = new StringBuilder();
@@ -45,7 +46,6 @@ public class BuildManager {
         Platform platform = Platform.parse(platformStr);
 
         LibraryPlatformKey key = new LibraryPlatformKey(library, platform);
-        mLibraries.put(key, new CompileModifier())
 
 
 
@@ -354,7 +354,7 @@ public class BuildManager {
 
     }
 
-    public void addCompiler(JsonObject cfg) {
-        mCompilerCfg.add(new CompilerConfig(cfg));
+    public void addCompiler(CompileTemplateBuilder cfg) {
+        //mCompilerCfg.add(new CompilerConfig(cfg));
     }
 }

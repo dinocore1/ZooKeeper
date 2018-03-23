@@ -12,9 +12,12 @@ import com.google.common.primitives.SignedBytes;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
+import groovy.lang.Binding;
+import groovy.lang.GroovyShell;
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.apache.commons.cli.*;
+import org.codehaus.groovy.control.CompilerConfiguration;
 import org.jetbrains.annotations.NotNull;
 import org.mapdb.*;
 import org.slf4j.Logger;
@@ -98,14 +101,24 @@ public class ZooKeeper {
             }
         }
 
-        Gson gson = new GsonBuilder().create();
+        ArrayList<CompileTemplateBuilder> templates = new ArrayList<CompileTemplateBuilder>();
+        Binding binding = new Binding();
+        binding.setVariable("templates", templates);
+
+
+        CompilerConfiguration cc = new CompilerConfiguration();
+        cc.setScriptBaseClass("com.devsmart.zookeeper.ZooKeeperDSL");
+
+        GroovyShell shell = new GroovyShell(ZooKeeperDSL.class.getClassLoader(), binding, cc);
+
         for(File compilerCfg : compilerDir.listFiles()) {
 
             try {
-                FileReader reader = new FileReader(compilerCfg);
-                JsonObject cfg = gson.fromJson(reader, JsonObject.class);
 
-                mBuildManager.addCompiler(cfg);
+                shell.evaluate(compilerCfg);
+
+                //mBuildManager.addCompiler(templates.get(0));
+                templates.clear();
 
             } catch (Exception e) {
                 LOGGER.error("", e);
