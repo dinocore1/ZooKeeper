@@ -31,7 +31,7 @@ class CompileTemplateBuilder {
         return mDebugVariant
     }
 
-    CompileTemplate getReleaseVarian() {
+    CompileTemplate getReleaseVariant() {
         return mReleaseVariant
     }
 

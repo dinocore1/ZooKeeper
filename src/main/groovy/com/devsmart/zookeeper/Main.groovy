@@ -21,17 +21,17 @@ class Main {
             GroovyShell shell = new GroovyShell(ZooKeeperDSL.class.classLoader, binding, cc);
             Object result = shell.evaluate(Resources.getResource("test.txt").toURI())
 
-            CompileTemplate template = templates.get(0).getDebugVariant();
+            CompileTemplate template = templates.get(0).getReleaseVariant();
 
             result = template.getCmdLine(new CompileTarget() {
                 @Override
                 File getInput() {
-                    return new File("input")
+                    return new File("inputFile")
                 }
 
                 @Override
                 File getOutput() {
-                    return new File("output")
+                    return new File("outputFile")
                 }
 
                 @Override
