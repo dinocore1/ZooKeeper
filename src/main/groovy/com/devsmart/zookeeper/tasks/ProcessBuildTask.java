@@ -14,22 +14,24 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class ProcessBuildTask extends BuildArtifact {
+public abstract class ProcessBuildTask extends BuildArtifact {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ProcessBuildTask.class);
 
-
-    public List<String> commandLine = new ArrayList<String>();
     public File mExeDir;
+
+    public abstract String[] createCommandLine();
 
     @Override
     public boolean run() {
         try {
 
-            LOGGER.info("run: {}", Joiner.on(" ").join(commandLine));
+            String[] cmdLine = createCommandLine();
+
+            LOGGER.info("run: {}", Joiner.on(" ").join(cmdLine));
 
             ProcessBuilder builder = new ProcessBuilder()
-                    .command(commandLine)
+                    .command(cmdLine)
                     .redirectErrorStream(true)
                     .redirectOutput(ProcessBuilder.Redirect.PIPE)
                     .directory(mExeDir)

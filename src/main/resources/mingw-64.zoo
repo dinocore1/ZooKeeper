@@ -1,0 +1,32 @@
+
+name 'gcc'
+language 'c++'
+
+compile {
+
+  flags '-std=c++11'
+
+  debug {
+    flags '-Wall', '-g', '-O0'
+  }
+
+  release {
+    flags '-O3'
+  }
+
+  sharedlib {
+    flags '-DEXPORT_DLL'
+  }
+
+  cmd 'c++', flags, prefix('-I', includes), ['-o', output], ['-c', input]
+
+}
+
+link {
+
+  sharedlib {
+    flags '-shared', "-Wl,--out-implib,${ -> output_dir}\\${ -> output_name}.a"
+  }
+
+  cmd 'c++', flags, ['-o', output], input
+}
