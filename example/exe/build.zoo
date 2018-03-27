@@ -1,0 +1,21 @@
+
+exe {
+  name 'helloworld'
+  version '0.0.1'
+
+  src 'src/*.cpp', 'build/generated/version.cpp'
+
+}
+
+exe {
+  name 'versiongen'
+
+  src 'versiongen/main.cpp'
+}
+
+task {
+  output 'build/generated/version.cpp'
+  depends 'versiongen'
+
+  cmd { "${exe.versiongen.output}", '-o', "${output}" }
+}
