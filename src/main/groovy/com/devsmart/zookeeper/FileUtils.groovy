@@ -29,7 +29,7 @@ class FileUtils {
             Iterator<File> iterator() {
                 return Iterables.filter(
                         Arrays.asList(rootDir.listFiles()),
-                        createFilenamePatternPredicate(filenamePattern));
+                        createFilenamePatternPredicate(filenamePattern)).iterator()
             }
         }
     }
@@ -69,7 +69,7 @@ class FileUtils {
 
         FileCollection[] collections = new FileCollection[paths.length]
         for(int i=0;i<collections.length;i++) {
-            collections[i] = from(paths[0])
+            collections[i] = from(paths[i])
         }
 
         Iterable<File> concat = Iterables.concat(collections)

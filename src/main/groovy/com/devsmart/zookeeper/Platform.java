@@ -1,6 +1,7 @@
 package com.devsmart.zookeeper;
 
 
+import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -83,5 +84,31 @@ public class Platform {
 
         Platform other = (Platform) obj;
         return os.equals(other.os) && arch.equals(other.arch);
+    }
+
+    public static Platform getNativePlatform() {
+        Platform.OS os;
+        String OSString = System.getProperty("os.name", "generic").toLowerCase(Locale.ENGLISH);
+        if (OSString.contains("mac") || OSString.contains("darwin")) {
+            os = Platform.OS.osx;
+        } else if (OSString.contains("win")) {
+            os = Platform.OS.win;
+        } else if (OSString.contains("nux")) {
+            os = Platform.OS.linux;
+        } else {
+            os = Platform.OS.UNKNOWN;
+        }
+
+        Platform.ARCH arch;
+        String archStr = System.getProperty("os.arch", "generic").toLowerCase(Locale.ENGLISH);
+        if(archStr.contains("x86_64") || archStr.contains("amd64")) {
+            arch = Platform.ARCH.x86_64;
+        } else if(archStr.contains("x86")){
+            arch = Platform.ARCH.x86;
+        } else {
+            arch = Platform.ARCH.UNKNOWN;
+        }
+
+        return new Platform(os, arch);
     }
 }
