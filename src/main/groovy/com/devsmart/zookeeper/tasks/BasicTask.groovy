@@ -1,29 +1,29 @@
 package com.devsmart.zookeeper.tasks
 
-import java.nio.file.Path
-import java.nio.file.Paths
+import com.devsmart.zookeeper.FileCollection
+import com.devsmart.zookeeper.FileUtils
 
 class BasicTask implements BuildTask {
 
     String name
     Closure cmd
-    final Set<String> dependcies = []
-    final Set<Path> output = []
+    final Set<String> dependencies = []
+    FileCollection output
 
     def name(String name) {
         setName(name)
     }
 
     def depends(String taskName) {
-        dependcies.add(taskName)
+        dependencies.add(taskName)
     }
 
     def depends(String... tasks) {
-        dependcies.addAll(task)
+        dependencies.addAll(task)
     }
 
-    def output(String filepath) {
-        output.add(Paths.get(filepath))
+    def output(Object... paths) {
+        output = FileUtils.from(paths)
     }
 
     def cmd(Closure cl) {
@@ -32,7 +32,7 @@ class BasicTask implements BuildTask {
 
     static BasicTask make(Closure cl) {
         BasicTask retval = new BasicTask()
-        Closure code = cl.rehydrate(retval, retval, retval);
+        Closure code = cl.rehydrate(retval, retval, retval)
         code()
         return retval
     }

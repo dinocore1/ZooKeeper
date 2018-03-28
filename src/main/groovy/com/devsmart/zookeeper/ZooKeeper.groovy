@@ -16,7 +16,7 @@ class ZooKeeper {
 
 
     void resolveTaskDependencies(BasicTask t) {
-        for(String taskName : t.dependcies) {
+        for(String taskName : t.dependencies) {
             BuildTask childTask = dependencyGraph.getTask(taskName)
             if(childTask == null) {
                 LOGGER.warn("could not resolve task: {}", taskName)
