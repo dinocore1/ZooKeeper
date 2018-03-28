@@ -5,12 +5,10 @@ import com.devsmart.zookeeper.tasks.BasicTask
 
 abstract class ZooKeeper_DSL extends Script {
 
-    private List<Runnable> mDoLast = []
-
     def exe(Closure cl) {
         BuildExeTask t = BuildExeTask.make(cl)
         zooKeeper.addExeTask(t)
-        mDoLast.add({
+        zooKeeper.addDoLast({
             zooKeeper.resolveTaskDependencies(t)
         })
     }
@@ -18,7 +16,7 @@ abstract class ZooKeeper_DSL extends Script {
     def task(Closure cl) {
         BasicTask t = BasicTask.make(cl)
         zooKeeper.addTask(t)
-        mDoLast.add({
+        zooKeeper.addDoLast({
             zooKeeper.resolveTaskDependencies(t)
         })
     }

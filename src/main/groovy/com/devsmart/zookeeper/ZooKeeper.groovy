@@ -4,10 +4,15 @@ import com.devsmart.zookeeper.tasks.BuildExeTask
 import com.devsmart.zookeeper.tasks.BuildTask
 import com.devsmart.zookeeper.tasks.BasicTask
 import org.codehaus.groovy.control.CompilerConfiguration
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 class ZooKeeper {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(ZooKeeper.class)
+
     public final DependencyGraph dependencyGraph = new DependencyGraph()
+    private final List<Runnable> mDoLast = []
 
 
     void resolveTaskDependencies(BasicTask t) {
@@ -24,20 +29,25 @@ class ZooKeeper {
     void addTask(BasicTask t) {
         String taskName = t.name
         if(taskName != null) {
-            zooKeeper.dependencyGraph.addTask(t, taskName)
+            dependencyGraph.addTask(t, taskName)
         } else {
-            zooKeeper.dependencyGraph.addTask(t)
+            dependencyGraph.addTask(t)
         }
     }
 
-    void addExeTask(BuildExeTask task) {
+    void addExeTask(BuildExeTask t) {
+        addTask(t)
 
 
     }
 
-    private void resolveDependicies(BasicTask t) {
-        for(String taskName : t.dependcies) {
-            zooKeeper.dependencyGraph.getTask(taskName)
+    void addDoLast(Runnable r) {
+        mDoLast.add(r)
+    }
+
+    void runDoLast() {
+        for(Runnable r : mDoLast) {
+            r.run()
         }
     }
 
@@ -56,8 +66,11 @@ class ZooKeeper {
             Script script = shell.parse(buildFile)
             script.run()
 
+            zooKeeper.runDoLast()
 
-
+        } else {
+            LOGGER.error("no build.zoo file found")
+            System.exit(-1)
         }
 
     }
