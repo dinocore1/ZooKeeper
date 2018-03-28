@@ -17,5 +17,20 @@ task {
   output 'build/generated/version.cpp'
   depends 'versiongen'
 
-  cmd { "${exe.versiongen.output}", '-o', "${output}" }
+  cmd { ["${exe.versiongen.output}", '-o', "${output}"] }
+}
+
+compile {
+  language 'c++'
+  target 'osx-x86_64'
+
+  debug {
+    flags '-O0', '-g'
+  }
+
+  release {
+    flags '-O3'
+  }
+
+  cmd { ['c++', "$flags", '-o', "$output", '-c', "$input"] }
 }

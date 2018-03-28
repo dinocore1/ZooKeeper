@@ -1,6 +1,8 @@
-package com.devsmart.zookeeper
+package com.devsmart.zookeeper.tasks
 
-class BuildExeTask extends Task {
+import com.devsmart.zookeeper.Version
+
+class BuildExeTask extends BasicTask {
 
     Version version
 

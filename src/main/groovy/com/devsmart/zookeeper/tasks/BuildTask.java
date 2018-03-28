@@ -1,4 +1,4 @@
-package com.devsmart.zookeeper;
+package com.devsmart.zookeeper.tasks;
 
 public interface BuildTask {
 

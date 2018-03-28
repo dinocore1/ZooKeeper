@@ -1,34 +1,30 @@
 package com.devsmart.zookeeper
 
+import com.devsmart.zookeeper.tasks.BuildExeTask
+import com.devsmart.zookeeper.tasks.BasicTask
+
 abstract class ZooKeeper_DSL extends Script {
 
-    ZooKeeper zooKeeper
-    private List<Task> mResolveQueue = []
-
-    private void addTask(Task t) {
-        String taskName = t.name
-        if(taskName != null) {
-            zooKeeper.dependencyGraph.addTask(t, taskName)
-        } else {
-            zooKeeper.dependencyGraph.addTask(t)
-        }
-        mResolveQueue.add(t)
-    }
-
-    private void resolveDependicies(Task t) {
-        for(String taskName : t.dependcies) {
-            zooKeeper.dependencyGraph.getTask(taskName)
-        }
-    }
+    private List<Runnable> mDoLast = []
 
     def exe(Closure cl) {
         BuildExeTask t = BuildExeTask.make(cl)
-        addTask(t)
+        zooKeeper.addExeTask(t)
+        mDoLast.add({
+            zooKeeper.resolveTaskDependencies(t)
+        })
     }
 
     def task(Closure cl) {
-        Task t = Task.make(cl)
-        addTask(t)
+        BasicTask t = BasicTask.make(cl)
+        zooKeeper.addTask(t)
+        mDoLast.add({
+            zooKeeper.resolveTaskDependencies(t)
+        })
+    }
+
+    def compile(Closure cl) {
+        CompileTemplate t = CompileTemplate.make(cl)
     }
 
 }

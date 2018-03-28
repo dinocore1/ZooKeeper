@@ -1,9 +1,9 @@
-package com.devsmart.zookeeper
+package com.devsmart.zookeeper.tasks
 
 import java.nio.file.Path
 import java.nio.file.Paths
 
-class Task {
+class BasicTask implements BuildTask {
 
     String name
     Closure cmd
@@ -30,10 +30,15 @@ class Task {
         setCmd(cl)
     }
 
-    static Task make(Closure cl) {
-        Task retval = new Task()
+    static BasicTask make(Closure cl) {
+        BasicTask retval = new BasicTask()
         Closure code = cl.rehydrate(retval, retval, retval);
         code()
         return retval
+    }
+
+    @Override
+    boolean run() {
+        return false
     }
 }
