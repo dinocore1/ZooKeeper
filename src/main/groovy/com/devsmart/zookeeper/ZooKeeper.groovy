@@ -6,10 +6,19 @@ import com.devsmart.zookeeper.artifacts.PhonyArtifact
 import com.devsmart.zookeeper.tasks.BuildExeTask
 import com.devsmart.zookeeper.tasks.BuildTask
 import com.devsmart.zookeeper.tasks.BasicTask
+import com.devsmart.zookeeper.tasks.ListBuildTasks
 import com.devsmart.zookeeper.tasks.MkdirBuildTask
+import org.apache.commons.cli.CommandLine
+import org.apache.commons.cli.CommandLineParser
+import org.apache.commons.cli.DefaultParser
+import org.apache.commons.cli.HelpFormatter
+import org.apache.commons.cli.Option
+import org.apache.commons.cli.Options
 import org.codehaus.groovy.control.CompilerConfiguration
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+
+import java.text.ParseException
 
 class ZooKeeper {
 
@@ -156,7 +165,7 @@ class ZooKeeper {
                 ExePlan plan = dependencyGraph.createExePlan(buildTask)
                 plan.run(4)
             } else {
-                LOGGER.warn("not task with name: {}", taskName)
+                LOGGER.warn('no task with name: {}', taskName)
             }
         }
     }
@@ -165,25 +174,57 @@ class ZooKeeper {
 
         ZooKeeper zooKeeper = new ZooKeeper()
 
-        File buildFile = new File("build.zoo")
-        if(buildFile.exists()) {
-            CompilerConfiguration cc = new CompilerConfiguration()
-            cc.scriptBaseClass = 'com.devsmart.zookeeper.ZooKeeper_DSL'
-            Binding binding = new Binding()
-            binding.setProperty("zooKeeper", zooKeeper)
-            GroovyShell shell = new GroovyShell(binding, cc)
+        zooKeeper.dependencyGraph.addTask(new ListBuildTasks(zooKeeper), "tasks")
 
-            Script script = shell.parse(buildFile)
-            script.run()
 
-            zooKeeper.runDoLast()
 
-            zooKeeper.build("linkVersiongenDebug")
+        Options options = new Options()
+        options.addOption(Option.builder("i")
+            .hasArg()
+            .argName('input .zoo file')
+            .desc('the input ZOO file')
+            .build())
 
-        } else {
-            LOGGER.error("no build.zoo file found")
-            System.exit(-1)
+        CommandLineParser parser = new DefaultParser()
+
+        try {
+            CommandLine cmdline = parser.parse(options, args)
+
+            String inputFileStr = cmdline.getOptionValue('i', 'build.zoo')
+            File inputFile = new File(inputFileStr)
+            if(inputFile.exists() && inputFile.isFile()) {
+                CompilerConfiguration cc = new CompilerConfiguration()
+                cc.scriptBaseClass = 'com.devsmart.zookeeper.ZooKeeper_DSL'
+                Binding binding = new Binding()
+                binding.setProperty("zooKeeper", zooKeeper)
+                GroovyShell shell = new GroovyShell(binding, cc)
+
+                Script script = shell.parse(inputFile)
+                script.run()
+
+                zooKeeper.runDoLast()
+
+
+            } else {
+                System.err.println("could not open file: ${inputFile.absolutePath}")
+                System.exit(1)
+            }
+
+            String[] unparsedArgs = cmdline.getArgs()
+            zooKeeper.build(unparsedArgs)
+
+
+        } catch (ParseException e) {
+            System.err.println("cmd line parse failed: " + e.getMessage())
+            HelpFormatter formatter = new HelpFormatter()
+            formatter.printHelp("zookeeper [OPTIONS] [target]...", options)
+            System.exit(1)
+        } catch (Throwable e) {
+            e.printStackTrace()
+            System.exit(1)
         }
+
+        System.exit(0)
 
     }
 
