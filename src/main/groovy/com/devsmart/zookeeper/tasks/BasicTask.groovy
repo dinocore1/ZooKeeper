@@ -2,6 +2,7 @@ package com.devsmart.zookeeper.tasks
 
 import com.devsmart.zookeeper.FileCollection
 import com.devsmart.zookeeper.FileUtils
+import com.devsmart.zookeeper.ZooKeeper
 import com.google.common.base.Joiner
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -43,13 +44,17 @@ class BasicTask implements BuildTask {
         setEnv(cl)
     }
 
+    def workingDir(String pathStr) {
+        setWorkingDir(new File(pathStr))
+    }
+
     def cmd(Closure cl) {
         setCmd(cl)
     }
 
-    static BasicTask make(Closure cl) {
+    static BasicTask make(Closure cl, ZooKeeper zooKeeper) {
         BasicTask retval = new BasicTask()
-        Closure code = cl.rehydrate(retval, retval, retval)
+        Closure code = cl.rehydrate(retval, zooKeeper, retval)
         code()
         return retval
     }
@@ -58,7 +63,7 @@ class BasicTask implements BuildTask {
     boolean run() {
         try {
 
-            String[] cmdLine = cmd().flatten({ it ->
+            Object[] cmdLineObj = cmd().flatten({ it ->
                 if(it instanceof Closure) {
                     return it()
                 } else if(it instanceof FileCollection) {
@@ -69,6 +74,13 @@ class BasicTask implements BuildTask {
 
             })
 
+            File workingDir = getWorkingDir()
+            if(workingDir != null && cmdLineObj[0] instanceof File) {
+                cmdLineObj[0] = cmdLineObj[0].absoluteFile
+            }
+
+            String[] cmdLine = cmdLineObj as String[]
+
             LOGGER.info("run: {}", Joiner.on(" ").join(cmdLine));
 
             ProcessBuilder builder = new ProcessBuilder()
@@ -78,7 +90,14 @@ class BasicTask implements BuildTask {
                     .directory(workingDir)
             ;
 
-            Map<String, String> env = builder.environment();
+            Map<String, String> childEnv = builder.environment();
+
+            if(env != null) {
+                Map<String, Object> modifiedEnv = env()
+                modifiedEnv.each { e ->
+                    childEnv.put(e.key, e.value.toString())
+                }
+            }
 
             //String path = "C:\\Users\\pauls\\.zookeeper\\toolchains\\mingw64\\bin;" + env.get("Path");
             //env.clear();

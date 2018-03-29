@@ -1,0 +1,54 @@
+
+def versionStr = '3.3.0'
+
+exe {
+  name 'prdata'
+  version "$versionStr"
+
+  src 'src/pr_data.c', 'src/xrayvars.c', 'src/xrayglob.c', 'src/xrayfiles.c',
+    'src/fluor_yield.c', 'src/coskron.c', 'src/crystal_diffraction.c',
+    'src/scattering.c', 'src/fi.c', 'src/fii.c', 'src/splint.c'
+
+}
+
+lib {
+  name 'xraylib'
+  version "$versionStr"
+  exportHeaders 'include/*.h'
+
+  src 'src/*.c', 'build/generated/xrayglob_inline.c'
+}
+
+task {
+  output 'build/generated/xrayglob_inline.c'
+  depends 'prdata'
+
+  env { ['XRAYLIB_DIR': "${projectDir}"] }
+  workingDir 'build/generated'
+  cmd { [getExe('prdata').output] }
+}
+
+compile {
+  language 'c'
+  target 'osx-x86_64'
+
+  all {
+    flags '-Wall'
+  }
+
+  debug {
+    flags '-O0', '-g'
+  }
+
+  release {
+    flags '-O3'
+  }
+
+  cmd { ['gcc', flags, prefix('-I', includes), '-o', output, '-c', input] }
+}
+
+link {
+  target 'osx-x86_64'
+
+  cmd { ['gcc', flags, '-o', output, input, '-lm'] }
+}

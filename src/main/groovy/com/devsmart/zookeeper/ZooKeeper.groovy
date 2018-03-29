@@ -31,9 +31,19 @@ class ZooKeeper {
     public final DependencyGraph dependencyGraph = new DependencyGraph()
     private final Queue<Runnable> mDoLast = new LinkedList<Runnable>()
     private final Map<Artifact, BuildTask> mArtifactMap = [:]
+    private final List<BuildExeTask> mExeTasks = []
     CompileTemplate compileTemplate
     CompileTemplate linkTemplate
 
+    BuildExeTask getExe(String name) {
+        return mExeTasks.find { it ->
+            it.name.equals(name)
+        }
+    }
+
+    File getProjectDir() {
+        return new File(".").getCanonicalFile()
+    }
 
     void resolveTaskDependencies(BasicTask t) {
         for(String taskName : t.dependencies) {
@@ -62,6 +72,7 @@ class ZooKeeper {
 
     void addExeTask(BuildExeTask t) {
         addTask(t)
+        mExeTasks.add(t)
         mDoLast.add({
             buildExeTasks(t)
         })
@@ -126,17 +137,16 @@ class ZooKeeper {
             ctx.output = compileTask.output
             ctx.includes.addAll(includeDirs)
 
-            code = compileTemplate.all.rehydrate(ctx, null, null)
-            code.resolveStrategy = Closure.DELEGATE_ONLY
+            code = compileTemplate.all.rehydrate(ctx, this, null)
+            code.resolveStrategy = Closure.DELEGATE_FIRST
             code()
 
-            code = compileTemplate.debug.rehydrate(ctx, null, null)
-            code.resolveStrategy = Closure.DELEGATE_ONLY
+            code = compileTemplate.debug.rehydrate(ctx, this, null)
+            code.resolveStrategy = Closure.DELEGATE_FIRST
             code()
 
-
-            code = compileTemplate.cmd.rehydrate(ctx, null, null)
-            code.resolveStrategy = Closure.DELEGATE_ONLY
+            code = compileTemplate.cmd.rehydrate(ctx, this, null)
+            code.resolveStrategy = Closure.DELEGATE_FIRST
             compileTask.cmd = code
 
             addTask(compileTask)
@@ -149,8 +159,8 @@ class ZooKeeper {
         ApplyTemplate ctx = new ApplyTemplate()
         ctx.input = t.input
         ctx.output = t.output
-        Closure code = linkTemplate.cmd.rehydrate(ctx, null, null)
-        code.resolveStrategy = Closure.DELEGATE_ONLY
+        Closure code = linkTemplate.cmd.rehydrate(ctx, this, null)
+        code.resolveStrategy = Closure.DELEGATE_FIRST
         t.cmd = code
 
     }
@@ -168,10 +178,21 @@ class ZooKeeper {
 
     void build(String... taskNames) {
         for(String taskName : taskNames) {
-            BuildTask buildTask = dependencyGraph.getTask(taskName)
+            BuildTask buildTask = null
+
+            if(buildTask == null) {
+                buildTask = dependencyGraph.getTask(taskName)
+            }
+
+            if(buildTask == null) {
+                buildTask = mArtifactMap.get(new FileArtifact(new File(taskName)))
+            }
+
             if(buildTask != null) {
                 ExePlan plan = dependencyGraph.createExePlan(buildTask)
-                plan.run(4)
+
+                int cores = Runtime.getRuntime().availableProcessors();
+                plan.run(cores)
             } else {
                 LOGGER.warn('no task with name: {}', taskName)
             }
