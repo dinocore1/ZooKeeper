@@ -2,6 +2,7 @@ package com.devsmart.zookeeper
 
 import com.devsmart.zookeeper.tasks.BuildExeTask
 import com.devsmart.zookeeper.tasks.BasicTask
+import com.devsmart.zookeeper.tasks.BuildLibTask
 
 abstract class ZooKeeper_DSL extends Script {
 
@@ -14,7 +15,11 @@ abstract class ZooKeeper_DSL extends Script {
     }
 
     def lib(Closure cl) {
-
+        BuildLibTask t = BuildLibTask.make(cl)
+        zooKeeper.addLibTask(t)
+        zooKeeper.addDoLast({
+            zooKeeper.resolveTaskDependencies(t)
+        })
     }
 
     def task(Closure cl) {

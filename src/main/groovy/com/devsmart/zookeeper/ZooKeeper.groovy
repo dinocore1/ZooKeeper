@@ -4,6 +4,7 @@ import com.devsmart.zookeeper.artifacts.Artifact
 import com.devsmart.zookeeper.artifacts.FileArtifact
 import com.devsmart.zookeeper.artifacts.PhonyArtifact
 import com.devsmart.zookeeper.tasks.BuildExeTask
+import com.devsmart.zookeeper.tasks.BuildLibTask
 import com.devsmart.zookeeper.tasks.BuildTask
 import com.devsmart.zookeeper.tasks.BasicTask
 import com.devsmart.zookeeper.tasks.ListBuildTasks
@@ -32,6 +33,7 @@ class ZooKeeper {
     private final Queue<Runnable> mDoLast = new LinkedList<Runnable>()
     private final Map<Artifact, BuildTask> mArtifactMap = [:]
     private final List<BuildExeTask> mExeTasks = []
+    private final List<BuildLibTask> mLibTasks = []
     CompileTemplate compileTemplate
     CompileTemplate linkTemplate
 
@@ -75,6 +77,14 @@ class ZooKeeper {
         mExeTasks.add(t)
         mDoLast.add({
             buildExeTasks(t)
+        })
+    }
+
+    void addLibTask(BuildLibTask t) {
+        addTask(t)
+        mLibTasks.add(t)
+        mDoLast.add({
+            buildLibTask(t)
         })
     }
 
@@ -163,6 +173,77 @@ class ZooKeeper {
         code.resolveStrategy = Closure.DELEGATE_FIRST
         t.cmd = code
 
+    }
+
+    void buildLibTask(BuildLibTask t) {
+        Platform platform = Platform.getNativePlatform()
+        String variant = "debug"
+
+        File buildDir = new File("build")
+        buildDir = new File(buildDir, platform.toString())
+        buildDir = new File(buildDir, variant)
+
+        List<File> includeDirs = []
+        includeDirs.add(new File("include"))
+        includeDirs.add(new File("src"))
+
+        File exeFile = new File(buildDir, t.name)
+
+        BuildTask mkdirTask = new MkdirBuildTask(buildDir)
+        dependencyGraph.addTask(mkdirTask)
+
+        t.output = FileUtils.from(exeFile)
+        List<File> objFiles = []
+
+        for(File f : t.sources) {
+            if(!f.exists()) {
+                FileArtifact artifactKey = new FileArtifact(f)
+                BuildTask parentBuildTask = mArtifactMap.get(artifactKey)
+                if(parentBuildTask == null) {
+                    LOGGER.error("no build definition for: {}", artifactKey)
+                } else {
+                    dependencyGraph.addDependency(t, parentBuildTask)
+                }
+            }
+
+            BasicTask compileTask = new BasicTask()
+            compileTask.input = FileUtils.from(f)
+
+            File outputFile = new File(buildDir, createArtifactFileName(t.name, t.version, f))
+            objFiles.add(outputFile)
+            compileTask.output = FileUtils.from(outputFile)
+
+            Closure code
+            ApplyTemplate ctx = new ApplyTemplate()
+            ctx.input = compileTask.input
+            ctx.output = compileTask.output
+            ctx.includes.addAll(includeDirs)
+
+            code = compileTemplate.all.rehydrate(ctx, this, null)
+            code.resolveStrategy = Closure.DELEGATE_FIRST
+            code()
+
+            code = compileTemplate.debug.rehydrate(ctx, this, null)
+            code.resolveStrategy = Closure.DELEGATE_FIRST
+            code()
+
+            code = compileTemplate.cmd.rehydrate(ctx, this, null)
+            code.resolveStrategy = Closure.DELEGATE_FIRST
+            compileTask.cmd = code
+
+            addTask(compileTask)
+            dependencyGraph.addDependency(compileTask, mkdirTask)
+            dependencyGraph.addDependency(t, compileTask)
+
+        }
+
+        t.input = FileUtils.from(objFiles)
+        ApplyTemplate ctx = new ApplyTemplate()
+        ctx.input = t.input
+        ctx.output = t.output
+        Closure code = linkTemplate.cmd.rehydrate(ctx, this, null)
+        code.resolveStrategy = Closure.DELEGATE_FIRST
+        t.cmd = code
     }
 
     void addDoLast(Runnable r) {
