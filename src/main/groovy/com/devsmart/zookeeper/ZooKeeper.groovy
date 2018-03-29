@@ -88,11 +88,7 @@ class ZooKeeper {
         BuildTask mkdirTask = new MkdirBuildTask(buildDir)
         dependencyGraph.addTask(mkdirTask)
 
-        BasicTask linkTask = new BasicTask()
-        linkTask.name = StringUtils.toCamelCase("link", t.name, variant)
-        linkTask.output = FileUtils.from(exeFile)
-        addTask(linkTask)
-        dependencyGraph.addDependency(t, linkTask)
+        t.output = FileUtils.from(exeFile)
         List<File> objFiles = []
 
         for(File f : t.sources) {
@@ -133,17 +129,17 @@ class ZooKeeper {
 
             addTask(compileTask)
             dependencyGraph.addDependency(compileTask, mkdirTask)
-            dependencyGraph.addDependency(linkTask, compileTask)
+            dependencyGraph.addDependency(t, compileTask)
 
         }
 
-        linkTask.input = FileUtils.from(objFiles)
+        t.input = FileUtils.from(objFiles)
         ApplyTemplate ctx = new ApplyTemplate()
-        ctx.input = linkTask.input
-        ctx.output = linkTask.output
+        ctx.input = t.input
+        ctx.output = t.output
         Closure code = linkTemplate.cmd.rehydrate(ctx, null, null)
         code.resolveStrategy = Closure.DELEGATE_ONLY
-        linkTask.cmd = code
+        t.cmd = code
 
     }
 

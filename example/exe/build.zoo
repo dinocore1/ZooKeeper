@@ -17,7 +17,7 @@ task {
   output 'build/generated/version.cpp'
   depends 'versiongen'
 
-  cmd { ["${exe.versiongen.output}", '-o', "${output}"] }
+  cmd { ["${exe.versiongen.output}", '-o', output] }
 }
 
 compile {
