@@ -60,8 +60,8 @@ class FileUtils {
         return new FileCollection() {
             @Override
             Iterator<File> iterator() {
-                return paths.flatten({ it ->
-                    return from(it)
+                return paths.collectMany({ it ->
+                    return from(it).iterator().toList()
                 }).iterator()
             }
         }
@@ -79,31 +79,6 @@ class FileUtils {
     }
 
     static FileCollection from(Object... paths) {
-
-        return new FileCollection() {
-            @Override
-            Iterator<File> iterator() {
-                return paths.toList().collectMany({ it->
-                    return from(it).iterator().toList()
-                }).iterator()
-            }
-        }
-
-
-        /*
-        FileCollection[] collections = new FileCollection[paths.length]
-        for(int i=0;i<collections.length;i++) {
-            collections[i] = from(paths[i])
-        }
-
-        Iterable<File> concat = Iterables.concat(collections)
-
-        return new FileCollection() {
-            @Override
-            Iterator<File> iterator() {
-                return concat.iterator()
-            }
-        }
-        */
+        return from(paths.flatten())
     }
 }
