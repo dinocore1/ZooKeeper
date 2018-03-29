@@ -6,6 +6,7 @@ import com.devsmart.zookeeper.artifacts.PhonyArtifact
 import com.devsmart.zookeeper.tasks.BuildExeTask
 import com.devsmart.zookeeper.tasks.BuildTask
 import com.devsmart.zookeeper.tasks.BasicTask
+import com.devsmart.zookeeper.tasks.MkdirBuildTask
 import org.codehaus.groovy.control.CompilerConfiguration
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -17,6 +18,8 @@ class ZooKeeper {
     public final DependencyGraph dependencyGraph = new DependencyGraph()
     private final Queue<Runnable> mDoLast = new LinkedList<Runnable>()
     private final Map<Artifact, BuildTask> mArtifactMap = [:]
+    CompileTemplate compileTemplate
+    CompileTemplate linkTemplate
 
 
     void resolveTaskDependencies(BasicTask t) {
@@ -71,11 +74,17 @@ class ZooKeeper {
         buildDir = new File(buildDir, platform.toString())
         buildDir = new File(buildDir, variant)
 
-        BasicTask linkTask = new BasicTask()
-        linkTask.name = StringUtils.toCamelCase("link", variant, t.name)
-        addTask(linkTask)
+        File exeFile = new File(buildDir, t.name)
 
+        BuildTask mkdirTask = new MkdirBuildTask(buildDir)
+        dependencyGraph.addTask(mkdirTask)
+
+        BasicTask linkTask = new BasicTask()
+        linkTask.name = StringUtils.toCamelCase("link", t.name, variant)
+        linkTask.output = FileUtils.from(exeFile)
+        addTask(linkTask)
         dependencyGraph.addDependency(t, linkTask)
+        List<File> objFiles = []
 
         for(File f : t.sources) {
             if(!f.exists()) {
@@ -89,11 +98,43 @@ class ZooKeeper {
             }
 
             BasicTask compileTask = new BasicTask()
-            compileTask.output = FileUtils.from(new File(buildDir, createArtifactFileName(existingOutputFiles, f)))
+            compileTask.input = FileUtils.from(f)
+
+            File outputFile = new File(buildDir, createArtifactFileName(existingOutputFiles, f))
+            objFiles.add(outputFile)
+            compileTask.output = FileUtils.from(outputFile)
+
+            Closure code
+            ApplyTemplate ctx = new ApplyTemplate()
+            ctx.input = compileTask.input
+            ctx.output = compileTask.output
+
+            code = compileTemplate.all.rehydrate(ctx, null, null)
+            code.resolveStrategy = Closure.DELEGATE_ONLY
+            code()
+
+            code = compileTemplate.debug.rehydrate(ctx, null, null)
+            code.resolveStrategy = Closure.DELEGATE_ONLY
+            code()
+
+
+            code = compileTemplate.cmd.rehydrate(ctx, null, null)
+            code.resolveStrategy = Closure.DELEGATE_ONLY
+            compileTask.cmd = code
+
             addTask(compileTask)
+            dependencyGraph.addDependency(compileTask, mkdirTask)
             dependencyGraph.addDependency(linkTask, compileTask)
 
         }
+
+        linkTask.input = FileUtils.from(objFiles)
+        ApplyTemplate ctx = new ApplyTemplate()
+        ctx.input = linkTask.input
+        ctx.output = linkTask.output
+        Closure code = linkTemplate.cmd.rehydrate(ctx, null, null)
+        code.resolveStrategy = Closure.DELEGATE_ONLY
+        linkTask.cmd = code
 
     }
 
@@ -105,6 +146,18 @@ class ZooKeeper {
         Runnable r
         while( (r = mDoLast.poll()) != null) {
             r.run()
+        }
+    }
+
+    void build(String... taskNames) {
+        for(String taskName : taskNames) {
+            BuildTask buildTask = dependencyGraph.getTask(taskName)
+            if(buildTask != null) {
+                ExePlan plan = dependencyGraph.createExePlan(buildTask)
+                plan.run(4)
+            } else {
+                LOGGER.warn("not task with name: {}", taskName)
+            }
         }
     }
 
@@ -124,6 +177,8 @@ class ZooKeeper {
             script.run()
 
             zooKeeper.runDoLast()
+
+            zooKeeper.build("linkVersiongenDebug")
 
         } else {
             LOGGER.error("no build.zoo file found")

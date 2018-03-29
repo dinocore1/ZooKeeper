@@ -4,6 +4,7 @@ class CompileTemplate {
 
     String language
     Platform target
+    Closure all
     Closure debug
     Closure release
     Closure cmd
@@ -14,6 +15,10 @@ class CompileTemplate {
 
     def target(String str) {
         setTarget(Platform.parse(str))
+    }
+
+    def all(Closure cl) {
+        setAll(cl)
     }
 
     def debug(Closure cl) {

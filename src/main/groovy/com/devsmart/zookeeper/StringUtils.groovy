@@ -8,9 +8,10 @@ class StringUtils {
         builder.append(strs[0].toLowerCase())
 
         for(int i=1;i<strs.length;i++) {
-            builder.append(strs[0].charAt(0).toUpperCase())
-            if(strs[0].length() > 1) {
-                builder.append(strs[0].substring(1, strs[0].length()))
+            String name = strs[i]
+            builder.append(name.charAt(0).toUpperCase())
+            if(name.length() > 1) {
+                builder.append(name.substring(1, strs[i].length()))
             }
         }
         return builder.toString()

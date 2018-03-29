@@ -23,6 +23,12 @@ abstract class ZooKeeper_DSL extends Script {
 
     def compile(Closure cl) {
         CompileTemplate t = CompileTemplate.make(cl)
+        zooKeeper.compileTemplate = t
+    }
+
+    def link(Closure cl) {
+        CompileTemplate t = CompileTemplate.make(cl)
+        zooKeeper.linkTemplate = t
     }
 
 }

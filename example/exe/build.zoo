@@ -24,6 +24,10 @@ compile {
   language 'c++'
   target 'osx-x86_64'
 
+  all {
+    flags '-std=c++11', '-Wall'
+  }
+
   debug {
     flags '-O0', '-g'
   }
@@ -32,5 +36,11 @@ compile {
     flags '-O3'
   }
 
-  cmd { ['c++', "$flags", '-o', "$output", '-c', "$input"] }
+  cmd { ['c++', flags, prefix('-I', includes), '-o', output, '-c', input] }
+}
+
+link {
+  target 'osx-x86_64'
+
+  cmd { ['c++', flags, '-o', output, input] }
 }
