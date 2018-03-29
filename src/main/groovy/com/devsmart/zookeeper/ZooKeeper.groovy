@@ -8,6 +8,10 @@ import com.devsmart.zookeeper.tasks.BuildTask
 import com.devsmart.zookeeper.tasks.BasicTask
 import com.devsmart.zookeeper.tasks.ListBuildTasks
 import com.devsmart.zookeeper.tasks.MkdirBuildTask
+import com.google.common.base.Charsets
+import com.google.common.hash.HashFunction
+import com.google.common.hash.Hasher
+import com.google.common.hash.Hashing
 import org.apache.commons.cli.CommandLine
 import org.apache.commons.cli.CommandLineParser
 import org.apache.commons.cli.DefaultParser
@@ -63,25 +67,32 @@ class ZooKeeper {
         })
     }
 
-    private static String createArtifactFileName(Set<String> existingOutputFiles, File srcFile) {
-        String newName = srcFile.name + '.o'
-        int i = 1;
-        while(existingOutputFiles.contains(newName)) {
-            newName = String.format("%s%d.o", srcFile.name, i)
-        }
+    private static final HashFunction HASH_FUNCTION = Hashing.sha1()
 
-        existingOutputFiles.add(newName)
+    private static String createArtifactFileName(String buildName, Version version, File srcFile) {
+
+        Hasher hasher = HASH_FUNCTION.newHasher()
+        hasher.putString(buildName, Charsets.UTF_8)
+        hasher.putString(version.toString(), Charsets.UTF_8)
+        hasher.putString(srcFile.name, Charsets.UTF_8)
+
+        String hashStr = hasher.hash().toString().substring(0, 5)
+
+        String newName = srcFile.name + '_' + hashStr + '.o'
         return newName
     }
 
     private void buildExeTasks(BuildExeTask t) {
-        Set<String> existingOutputFiles = []
         Platform platform = Platform.getNativePlatform()
         String variant = "debug"
 
         File buildDir = new File("build")
         buildDir = new File(buildDir, platform.toString())
         buildDir = new File(buildDir, variant)
+
+        List<File> includeDirs = []
+        includeDirs.add(new File("include"))
+        includeDirs.add(new File("src"))
 
         File exeFile = new File(buildDir, t.name)
 
@@ -105,7 +116,7 @@ class ZooKeeper {
             BasicTask compileTask = new BasicTask()
             compileTask.input = FileUtils.from(f)
 
-            File outputFile = new File(buildDir, createArtifactFileName(existingOutputFiles, f))
+            File outputFile = new File(buildDir, createArtifactFileName(t.name, t.version, f))
             objFiles.add(outputFile)
             compileTask.output = FileUtils.from(outputFile)
 
@@ -113,6 +124,7 @@ class ZooKeeper {
             ApplyTemplate ctx = new ApplyTemplate()
             ctx.input = compileTask.input
             ctx.output = compileTask.output
+            ctx.includes.addAll(includeDirs)
 
             code = compileTemplate.all.rehydrate(ctx, null, null)
             code.resolveStrategy = Closure.DELEGATE_ONLY

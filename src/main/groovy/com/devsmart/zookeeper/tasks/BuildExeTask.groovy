@@ -6,7 +6,7 @@ import com.devsmart.zookeeper.Version
 
 class BuildExeTask extends BasicTask {
 
-    Version version
+    Version version = Version.fromString('0.0.0')
     FileCollection sources
 
     def version(String versionstr) {

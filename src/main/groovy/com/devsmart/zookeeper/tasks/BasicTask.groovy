@@ -21,6 +21,7 @@ class BasicTask implements BuildTask {
     FileCollection input
     FileCollection output
     File workingDir
+    Closure env
 
     def name(String name) {
         setName(name)
@@ -36,6 +37,10 @@ class BasicTask implements BuildTask {
 
     def output(Object... paths) {
         output = FileUtils.from(paths)
+    }
+
+    def env(Closure cl) {
+        setEnv(cl)
     }
 
     def cmd(Closure cl) {

@@ -13,6 +13,10 @@ abstract class ZooKeeper_DSL extends Script {
         })
     }
 
+    def lib(Closure cl) {
+
+    }
+
     def task(Closure cl) {
         BasicTask t = BasicTask.make(cl)
         zooKeeper.addTask(t)

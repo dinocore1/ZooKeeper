@@ -29,7 +29,7 @@ public class Version implements Comparable<Version> {
 
     @Override
     public int hashCode() {
-        return major ^ minor ^ patch;
+        return (major << 20) & (minor << 10) & patch;
     }
 
     @Override
