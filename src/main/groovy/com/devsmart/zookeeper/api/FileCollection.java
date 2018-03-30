@@ -6,13 +6,6 @@ import java.util.Set;
 public interface FileCollection extends Iterable<File> {
 
     /**
-     * Adds another collection to this collection
-     * @param collection
-     * @return
-     */
-    FileCollection add(FileCollection collection);
-
-    /**
      * Returns a FileCollection which contains the union of
      * this collection and the given collection
      * @param collection

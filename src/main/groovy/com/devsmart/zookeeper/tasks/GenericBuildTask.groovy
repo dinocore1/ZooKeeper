@@ -1,7 +1,6 @@
 package com.devsmart.zookeeper.tasks
 
 import com.devsmart.zookeeper.api.FileCollection
-import com.devsmart.zookeeper.FileUtils
 import com.devsmart.zookeeper.Version
 
 class GenericBuildTask extends BasicTask {

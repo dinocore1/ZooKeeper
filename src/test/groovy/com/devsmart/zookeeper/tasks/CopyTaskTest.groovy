@@ -17,7 +17,7 @@ class CopyTaskTest {
 
         String newDir = "${folder.root}" + File.separator + "newdir"
 
-        CopyTask task = new CopyTask()
+        //CopyTask task = new CopyTask()
         task.to(newDir)
 
 

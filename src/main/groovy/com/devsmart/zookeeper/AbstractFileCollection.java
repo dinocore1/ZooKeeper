@@ -5,9 +5,8 @@ import com.devsmart.zookeeper.api.FileCollection;
 import java.io.File;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.Set;
 
-class FileCollectionImpl implements FileCollection {
+abstract class AbstractFileCollection implements FileCollection {
 
 
     public String getDisplayName() {
@@ -20,28 +19,8 @@ class FileCollectionImpl implements FileCollection {
     }
 
     @Override
-    public FileCollection add(FileCollection collection) {
-        return null;
-    }
-
-    @Override
-    public FileCollection plus(FileCollection collection) {
-        return null;
-    }
-
-    @Override
-    public FileCollection minus(FileCollection collection) {
-        return null;
-    }
-
-    @Override
     public boolean isEmpty() {
-        return false;
-    }
-
-    @Override
-    public Set<File> getFiles() {
-        return null;
+        return getFiles().isEmpty();
     }
 
     @Override
