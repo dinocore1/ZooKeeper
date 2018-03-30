@@ -1,29 +1,13 @@
 package com.devsmart.zookeeper.tasks
 
-import com.devsmart.zookeeper.FileCollection
-import com.devsmart.zookeeper.FileUtils
-import com.devsmart.zookeeper.Version
+import com.devsmart.zookeeper.api.FileCollection
 
-class BuildLibTask extends BasicTask {
+class BuildLibTask extends GenericBuildTask {
 
-    Version version = Version.fromString('0.0.0')
-    FileCollection sources
+    FileCollection exportHeaders
 
-    def version(String versionstr) {
-        setVersion(Version.fromString(versionstr))
-    }
-
-    def src(Object... paths) {
-        sources = FileUtils.from(paths)
-    }
-
-    def exportHeaders(String... paths) {
-
-    }
-
-    @Override
-    String toString() {
-        return "build: " + name
+    def headers(Closure cl) {
+        setExportHeaders(cl)
     }
 
     static BuildLibTask make(Closure cl) {

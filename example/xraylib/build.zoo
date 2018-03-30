@@ -14,7 +14,10 @@ exe {
 lib {
   name 'xraylib'
   version "$versionStr"
-  exportHeaders 'include/*.h'
+  headers {
+    from 'include/*.h'
+    to 'include'
+  }
 
   src 'src/*.c', 'build/generated/xrayglob_inline.c'
 }

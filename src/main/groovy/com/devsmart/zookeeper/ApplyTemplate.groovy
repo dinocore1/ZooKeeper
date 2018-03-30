@@ -1,5 +1,7 @@
 package com.devsmart.zookeeper
 
+import com.devsmart.zookeeper.api.FileCollection
+
 class ApplyTemplate {
 
 

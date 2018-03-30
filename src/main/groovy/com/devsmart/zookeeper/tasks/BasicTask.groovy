@@ -1,6 +1,6 @@
 package com.devsmart.zookeeper.tasks
 
-import com.devsmart.zookeeper.FileCollection
+import com.devsmart.zookeeper.api.FileCollection
 import com.devsmart.zookeeper.FileUtils
 import com.devsmart.zookeeper.ZooKeeper
 import com.google.common.base.Joiner
