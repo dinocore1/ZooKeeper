@@ -5,12 +5,32 @@ import com.devsmart.zookeeper.api.FileCollection;
 import java.io.File;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 abstract class AbstractFileCollection implements FileCollection {
 
 
     public String getDisplayName() {
         return "";
+    }
+
+    @Override
+    public FileCollection plus(FileCollection collection) {
+        return new UnionFileCollection(this, collection);
+    }
+
+    @Override
+    public FileCollection minus(FileCollection collection) {
+        return new AbstractFileCollection() {
+
+            @Override
+            public Set<File> getFiles() {
+                Set<File> files = new LinkedHashSet<File>(AbstractFileCollection.this.getFiles());
+                files.removeAll(collection.getFiles());
+                return files;
+            }
+        };
     }
 
     @Override
