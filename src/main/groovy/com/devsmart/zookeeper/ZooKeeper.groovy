@@ -2,7 +2,7 @@ package com.devsmart.zookeeper
 
 import com.devsmart.zookeeper.artifacts.Artifact
 import com.devsmart.zookeeper.artifacts.FileArtifact
-import com.devsmart.zookeeper.artifacts.PhonyArtifact
+import com.devsmart.zookeeper.file.FileUtils
 import com.devsmart.zookeeper.tasks.BuildExeTask
 import com.devsmart.zookeeper.tasks.BuildLibTask
 import com.devsmart.zookeeper.tasks.BuildTask

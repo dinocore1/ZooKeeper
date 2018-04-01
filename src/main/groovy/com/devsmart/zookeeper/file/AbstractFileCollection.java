@@ -1,4 +1,4 @@
-package com.devsmart.zookeeper;
+package com.devsmart.zookeeper.file;
 
 import com.devsmart.zookeeper.api.FileCollection;
 
@@ -10,10 +10,12 @@ import java.util.Set;
 
 abstract class AbstractFileCollection implements FileCollection {
 
-
-    public String getDisplayName() {
-        return "";
-    }
+    /**
+     * Returns the display name of this file collection. Used in log and error messages.
+     *
+     * @return the display name
+     */
+    public abstract String getDisplayName();
 
     @Override
     public FileCollection plus(FileCollection collection) {
@@ -25,17 +27,17 @@ abstract class AbstractFileCollection implements FileCollection {
         return new AbstractFileCollection() {
 
             @Override
+            public String getDisplayName() {
+                return AbstractFileCollection.this.getDisplayName();
+            }
+
+            @Override
             public Set<File> getFiles() {
                 Set<File> files = new LinkedHashSet<File>(AbstractFileCollection.this.getFiles());
                 files.removeAll(collection.getFiles());
                 return files;
             }
         };
-    }
-
-    @Override
-    public String toString() {
-        return getDisplayName();
     }
 
     @Override

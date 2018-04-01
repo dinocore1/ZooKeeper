@@ -14,8 +14,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.devsmart.zookeeper;
+package com.devsmart.zookeeper.file;
 
+import com.devsmart.zookeeper.file.FileUtils;
 import org.apache.commons.io.IOCase;
 
 import java.io.File;
