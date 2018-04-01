@@ -43,10 +43,6 @@ class ZooKeeper {
         }
     }
 
-    File getProjectDir() {
-        return new File(".").getCanonicalFile()
-    }
-
     void resolveTaskDependencies(BasicTask t) {
         for(String taskName : t.dependencies) {
             BuildTask childTask = dependencyGraph.getTask(taskName)
@@ -284,9 +280,11 @@ class ZooKeeper {
 
         ZooKeeper zooKeeper = new ZooKeeper()
 
+        File projectDir = new File(".").getCanonicalFile()
+        Project project = new Project(projectDir: projectDir, zooKeeper: zooKeeper)
+
+
         zooKeeper.dependencyGraph.addTask(new ListBuildTasks(zooKeeper), "tasks")
-
-
 
         Options options = new Options()
         options.addOption(Option.builder("i")
@@ -306,7 +304,7 @@ class ZooKeeper {
                 CompilerConfiguration cc = new CompilerConfiguration()
                 cc.scriptBaseClass = 'com.devsmart.zookeeper.ZooKeeper_DSL'
                 Binding binding = new Binding()
-                binding.setProperty("zooKeeper", zooKeeper)
+                binding.setProperty("project", project)
                 GroovyShell shell = new GroovyShell(binding, cc)
 
                 Script script = shell.parse(inputFile)

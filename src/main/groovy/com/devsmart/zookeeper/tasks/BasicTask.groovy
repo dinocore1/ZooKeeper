@@ -2,6 +2,7 @@ package com.devsmart.zookeeper.tasks
 
 import com.devsmart.zookeeper.api.FileCollection
 import com.devsmart.zookeeper.ZooKeeper
+import com.devsmart.zookeeper.file.FileUtils
 import com.google.common.base.Joiner
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory

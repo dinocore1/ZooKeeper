@@ -5,9 +5,9 @@ exe {
   name 'prdata'
   version "$versionStr"
 
-  src 'src/pr_data.c', 'src/xrayvars.c', 'src/xrayglob.c', 'src/xrayfiles.c',
+  src files('src/pr_data.c', 'src/xrayvars.c', 'src/xrayglob.c', 'src/xrayfiles.c',
     'src/fluor_yield.c', 'src/coskron.c', 'src/crystal_diffraction.c',
-    'src/scattering.c', 'src/fi.c', 'src/fii.c', 'src/splint.c'
+    'src/scattering.c', 'src/fi.c', 'src/fii.c', 'src/splint.c')
 
 }
 

@@ -5,7 +5,7 @@ import com.devsmart.zookeeper.DeferredUtil;
 import java.io.File;
 import java.nio.file.Path;
 
-public class FileResolver {
+public abstract class AbstractFileResolver implements PathToFileResolver{
 
     public enum PathValidation {
         NONE,
@@ -13,6 +13,8 @@ public class FileResolver {
         FILE,
         DIRECTORY
     }
+
+    protected abstract File doResolve(Object path);
 
     public File resolve(Object path, PathValidation validation) {
         File file = doResolve(path);
@@ -25,30 +27,45 @@ public class FileResolver {
 
     }
 
-    protected File doResolve(Object path) {
+    @Override
+    public File resolve(Object path) {
+        return resolve(path, PathValidation.NONE);
+    }
+
+    protected File convertObjectToFile(Object path) {
         Object object = DeferredUtil.unpack(path);
         if (object == null) {
             return null;
         }
-        Object converted = convertObjectToFile(object);
-        if (converted instanceof File) {
-            return (File) converted;
-        } else {
-            throw new RuntimeException(String.format("Cannot convert '%s' to a file.", converted));
-        }
-    }
 
-    private Object convertObjectToFile(Object path) {
-        if(path == null) {
-            return null;
-        } else if(path instanceof Path) {
+
+        if(path instanceof Path) {
             return ((Path)path).toFile();
         } else if(path instanceof File) {
             return (File) path;
+        } else if(path instanceof String){
+            return new File((String) path);
+        }
+
+        Object converted = convert(object);
+        if (converted instanceof File) {
+            return (File) converted;
+        }
+        throw new RuntimeException(String.format("Cannot convert '%s' to a file.", converted));
+    }
+
+    private Object convert(Object input) {
+        if(input instanceof Path) {
+            return ((Path)input).toFile();
+        } else if(input instanceof File) {
+            return (File) input;
+        } else if(input instanceof String){
+            return new File((String) input);
         } else {
-            return null;
+            return input;
         }
     }
+
 
     protected void validate(File file, PathValidation validation) {
         switch (validation) {
