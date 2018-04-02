@@ -173,4 +173,12 @@ public class RelativePath implements CharSequence, Comparable<RelativePath> {
         segments[segments.length-1] = name;
         return new RelativePath(isFile, segments);
     }
+
+    public String[] getSegments() {
+        return mSegments;
+    }
+
+    public boolean isFile() {
+        return mIsFile;
+    }
 }

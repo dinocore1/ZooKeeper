@@ -1,23 +1,22 @@
 package com.devsmart.zookeeper.file;
 
 import com.devsmart.zookeeper.PatternSet;
-import com.devsmart.zookeeper.api.FileDetails;
-import com.devsmart.zookeeper.api.FileTree;
-import com.devsmart.zookeeper.api.FileVisitor;
-import com.devsmart.zookeeper.api.RelativePath;
+import com.devsmart.zookeeper.api.*;
 
 import java.io.File;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class DirectoryFileTree implements MinFileTree {
 
 
     private final File mBaseDir;
-    private Object mSpec;
+    private Spec<FileTreeElement> mSpec;
 
     public DirectoryFileTree(File baseDir, PatternSet patternSet) {
         mBaseDir = baseDir;
-        //mSpec = patternSet.getAsSpec();
+        mSpec = patternSet.getAsSpec();
     }
 
     @Override
@@ -28,20 +27,24 @@ public class DirectoryFileTree implements MinFileTree {
     private void visitFrom(FileVisitor visitor, File fileOrDir, RelativePath path) {
         if(fileOrDir.isFile()) {
             path = path.append(true, fileOrDir.getName());
-            FileDetails detail = new DefaultFileDetails(fileOrDir, path);
-            visitor.visit(detail);
+            DefaultFileDetails detail = new DefaultFileDetails(fileOrDir, path);
+            if(mSpec.isSatisfiedBy(detail)) {
+                visitor.visit(detail);
+            }
         } else if(fileOrDir.isDirectory()) {
             path = path.append(false, fileOrDir.getName());
-            FileDetails detail = new DefaultFileDetails(fileOrDir, path);
-            visitor.visit(detail);
-            for(File f : fileOrDir.listFiles()) {
-                visitFrom(visitor, f, path);
+            DefaultFileDetails detail = new DefaultFileDetails(fileOrDir, path);
+            if(mSpec.isSatisfiedBy(detail)) {
+                visitor.visit(detail);
+                for (File f : fileOrDir.listFiles()) {
+                    visitFrom(visitor, f, path);
+                }
             }
         }
 
     }
 
-    private static class DefaultFileDetails implements FileDetails {
+    private static class DefaultFileDetails implements FileDetails, FileTreeElement {
 
         private final File mFile;
         private final RelativePath mRelitivePath;
@@ -57,8 +60,43 @@ public class DirectoryFileTree implements MinFileTree {
         }
 
         @Override
+        public String getPath() {
+            return null;
+        }
+
+        @Override
+        public int getMode() {
+            return 0;
+        }
+
+        @Override
         public boolean isDirectory() {
             return mFile.isDirectory();
+        }
+
+        @Override
+        public long getLastModified() {
+            return 0;
+        }
+
+        @Override
+        public long getSize() {
+            return 0;
+        }
+
+        @Override
+        public InputStream open() {
+            return null;
+        }
+
+        @Override
+        public void copyTo(OutputStream output) {
+
+        }
+
+        @Override
+        public boolean copyTo(File target) {
+            return false;
         }
 
         @Override
@@ -67,9 +105,10 @@ public class DirectoryFileTree implements MinFileTree {
         }
 
         @Override
-        public RelativePath getRelitivePath() {
+        public RelativePath getRelativePath() {
             return mRelitivePath;
         }
+
     }
 
 

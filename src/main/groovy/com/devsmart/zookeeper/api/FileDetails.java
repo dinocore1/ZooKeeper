@@ -10,7 +10,7 @@ public interface FileDetails {
 
     File getFile();
 
-    RelativePath getRelitivePath();
+    RelativePath getRelativePath();
 
 
 }

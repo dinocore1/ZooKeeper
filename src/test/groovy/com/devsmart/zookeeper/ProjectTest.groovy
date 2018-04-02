@@ -70,7 +70,7 @@ class ProjectTest {
 
         Project project = new Project(projectDir, null)
 
-        FileTree ft = project.fileTree(dir: 'src', include: '*.txt')
+        FileTree ft = project.fileTree(dir: 'src', include: '**/*.txt')
         File f1 = ft.getSingleFile()
         assertEquals(cool, f1)
     }

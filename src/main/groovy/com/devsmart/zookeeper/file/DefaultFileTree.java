@@ -23,6 +23,13 @@ public class DefaultFileTree extends CompositFileTree {
             mBaseDir = mFileResolver.resolve(".");
         }
 
+        Object include = args.get("include");
+        if(include instanceof Iterable) {
+            patternSet.include((Iterable)include);
+        } else {
+            patternSet.include((String) include);
+        }
+
     }
 
     public Set<String> getIncludes() {
