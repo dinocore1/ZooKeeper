@@ -18,7 +18,7 @@ lib {
     from 'include/**/*.h'
   }
 
-  src files('src/*.c', 'build/generated/xrayglob_inline.c')
+  src fileTree(dir: 'src', include: '**/*.c') + file('build/generated/xrayglob_inline.c')
 }
 
 task {

@@ -25,7 +25,9 @@ public class DefaultFileCollectionResolveContext implements FileCollectionResolv
 
         @Override
         public void convertInto(Object element, Collection<? super FileCollection> result, PathToFileResolver resolver) {
-            if(element instanceof MinFileTree) {
+            if(element instanceof FileCollection) {
+                result.add((FileCollection)element);
+            } else if(element instanceof MinFileTree) {
                 result.add(new FileTreeAdapter((MinFileTree) element));
             } else {
                 result.add(new FileListAdapter(resolver.resolve(element)));
@@ -37,7 +39,9 @@ public class DefaultFileCollectionResolveContext implements FileCollectionResolv
 
         @Override
         public void convertInto(Object element, Collection<? super FileTree> result, PathToFileResolver resolver) {
-            if(element instanceof MinFileTree) {
+            if(element instanceof FileTree){
+                result.add((FileTree) element);
+            } else if(element instanceof MinFileTree) {
                 result.add(new FileTreeAdapter((MinFileTree) element));
             }
         }
@@ -77,7 +81,9 @@ public class DefaultFileCollectionResolveContext implements FileCollectionResolv
 
         while(!mQueue.isEmpty()) {
             Object element = mQueue.poll();
-            if(element instanceof Callable) {
+            if(element instanceof FileCollection){
+                converter.convertInto(element, result, mFileResolver);
+            } else if(element instanceof Callable) {
                 Callable callable = (Callable) element;
                 Object callableResult = DeferredUtil.uncheckedCall(callable);
                 if (callableResult != null) {
