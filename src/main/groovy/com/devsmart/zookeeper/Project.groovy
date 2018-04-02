@@ -26,7 +26,7 @@ class Project {
     }
 
     FileCollection files(Object... objects) {
-        return DefaultFileCollection("file collection", mBaseDirFileResolver, objects)
+        return new DefaultFileCollection("file collection", mBaseDirFileResolver, objects)
     }
 
     FileTree fileTree(Map obj) {

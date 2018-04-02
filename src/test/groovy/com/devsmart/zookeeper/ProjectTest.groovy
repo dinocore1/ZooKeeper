@@ -1,7 +1,9 @@
 package com.devsmart.zookeeper
 
+import com.devsmart.zookeeper.api.FileCollection
 import org.junit.Rule
 import org.junit.Test
+import static org.junit.Assert.*
 import org.junit.rules.TemporaryFolder
 
 class ProjectTest {
@@ -21,9 +23,11 @@ class ProjectTest {
         writer.close()
 
 
-        Project project = new Project(projectDir: projectDir)
+        Project project = new Project(projectDir, null)
 
         FileCollection fc = project.files('src/cool.txt')
+        File f1 = fc.getSingleFile()
+        assertEquals(cool, f1)
 
     }
 }

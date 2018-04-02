@@ -15,12 +15,13 @@ public class UnionFileCollection extends CompositeFileCollection {
         mSource.addAll(Arrays.asList(collections));
     }
 
-    @Override
-    Set<FileCollection> getSourceCollections() {
-        return mSource;
-    }
 
     public String getDisplayName() {
         return "file collection";
+    }
+
+    @Override
+    public void visitContents(FileCollectionResolveContext context) {
+        context.add(mSource);
     }
 }

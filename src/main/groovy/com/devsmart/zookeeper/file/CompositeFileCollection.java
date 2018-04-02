@@ -4,14 +4,9 @@ import com.devsmart.zookeeper.api.FileCollection;
 import com.devsmart.zookeeper.file.AbstractFileCollection;
 
 import java.io.File;
-import java.util.LinkedHashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 abstract public class CompositeFileCollection extends AbstractFileCollection {
-
-    abstract Set<FileCollection> getSourceCollections();
 
     @Override
     public Set<File> getFiles() {
@@ -29,4 +24,14 @@ abstract public class CompositeFileCollection extends AbstractFileCollection {
         }
         return allFiles;
     }
+
+    public abstract void visitContents(FileCollectionResolveContext context);
+
+    protected Collection<FileCollection> getSourceCollections() {
+        DefaultFileCollectionResolveContext context = new DefaultFileCollectionResolveContext(new IdentityFileResolver());
+        visitContents(context);
+        return context.resolveAsFileCollections();
+    }
+
+
 }

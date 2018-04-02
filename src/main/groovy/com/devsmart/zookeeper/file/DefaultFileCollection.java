@@ -26,8 +26,9 @@ public class DefaultFileCollection extends CompositeFileCollection {
     }
 
     @Override
-    Set<FileCollection> getSourceCollections() {
-        return null;
+    public void visitContents(FileCollectionResolveContext context) {
+        FileCollectionResolveContext nested = context.push(mFileResolver);
+        nested.add(mFiles);
     }
 
     @Override
