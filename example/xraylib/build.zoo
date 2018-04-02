@@ -14,16 +14,15 @@ exe {
 lib {
   name 'xraylib'
   version "$versionStr"
-  headers {
-    from 'include/*.h'
-    to 'include'
+  exportHeaders {
+    from 'include/**/*.h'
   }
 
-  src 'src/*.c', 'build/generated/xrayglob_inline.c'
+  src files('src/*.c', 'build/generated/xrayglob_inline.c')
 }
 
 task {
-  output 'build/generated/xrayglob_inline.c'
+  output file('build/generated/xrayglob_inline.c')
   depends 'prdata'
 
   env { ['XRAYLIB_DIR': "${projectDir}"] }
