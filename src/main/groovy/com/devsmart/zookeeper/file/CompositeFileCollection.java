@@ -27,7 +27,7 @@ abstract public class CompositeFileCollection extends AbstractFileCollection {
 
     public abstract void visitContents(FileCollectionResolveContext context);
 
-    protected Collection<FileCollection> getSourceCollections() {
+    protected Collection<? extends FileCollection> getSourceCollections() {
         DefaultFileCollectionResolveContext context = new DefaultFileCollectionResolveContext(new IdentityFileResolver());
         visitContents(context);
         return context.resolveAsFileCollections();

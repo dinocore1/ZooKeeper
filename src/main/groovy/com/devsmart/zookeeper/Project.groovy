@@ -4,6 +4,7 @@ import com.devsmart.zookeeper.api.FileCollection
 import com.devsmart.zookeeper.api.FileTree
 import com.devsmart.zookeeper.file.DefaultBaseDirFileResolver
 import com.devsmart.zookeeper.file.DefaultFileCollection
+import com.devsmart.zookeeper.file.DefaultFileTree
 
 class Project {
 
@@ -29,7 +30,8 @@ class Project {
         return new DefaultFileCollection("file collection", mBaseDirFileResolver, objects)
     }
 
-    FileTree fileTree(Map obj) {
+    FileTree fileTree(Map<String, ?> args) {
+        return new DefaultFileTree(args, mBaseDirFileResolver)
 
     }
 }

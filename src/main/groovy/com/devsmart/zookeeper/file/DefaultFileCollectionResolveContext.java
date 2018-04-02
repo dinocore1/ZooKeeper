@@ -2,6 +2,7 @@ package com.devsmart.zookeeper.file;
 
 import com.devsmart.zookeeper.DeferredUtil;
 import com.devsmart.zookeeper.api.FileCollection;
+import com.devsmart.zookeeper.api.FileTree;
 import com.devsmart.zookeeper.tasks.BasicTask;
 import com.google.common.collect.Iterables;
 
@@ -11,11 +12,43 @@ import java.util.concurrent.Callable;
 
 public class DefaultFileCollectionResolveContext implements FileCollectionResolveContext {
 
+    private final FileCollectionConverter mFileCollectionConverter;
+    private final FileTreeConverter mFileTreeConverter;
     private LinkedList<Object> mQueue = new LinkedList<Object>();
     private PathToFileResolver mFileResolver;
 
+    private interface Converter<T> {
+        void convertInto(Object element, Collection<? super T> result, PathToFileResolver resolver);
+    }
+
+    private static class FileCollectionConverter implements Converter<FileCollection> {
+
+        @Override
+        public void convertInto(Object element, Collection<? super FileCollection> result, PathToFileResolver resolver) {
+            if(element instanceof MinFileTree) {
+                result.add(new FileTreeAdapter((MinFileTree) element));
+            } else {
+                result.add(new FileListAdapter(resolver.resolve(element)));
+            }
+        }
+    }
+
+    private static class FileTreeConverter implements Converter<FileTree> {
+
+        @Override
+        public void convertInto(Object element, Collection<? super FileTree> result, PathToFileResolver resolver) {
+            if(element instanceof MinFileTree) {
+                result.add(new FileTreeAdapter((MinFileTree) element));
+            }
+        }
+    }
+
     public DefaultFileCollectionResolveContext(PathToFileResolver fileResolver) {
         mFileResolver = fileResolver;
+
+        mFileCollectionConverter = new FileCollectionConverter();
+        mFileTreeConverter = new FileTreeConverter();
+
 
     }
 
@@ -32,7 +65,15 @@ public class DefaultFileCollectionResolveContext implements FileCollectionResolv
     }
 
     public List<FileCollection> resolveAsFileCollections() {
-        List<FileCollection> result = new ArrayList<FileCollection>();
+       return doResolve(mFileCollectionConverter);
+    }
+
+    public List<FileTree> resolveAsFileTrees() {
+        return doResolve(mFileTreeConverter);
+    }
+
+    private <T> List<T> doResolve(Converter<? extends T> converter) {
+        List<T> result = new ArrayList<T>();
 
         while(!mQueue.isEmpty()) {
             Object element = mQueue.poll();
@@ -47,12 +88,10 @@ public class DefaultFileCollectionResolveContext implements FileCollectionResolv
                 mQueue.add(0, task.getOutput());
             } else if (element instanceof Iterable) {
                 Iterables.addAll(mQueue.subList(0, 0), (Iterable) element);
-
             } else {
-                result.add(new FileListAdapter(mFileResolver.resolve(element)));
+                converter.convertInto(element, result, mFileResolver);
             }
         }
-
 
         return result;
     }

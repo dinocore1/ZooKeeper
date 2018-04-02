@@ -167,4 +167,10 @@ public class RelativePath implements CharSequence, Comparable<RelativePath> {
                 return new RelativePath(false, parentSegments);
         }
     }
+
+    public RelativePath append(boolean isFile, String name) {
+        String[] segments = Arrays.copyOf(mSegments, mSegments.length + 1);
+        segments[segments.length-1] = name;
+        return new RelativePath(isFile, segments);
+    }
 }
