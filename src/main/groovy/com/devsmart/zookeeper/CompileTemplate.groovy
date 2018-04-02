@@ -33,9 +33,9 @@ class CompileTemplate {
         setCmd(cl)
     }
 
-    static CompileTemplate make(Closure cl) {
+    static CompileTemplate make(Closure cl, Project project) {
         CompileTemplate t = new CompileTemplate()
-        Closure code = cl.rehydrate(t, t, t)
+        Closure code = cl.rehydrate(t, project, t)
         code()
         return t
     }

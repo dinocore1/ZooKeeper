@@ -3,14 +3,14 @@ exe {
   name 'helloworld'
   version '0.0.1'
 
-  src 'src/*.cpp', 'build/generated/version.cpp'
+  src files('src/*.cpp', 'build/generated/version.cpp')
 
 }
 
 exe {
   name 'versiongen'
 
-  src 'versiongen/main.cpp'
+  src files('versiongen/main.cpp')
 }
 
 task {

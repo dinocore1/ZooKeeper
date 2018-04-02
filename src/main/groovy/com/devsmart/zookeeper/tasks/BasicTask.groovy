@@ -1,5 +1,6 @@
 package com.devsmart.zookeeper.tasks
 
+import com.devsmart.zookeeper.Project
 import com.devsmart.zookeeper.api.FileCollection
 import com.devsmart.zookeeper.ZooKeeper
 import com.devsmart.zookeeper.file.FileUtils
@@ -36,8 +37,8 @@ class BasicTask implements BuildTask {
         dependencies.addAll(task)
     }
 
-    def output(Object... paths) {
-        output = FileUtils.from(paths)
+    def output(FileCollection fc) {
+        output = fc
     }
 
     def env(Closure cl) {
@@ -52,9 +53,9 @@ class BasicTask implements BuildTask {
         setCmd(cl)
     }
 
-    static BasicTask make(Closure cl, ZooKeeper zooKeeper) {
+    static BasicTask make(Closure cl, Project project) {
         BasicTask retval = new BasicTask()
-        Closure code = cl.rehydrate(retval, zooKeeper, retval)
+        Closure code = cl.rehydrate(retval, project, retval)
         code()
         return retval
     }

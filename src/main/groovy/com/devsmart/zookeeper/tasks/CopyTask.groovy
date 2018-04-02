@@ -5,14 +5,14 @@ import com.devsmart.zookeeper.api.FileCollection
 class CopyTask implements BuildTask {
 
     FileCollection from
-    File to
+    File into
 
 
     def from(String... paths) {
 
     }
 
-    def to(String path) {
+    def into(String path) {
 
     }
 

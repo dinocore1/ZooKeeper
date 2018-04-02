@@ -30,18 +30,12 @@ class ZooKeeper {
     private static final Logger LOGGER = LoggerFactory.getLogger(ZooKeeper.class)
 
     public final DependencyGraph dependencyGraph = new DependencyGraph()
-    private final Queue<Runnable> mDoLast = new LinkedList<Runnable>()
-    private final Map<Artifact, BuildTask> mArtifactMap = [:]
-    private final List<BuildExeTask> mExeTasks = []
-    private final List<BuildLibTask> mLibTasks = []
+    final Queue<Runnable> doLast = new LinkedList<Runnable>()
+    final Map<Artifact, BuildTask> artifactMap = [:]
+    final List<BuildExeTask> exeTasks = []
+    final List<BuildLibTask> libTasks = []
     CompileTemplate compileTemplate
     CompileTemplate linkTemplate
-
-    BuildExeTask getExe(String name) {
-        return mExeTasks.find { it ->
-            it.name.equals(name)
-        }
-    }
 
     void resolveTaskDependencies(BasicTask t) {
         for(String taskName : t.dependencies) {
@@ -52,36 +46,6 @@ class ZooKeeper {
                 dependencyGraph.addDependency(t, childTask)
             }
         }
-    }
-
-    void addTask(BasicTask t) {
-        String taskName = t.name
-        if(taskName != null) {
-            dependencyGraph.addTask(t, taskName)
-        } else {
-            dependencyGraph.addTask(t)
-        }
-
-        for(File f : t.output) {
-            mArtifactMap.put(new FileArtifact(f), t)
-        }
-
-    }
-
-    void addExeTask(BuildExeTask t) {
-        addTask(t)
-        mExeTasks.add(t)
-        mDoLast.add({
-            buildExeTasks(t)
-        })
-    }
-
-    void addLibTask(BuildLibTask t) {
-        addTask(t)
-        mLibTasks.add(t)
-        mDoLast.add({
-            buildLibTask(t)
-        })
     }
 
     private static final HashFunction HASH_FUNCTION = Hashing.sha1()
@@ -99,180 +63,10 @@ class ZooKeeper {
         return newName
     }
 
-    private void buildExeTasks(BuildExeTask t) {
-        Platform platform = Platform.getNativePlatform()
-        String variant = "debug"
-
-        File buildDir = new File("build")
-        buildDir = new File(buildDir, platform.toString())
-        buildDir = new File(buildDir, variant)
-
-        List<File> includeDirs = []
-        includeDirs.add(new File("include"))
-        includeDirs.add(new File("src"))
-
-        File exeFile = new File(buildDir, t.name)
-
-        BuildTask mkdirTask = new MkdirBuildTask(buildDir)
-        dependencyGraph.addTask(mkdirTask)
-
-        t.output = FileUtils.from(exeFile)
-        List<File> objFiles = []
-
-        for(File f : t.sources) {
-            if(!f.exists()) {
-                FileArtifact artifactKey = new FileArtifact(f)
-                BuildTask parentBuildTask = mArtifactMap.get(artifactKey)
-                if(parentBuildTask == null) {
-                    LOGGER.error("no build definition for: {}", artifactKey)
-                } else {
-                    dependencyGraph.addDependency(t, parentBuildTask)
-                }
-            }
-
-            BasicTask compileTask = new BasicTask()
-            compileTask.input = FileUtils.from(f)
-
-            File outputFile = new File(buildDir, createArtifactFileName(t.name, t.version, f))
-            objFiles.add(outputFile)
-            compileTask.output = FileUtils.from(outputFile)
-
-            Closure code
-            ApplyTemplate ctx = new ApplyTemplate()
-            ctx.input = compileTask.input
-            ctx.output = compileTask.output
-            ctx.includes.addAll(includeDirs)
-
-            code = compileTemplate.all.rehydrate(ctx, this, null)
-            code.resolveStrategy = Closure.DELEGATE_FIRST
-            code()
-
-            code = compileTemplate.debug.rehydrate(ctx, this, null)
-            code.resolveStrategy = Closure.DELEGATE_FIRST
-            code()
-
-            code = compileTemplate.cmd.rehydrate(ctx, this, null)
-            code.resolveStrategy = Closure.DELEGATE_FIRST
-            compileTask.cmd = code
-
-            addTask(compileTask)
-            dependencyGraph.addDependency(compileTask, mkdirTask)
-            dependencyGraph.addDependency(t, compileTask)
-
-        }
-
-        t.input = FileUtils.from(objFiles)
-        ApplyTemplate ctx = new ApplyTemplate()
-        ctx.input = t.input
-        ctx.output = t.output
-        Closure code = linkTemplate.cmd.rehydrate(ctx, this, null)
-        code.resolveStrategy = Closure.DELEGATE_FIRST
-        t.cmd = code
-
-    }
-
-    void buildLibTask(BuildLibTask t) {
-        Platform platform = Platform.getNativePlatform()
-        String variant = "debug"
-
-        File buildDir = new File("build")
-        buildDir = new File(buildDir, platform.toString())
-        buildDir = new File(buildDir, variant)
-
-        List<File> includeDirs = []
-        includeDirs.add(new File("include"))
-        includeDirs.add(new File("src"))
-
-        File exeFile = new File(buildDir, t.name)
-
-        BuildTask mkdirTask = new MkdirBuildTask(buildDir)
-        dependencyGraph.addTask(mkdirTask)
-
-        t.output = FileUtils.from(exeFile)
-        List<File> objFiles = []
-
-        for(File f : t.sources) {
-            if(!f.exists()) {
-                FileArtifact artifactKey = new FileArtifact(f)
-                BuildTask parentBuildTask = mArtifactMap.get(artifactKey)
-                if(parentBuildTask == null) {
-                    LOGGER.error("no build definition for: {}", artifactKey)
-                } else {
-                    dependencyGraph.addDependency(t, parentBuildTask)
-                }
-            }
-
-            BasicTask compileTask = new BasicTask()
-            compileTask.input = FileUtils.from(f)
-
-            File outputFile = new File(buildDir, createArtifactFileName(t.name, t.version, f))
-            objFiles.add(outputFile)
-            compileTask.output = FileUtils.from(outputFile)
-
-            Closure code
-            ApplyTemplate ctx = new ApplyTemplate()
-            ctx.input = compileTask.input
-            ctx.output = compileTask.output
-            ctx.includes.addAll(includeDirs)
-
-            code = compileTemplate.all.rehydrate(ctx, this, null)
-            code.resolveStrategy = Closure.DELEGATE_FIRST
-            code()
-
-            code = compileTemplate.debug.rehydrate(ctx, this, null)
-            code.resolveStrategy = Closure.DELEGATE_FIRST
-            code()
-
-            code = compileTemplate.cmd.rehydrate(ctx, this, null)
-            code.resolveStrategy = Closure.DELEGATE_FIRST
-            compileTask.cmd = code
-
-            addTask(compileTask)
-            dependencyGraph.addDependency(compileTask, mkdirTask)
-            dependencyGraph.addDependency(t, compileTask)
-
-        }
-
-        t.input = FileUtils.from(objFiles)
-        ApplyTemplate ctx = new ApplyTemplate()
-        ctx.input = t.input
-        ctx.output = t.output
-        Closure code = linkTemplate.cmd.rehydrate(ctx, this, null)
-        code.resolveStrategy = Closure.DELEGATE_FIRST
-        t.cmd = code
-    }
-
-    void addDoLast(Runnable r) {
-        mDoLast.add(r)
-    }
-
     void runDoLast() {
         Runnable r
-        while( (r = mDoLast.poll()) != null) {
+        while( (r = doLast.poll()) != null) {
             r.run()
-        }
-    }
-
-    void build(String... taskNames) {
-        for(String taskName : taskNames) {
-            BuildTask buildTask = null
-
-            if(buildTask == null) {
-                buildTask = dependencyGraph.getTask(taskName)
-            }
-
-            if(buildTask == null) {
-                buildTask = mArtifactMap.get(new FileArtifact(new File(taskName)))
-            }
-
-            if(buildTask != null) {
-                ExePlan plan = dependencyGraph.createExePlan(buildTask)
-
-                int cores = Runtime.getRuntime().availableProcessors();
-                plan.run(cores)
-            } else {
-                LOGGER.warn('no task with name: {}', taskName)
-            }
         }
     }
 
@@ -281,7 +75,7 @@ class ZooKeeper {
         ZooKeeper zooKeeper = new ZooKeeper()
 
         File projectDir = new File(".").getCanonicalFile()
-        Project project = new Project(projectDir: projectDir, zooKeeper: zooKeeper)
+        Project project = new Project(projectDir, zooKeeper)
 
 
         zooKeeper.dependencyGraph.addTask(new ListBuildTasks(zooKeeper), "tasks")
@@ -319,7 +113,7 @@ class ZooKeeper {
             }
 
             String[] unparsedArgs = cmdline.getArgs()
-            zooKeeper.build(unparsedArgs)
+            project.build(unparsedArgs)
 
 
         } catch (ParseException e) {

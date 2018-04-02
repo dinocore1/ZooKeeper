@@ -12,8 +12,8 @@ class GenericBuildTask extends BasicTask {
         setVersion(Version.fromString(versionstr))
     }
 
-    def src(Object... paths) {
-        sources = FileUtils.from(paths)
+    def src(FileCollection srcFiles) {
+        setSources(srcFiles)
     }
 
     @Override

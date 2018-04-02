@@ -1,18 +1,18 @@
 package com.devsmart.zookeeper.tasks
 
-import com.devsmart.zookeeper.api.FileCollection
+import com.devsmart.zookeeper.Project
 
 class BuildLibTask extends GenericBuildTask {
 
-    FileCollection exportHeaders
+    CopyTask exportHeaders
 
-    def headers(Closure cl) {
-        setExportHeaders(cl)
+    def exportHeaders(Closure cl) {
+
     }
 
-    static BuildLibTask make(Closure cl) {
+    static BuildLibTask make(Closure cl, Project project) {
         BuildLibTask retval = new BuildLibTask()
-        Closure code = cl.rehydrate(retval, retval, retval);
+        Closure code = cl.rehydrate(retval, project, retval)
         code()
         return retval
     }
