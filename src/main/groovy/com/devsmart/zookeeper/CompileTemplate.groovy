@@ -1,5 +1,7 @@
 package com.devsmart.zookeeper
 
+import com.devsmart.zookeeper.api.FileCollection
+
 class CompileTemplate {
 
     String language
@@ -8,6 +10,7 @@ class CompileTemplate {
     Closure debug
     Closure release
     Closure cmd
+    String workingDir
 
     def language(String str) {
         setLanguage(str)
@@ -31,6 +34,10 @@ class CompileTemplate {
 
     def cmd(Closure cl) {
         setCmd(cl)
+    }
+
+    def workingDir(String work) {
+        setWorkingDir(work)
     }
 
     static CompileTemplate make(Closure cl, Project project) {

@@ -142,6 +142,7 @@ class Project {
             code = zooKeeper.compileTemplate.cmd.rehydrate(ctx, this, null)
             code.resolveStrategy = Closure.DELEGATE_FIRST
             compileTask.cmd = code
+            compileTask.workingDir = file(zooKeeper.compileTemplate.workingDir).getSingleFile()
 
             addTask(compileTask)
             zooKeeper.dependencyGraph.addDependency(compileTask, mkdirTask)
@@ -215,6 +216,7 @@ class Project {
             code = zooKeeper.compileTemplate.cmd.rehydrate(ctx, this, null)
             code.resolveStrategy = Closure.DELEGATE_FIRST
             compileTask.cmd = code
+            compileTask.workingDir = file(zooKeeper.compileTemplate.workingDir).getSingleFile()
 
             addTask(compileTask)
             zooKeeper.dependencyGraph.addDependency(compileTask, mkdirTask)
@@ -249,7 +251,7 @@ class Project {
             if(buildTask != null) {
                 ExePlan plan = zooKeeper.dependencyGraph.createExePlan(buildTask)
 
-                int cores = Runtime.getRuntime().availableProcessors();
+                int cores = Runtime.getRuntime().availableProcessors()
                 plan.run(cores)
             } else {
                 LOGGER.warn('no task with name: {}', taskName)
