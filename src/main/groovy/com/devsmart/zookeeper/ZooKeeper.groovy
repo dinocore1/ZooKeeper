@@ -36,6 +36,7 @@ class ZooKeeper {
     final List<BuildLibTask> libTasks = []
     CompileTemplate compileTemplate
     CompileTemplate linkTemplate
+    CompileTemplate staticLibTemplate
 
     void resolveTaskDependencies(BasicTask t) {
         for(String taskName : t.dependencies) {

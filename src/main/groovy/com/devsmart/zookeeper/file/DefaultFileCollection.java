@@ -1,11 +1,8 @@
 package com.devsmart.zookeeper.file;
 
-import com.devsmart.zookeeper.api.FileCollection;
-
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashSet;
-import java.util.Set;
 
 public class DefaultFileCollection extends CompositeFileCollection {
 

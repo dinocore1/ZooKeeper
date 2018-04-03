@@ -5,9 +5,18 @@ exe {
   name 'prdata'
   version "$versionStr"
 
-  src files('src/pr_data.c', 'src/xrayvars.c', 'src/xrayglob.c', 'src/xrayfiles.c',
-    'src/fluor_yield.c', 'src/coskron.c', 'src/crystal_diffraction.c',
-    'src/scattering.c', 'src/fi.c', 'src/fii.c', 'src/splint.c')
+  src files(
+    'src/pr_data.c',
+    'src/xrayvars.c',
+    'src/xrayglob.c',
+    'src/xrayfiles.c',
+    'src/fluor_yield.c',
+    'src/coskron.c',
+    'src/crystal_diffraction.c',
+    'src/scattering.c',
+    'src/fi.c',
+    'src/fii.c',
+    'src/splint.c')
 
 }
 
@@ -18,7 +27,40 @@ lib {
     from 'include/**/*.h'
   }
 
-  src fileTree(dir: 'src', include: '**/*.c') + file('build/generated/xrayglob_inline.c')
+  include files('src', 'include', '.')
+
+  src files(
+        'src/xrayvars.c',
+	      'src/cross_sections.c',
+		    'src/scattering.c',
+		    'src/atomicweight.c',
+		    'src/edges.c',
+		    'src/fluor_lines.c',
+		    'src/fluor_yield.c',
+		    'src/jump.c',
+		    'src/coskron.c',
+		    'src/radrate.c',
+		    'src/cs_line.c',
+		    'src/polarized.c',
+		    'src/splint.c',
+		    'src/cs_barns.c',
+		    'src/fi.c',
+		    'src/fii.c',
+		    'src/kissel_pe.c',
+		    'src/xrayfiles_inline.c',
+		    'src/xraylib-aux.c',
+		    'src/xraylib-parser.c',
+		    'src/cs_cp.c',
+		    'src/refractive_indices.c',
+		    'src/comptonprofiles.c',
+		    'src/atomiclevelwidth.c',
+		    'src/auger_trans.c',
+		    'src/xrf_cross_sections_aux.c',
+		    'src/crystal_diffraction.c',
+		    'src/xraylib-nist-compounds.c',
+		    'src/densities.c',
+		    'src/xraylib-radionuclides.c',
+        'build/generated/xrayglob_inline.c')
 }
 
 task {
@@ -53,4 +95,8 @@ link {
   target 'osx-x86_64'
 
   cmd { ['gcc', flags, '-o', output, input, '-lm'] }
+}
+
+staticlib {
+  cmd { ['ar', 'rcs', output, input] }
 }

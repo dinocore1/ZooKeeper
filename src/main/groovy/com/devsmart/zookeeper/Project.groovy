@@ -94,9 +94,10 @@ class Project {
         buildDir = new File(buildDir, platform.toString())
         buildDir = new File(buildDir, variant)
 
-        List<File> includeDirs = []
-        includeDirs.add(new File("include"))
-        includeDirs.add(new File("src"))
+        if(t.includes == null) {
+            t.includes = files('src', 'include')
+        }
+        Set<File> includeDirs = t.getIncludes().files
 
         File exeFile = new File(buildDir, t.name)
 
@@ -166,11 +167,12 @@ class Project {
         buildDir = new File(buildDir, platform.toString())
         buildDir = new File(buildDir, variant)
 
-        List<File> includeDirs = []
-        includeDirs.add(new File("include"))
-        includeDirs.add(new File("src"))
+        if(t.includes == null) {
+            t.includes = files('src', 'include')
+        }
+        Set<File> includeDirs = t.getIncludes().files
 
-        File exeFile = new File(buildDir, t.name)
+        File exeFile = new File(buildDir, t.name  + ".a")
 
         BuildTask mkdirTask = new MkdirBuildTask(buildDir)
         zooKeeper.dependencyGraph.addTask(mkdirTask)
@@ -224,7 +226,7 @@ class Project {
         ApplyTemplate ctx = new ApplyTemplate()
         ctx.input = t.input
         ctx.output = t.output
-        Closure code = zooKeeper.linkTemplate.cmd.rehydrate(ctx, this, null)
+        Closure code = zooKeeper.staticLibTemplate.cmd.rehydrate(ctx, this, null)
         code.resolveStrategy = Closure.DELEGATE_FIRST
         t.cmd = code
     }

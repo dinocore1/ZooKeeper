@@ -40,4 +40,9 @@ abstract class ZooKeeper_DSL extends Script {
         project.zooKeeper.linkTemplate = t
     }
 
+    def staticlib(Closure cl) {
+        CompileTemplate t = CompileTemplate.make(cl, project)
+        project.zooKeeper.staticLibTemplate = t
+    }
+
 }
