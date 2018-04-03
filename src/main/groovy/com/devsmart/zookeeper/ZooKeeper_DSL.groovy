@@ -31,18 +31,29 @@ abstract class ZooKeeper_DSL extends Script {
     }
 
     def compile(Closure cl) {
-        CompileTemplate t = CompileTemplate.make(cl, project)
-        project.zooKeeper.compileTemplate = t
+        genTemplate(cl, 'compile')
     }
 
     def link(Closure cl) {
-        CompileTemplate t = CompileTemplate.make(cl, project)
-        project.zooKeeper.linkTemplate = t
+        genTemplate(cl, 'link')
     }
 
     def staticlib(Closure cl) {
+        genTemplate(cl, 'staticlib')
+    }
+
+    def sharedlib(Closure cl) {
+        genTemplate(cl, 'sharedlib')
+    }
+
+    private void genTemplate(Closure cl, String stage) {
         CompileTemplate t = CompileTemplate.make(cl, project)
-        project.zooKeeper.staticLibTemplate = t
+
+        for(String language : t.language) {
+            TemplateKey key = new TemplateKey(t.target, language, stage)
+            project.zooKeeper.templates.put(key, t)
+        }
+
     }
 
 }

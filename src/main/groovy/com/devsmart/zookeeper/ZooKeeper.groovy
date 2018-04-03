@@ -34,9 +34,28 @@ class ZooKeeper {
     final Map<Artifact, BuildTask> artifactMap = [:]
     final List<BuildExeTask> exeTasks = []
     final List<BuildLibTask> libTasks = []
-    CompileTemplate compileTemplate
-    CompileTemplate linkTemplate
-    CompileTemplate staticLibTemplate
+    final Map<TemplateKey, CompileTemplate> templates = [:]
+
+
+    void init(Project project) {
+        File zookeeperRoot = new File(System.getProperty('user.home'))
+        zookeeperRoot = new File(zookeeperRoot, '.zookeeper')
+        zookeeperRoot.mkdirs()
+
+        //read template files
+
+        File templateDir = new File(zookeeperRoot, 'templates')
+        for(File f : templateDir.listFiles()) {
+            CompilerConfiguration cc = new CompilerConfiguration()
+            cc.scriptBaseClass = 'com.devsmart.zookeeper.ZooKeeper_DSL'
+            Binding binding = new Binding()
+            binding.setProperty("project", project)
+            GroovyShell shell = new GroovyShell(binding, cc)
+
+            Script script = shell.parse(f)
+            script.run()
+        }
+    }
 
     void resolveTaskDependencies(BasicTask t) {
         for(String taskName : t.dependencies) {
@@ -77,6 +96,8 @@ class ZooKeeper {
 
         File projectDir = new File(".").getCanonicalFile()
         Project project = new Project(projectDir, zooKeeper)
+
+        zooKeeper.init(project)
 
 
         zooKeeper.dependencyGraph.addTask(new ListBuildTasks(zooKeeper), "tasks")

@@ -86,158 +86,177 @@ class Project {
         })
     }
 
+    private class CompileContext {
+        GenericBuildTask parentTask
+        Platform target
+        String variant
+        File buildDir
+        final List<File> includeDirs = []
+        final List<File> objectFiles = []
+    }
+
+    private BasicTask createCompileTask(String language, File sourceFile, CompileContext compileCtx) {
+        TemplateKey key = new TemplateKey(compileCtx.target, language, 'compile')
+        CompileTemplate template = zooKeeper.templates.get(key)
+        if(template == null) {
+            LOGGER.warn("could not find template for: {}", key)
+            return
+        }
+
+        BasicTask compileTask = new BasicTask()
+        addTask(compileTask)
+        compileTask.input = file(sourceFile)
+
+        if(!sourceFile.exists()) {
+            FileArtifact artifactKey = new FileArtifact(sourceFile)
+            BuildTask parentBuildTask = zooKeeper.artifactMap.get(artifactKey)
+            if(parentBuildTask == null) {
+                LOGGER.error("no build definition for: {}", artifactKey)
+            } else {
+                zooKeeper.dependencyGraph.addDependency(compileTask, parentBuildTask)
+            }
+        }
+
+        File outputFile = new File(compileCtx.buildDir, ZooKeeper.createArtifactFileName(compileCtx.parentTask.name, compileCtx.parentTask.version, sourceFile))
+        compileCtx.objectFiles.add(outputFile)
+        compileTask.output = file(outputFile)
+
+        Closure code
+        ApplyTemplate ctx = new ApplyTemplate()
+        ctx.input = compileTask.input
+        ctx.output = compileTask.output
+        ctx.includes.addAll(compileCtx.includeDirs)
+
+        code = template.all.rehydrate(ctx, this, null)
+        code.resolveStrategy = Closure.DELEGATE_FIRST
+        code()
+
+        if('debug'.equals(compileCtx.variant)) {
+            code = template.debug.rehydrate(ctx, this, null)
+            code.resolveStrategy = Closure.DELEGATE_FIRST
+            code()
+        } else if('release'.equals(compileCtx.variant)) {
+            code = template.release.rehydrate(ctx, this, null)
+            code.resolveStrategy = Closure.DELEGATE_FIRST
+            code()
+        }
+
+        code = template.cmd.rehydrate(ctx, this, null)
+        code.resolveStrategy = Closure.DELEGATE_FIRST
+        compileTask.cmd = code
+        if(template.workingDir != null) {
+            compileTask.workingDir = file(template.workingDir).getSingleFile()
+        }
+
+
+        return compileTask
+    }
+
     private void buildExeTasks(BuildExeTask t) {
-        Platform platform = Platform.getNativePlatform()
-        String variant = "debug"
+        CompileContext compileCtx = new CompileContext()
+        compileCtx.parentTask = t
+        compileCtx.target = Platform.getNativePlatform()
+        compileCtx.variant = 'debug'
+
 
         File buildDir = new File(projectDir, 'build')
-        buildDir = new File(buildDir, platform.toString())
-        buildDir = new File(buildDir, variant)
+        buildDir = new File(buildDir, compileCtx.target.toString())
+        buildDir = new File(buildDir, compileCtx.variant)
+        compileCtx.buildDir = buildDir
 
         if(t.includes == null) {
             t.includes = files('src', 'include')
         }
-        Set<File> includeDirs = t.getIncludes().files
+        compileCtx.includeDirs.addAll(t.getIncludes().files)
 
         File exeFile = new File(buildDir, t.name)
-
         BuildTask mkdirTask = new MkdirBuildTask(buildDir)
         zooKeeper.dependencyGraph.addTask(mkdirTask)
 
         t.output = file(exeFile)
-        List<File> objFiles = []
 
         for(File f : t.sources) {
 
-            BasicTask compileTask = new BasicTask()
-            addTask(compileTask)
-
-            if(!f.exists()) {
-                FileArtifact artifactKey = new FileArtifact(f)
-                BuildTask parentBuildTask = zooKeeper.artifactMap.get(artifactKey)
-                if(parentBuildTask == null) {
-                    LOGGER.error("no build definition for: {}", artifactKey)
-                } else {
-                    dependencyGraph.addDependency(compileTask, parentBuildTask)
-                }
+            String lang = ''
+            if(f.name.endsWith('.cpp')) {
+                lang = 'c++'
+            } else if(f.name.endsWith('.c')) {
+                lang = 'c'
             }
 
-            compileTask.input = file(f)
-
-            File outputFile = new File(buildDir, ZooKeeper.createArtifactFileName(t.name, t.version, f))
-            objFiles.add(outputFile)
-            compileTask.output = file(outputFile)
-
-            Closure code
-            ApplyTemplate ctx = new ApplyTemplate()
-            ctx.input = compileTask.input
-            ctx.output = compileTask.output
-            ctx.includes.addAll(includeDirs)
-
-            code = zooKeeper.compileTemplate.all.rehydrate(ctx, this, null)
-            code.resolveStrategy = Closure.DELEGATE_FIRST
-            code()
-
-            code = zooKeeper.compileTemplate.debug.rehydrate(ctx, this, null)
-            code.resolveStrategy = Closure.DELEGATE_FIRST
-            code()
-
-            code = zooKeeper.compileTemplate.cmd.rehydrate(ctx, this, null)
-            code.resolveStrategy = Closure.DELEGATE_FIRST
-            compileTask.cmd = code
-            compileTask.workingDir = file(zooKeeper.compileTemplate.workingDir).getSingleFile()
-
+            BasicTask compileTask = createCompileTask(lang, f, compileCtx)
 
             zooKeeper.dependencyGraph.addDependency(compileTask, mkdirTask)
             zooKeeper.dependencyGraph.addDependency(t, compileTask)
-
         }
 
-        t.input = files(objFiles)
+        TemplateKey linkKey = new TemplateKey(compileCtx.target, 'c', 'link')
+        CompileTemplate linkTemplate = zooKeeper.templates.get(linkKey)
+
+        t.input = files(compileCtx.objectFiles)
         ApplyTemplate ctx = new ApplyTemplate()
         ctx.input = t.input
         ctx.output = t.output
-        Closure code = zooKeeper.linkTemplate.cmd.rehydrate(ctx, this, null)
+        Closure code = linkTemplate.cmd.rehydrate(ctx, this, null)
         code.resolveStrategy = Closure.DELEGATE_FIRST
         t.cmd = code
-        t.workingDir = file(zooKeeper.compileTemplate.workingDir).getSingleFile()
+        if(linkTemplate.workingDir != null) {
+            t.workingDir = file(linkTemplate.workingDir).getSingleFile()
+        }
 
     }
 
     void buildLibTask(BuildLibTask t) {
-        Platform platform = Platform.getNativePlatform()
-        String variant = "debug"
+        CompileContext compileCtx = new CompileContext()
+        compileCtx.parentTask = t
+        compileCtx.target = Platform.getNativePlatform()
+        compileCtx.variant = 'debug'
+
 
         File buildDir = new File(projectDir, 'build')
-        buildDir = new File(buildDir, platform.toString())
-        buildDir = new File(buildDir, variant)
+        buildDir = new File(buildDir, compileCtx.target.toString())
+        buildDir = new File(buildDir, compileCtx.variant)
+        compileCtx.buildDir = buildDir
 
         if(t.includes == null) {
             t.includes = files('src', 'include')
         }
-        Set<File> includeDirs = t.getIncludes().files
+        compileCtx.includeDirs.addAll(t.getIncludes().files)
 
-        File exeFile = new File(buildDir, t.name  + ".a")
-
+        File exeFile = new File(buildDir, t.name)
         BuildTask mkdirTask = new MkdirBuildTask(buildDir)
         zooKeeper.dependencyGraph.addTask(mkdirTask)
 
         t.output = file(exeFile)
-        List<File> objFiles = []
 
         for(File f : t.sources) {
 
-            BasicTask compileTask = new BasicTask()
-            addTask(compileTask)
-            compileTask.input = file(f)
-
-            if(!f.exists()) {
-                FileArtifact artifactKey = new FileArtifact(f)
-                BuildTask parentBuildTask = zooKeeper.artifactMap.get(artifactKey)
-                if(parentBuildTask == null) {
-                    LOGGER.error("no build definition for: {}", artifactKey)
-                } else {
-                    zooKeeper.dependencyGraph.addDependency(compileTask, parentBuildTask)
-                }
+            String lang = ''
+            if(f.name.endsWith('.cpp')) {
+                lang = 'c++'
+            } else if(f.name.endsWith('.c')) {
+                lang = 'c'
             }
 
-            File outputFile = new File(buildDir, ZooKeeper.createArtifactFileName(t.name, t.version, f))
-            objFiles.add(outputFile)
-            compileTask.output = file(outputFile)
-
-            Closure code
-            ApplyTemplate ctx = new ApplyTemplate()
-            ctx.input = compileTask.input
-            ctx.output = compileTask.output
-            ctx.includes.addAll(includeDirs)
-
-            code = zooKeeper.compileTemplate.all.rehydrate(ctx, this, null)
-            code.resolveStrategy = Closure.DELEGATE_FIRST
-            code()
-
-            code = zooKeeper.compileTemplate.debug.rehydrate(ctx, this, null)
-            code.resolveStrategy = Closure.DELEGATE_FIRST
-            code()
-
-            code = zooKeeper.compileTemplate.cmd.rehydrate(ctx, this, null)
-            code.resolveStrategy = Closure.DELEGATE_FIRST
-            compileTask.cmd = code
-            compileTask.workingDir = file(zooKeeper.compileTemplate.workingDir).getSingleFile()
-
+            BasicTask compileTask = createCompileTask(lang, f, compileCtx)
 
             zooKeeper.dependencyGraph.addDependency(compileTask, mkdirTask)
             zooKeeper.dependencyGraph.addDependency(t, compileTask)
-
         }
 
-        t.input = files(objFiles)
+        TemplateKey linkKey = new TemplateKey(compileCtx.target, 'c', 'staticlib')
+        CompileTemplate linkTemplate = zooKeeper.templates.get(linkKey)
+
+        t.input = files(compileCtx.objectFiles)
         ApplyTemplate ctx = new ApplyTemplate()
         ctx.input = t.input
         ctx.output = t.output
-        Closure code = zooKeeper.staticLibTemplate.cmd.rehydrate(ctx, this, null)
+        Closure code = linkTemplate.cmd.rehydrate(ctx, this, null)
         code.resolveStrategy = Closure.DELEGATE_FIRST
         t.cmd = code
-        t.workingDir = file(zooKeeper.compileTemplate.workingDir).getSingleFile()
+        if(linkTemplate.workingDir != null) {
+            t.workingDir = file(linkTemplate.workingDir).getSingleFile()
+        }
     }
 
     void build(String... taskNames) {

@@ -1,0 +1,72 @@
+compile {
+  language 'c'
+  target 'linux-x86_64'
+
+  all {
+    flags '-Wall'
+  }
+
+  debug {
+    flags '-O0', '-g'
+  }
+
+  release {
+    flags '-O3'
+  }
+
+  cmd { ['gcc', flags, prefix('-I', includes), '-o', output, '-c', input] }
+}
+
+compile {
+  language 'c++'
+  target 'linux-x86_64'
+
+  all {
+    flags '-Wall', '-std=c++11'
+  }
+
+  debug {
+    flags '-O0', '-g'
+  }
+
+  release {
+    flags '-O3'
+  }
+
+  cmd { ['g++', flags, prefix('-I', includes), '-o', output, '-c', input] }
+}
+
+link {
+  language 'c'
+  target 'linux-x86_64'
+
+  cmd { ['gcc', flags, '-o', output, input, '-lm'] }
+}
+
+link {
+  language 'c++'
+  target 'linux-x86_64'
+
+  cmd { ['g++', flags, '-o', output, input] }
+}
+
+staticlib {
+  language 'c', 'c++'
+  target 'linux-x86_64'
+
+  cmd { ['ar', 'rcs', output, input] }
+}
+
+sharedlib {
+  language 'c'
+  target 'linux-x86_64'
+
+  cmd { ['gcc', '-shared', '-o', output, input] }
+}
+
+sharedlib {
+  language 'c++'
+  target 'linux-x86_64'
+
+  cmd { ['g++', '-shared', '-o', output, input] }
+}

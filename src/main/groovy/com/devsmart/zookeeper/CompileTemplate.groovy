@@ -1,10 +1,8 @@
 package com.devsmart.zookeeper
 
-import com.devsmart.zookeeper.api.FileCollection
-
 class CompileTemplate {
 
-    String language
+    String[] language
     Platform target
     Closure all
     Closure debug
@@ -12,7 +10,11 @@ class CompileTemplate {
     Closure cmd
     String workingDir
 
-    def language(String str) {
+    CompileTemplate() {
+        target = Platform.nativePlatform
+    }
+
+    def language(String... str) {
         setLanguage(str)
     }
 
