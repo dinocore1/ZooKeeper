@@ -108,17 +108,20 @@ class Project {
         List<File> objFiles = []
 
         for(File f : t.sources) {
+
+            BasicTask compileTask = new BasicTask()
+            addTask(compileTask)
+
             if(!f.exists()) {
                 FileArtifact artifactKey = new FileArtifact(f)
-                BuildTask parentBuildTask = mArtifactMap.get(artifactKey)
+                BuildTask parentBuildTask = zooKeeper.artifactMap.get(artifactKey)
                 if(parentBuildTask == null) {
                     LOGGER.error("no build definition for: {}", artifactKey)
                 } else {
-                    dependencyGraph.addDependency(t, parentBuildTask)
+                    dependencyGraph.addDependency(compileTask, parentBuildTask)
                 }
             }
 
-            BasicTask compileTask = new BasicTask()
             compileTask.input = file(f)
 
             File outputFile = new File(buildDir, ZooKeeper.createArtifactFileName(t.name, t.version, f))
@@ -144,7 +147,7 @@ class Project {
             compileTask.cmd = code
             compileTask.workingDir = file(zooKeeper.compileTemplate.workingDir).getSingleFile()
 
-            addTask(compileTask)
+
             zooKeeper.dependencyGraph.addDependency(compileTask, mkdirTask)
             zooKeeper.dependencyGraph.addDependency(t, compileTask)
 
@@ -157,6 +160,7 @@ class Project {
         Closure code = zooKeeper.linkTemplate.cmd.rehydrate(ctx, this, null)
         code.resolveStrategy = Closure.DELEGATE_FIRST
         t.cmd = code
+        t.workingDir = file(zooKeeper.compileTemplate.workingDir).getSingleFile()
 
     }
 
@@ -182,18 +186,20 @@ class Project {
         List<File> objFiles = []
 
         for(File f : t.sources) {
+
+            BasicTask compileTask = new BasicTask()
+            addTask(compileTask)
+            compileTask.input = file(f)
+
             if(!f.exists()) {
                 FileArtifact artifactKey = new FileArtifact(f)
                 BuildTask parentBuildTask = zooKeeper.artifactMap.get(artifactKey)
                 if(parentBuildTask == null) {
                     LOGGER.error("no build definition for: {}", artifactKey)
                 } else {
-                    zooKeeper.dependencyGraph.addDependency(t, parentBuildTask)
+                    zooKeeper.dependencyGraph.addDependency(compileTask, parentBuildTask)
                 }
             }
-
-            BasicTask compileTask = new BasicTask()
-            compileTask.input = file(f)
 
             File outputFile = new File(buildDir, ZooKeeper.createArtifactFileName(t.name, t.version, f))
             objFiles.add(outputFile)
@@ -218,7 +224,7 @@ class Project {
             compileTask.cmd = code
             compileTask.workingDir = file(zooKeeper.compileTemplate.workingDir).getSingleFile()
 
-            addTask(compileTask)
+
             zooKeeper.dependencyGraph.addDependency(compileTask, mkdirTask)
             zooKeeper.dependencyGraph.addDependency(t, compileTask)
 
@@ -231,6 +237,7 @@ class Project {
         Closure code = zooKeeper.staticLibTemplate.cmd.rehydrate(ctx, this, null)
         code.resolveStrategy = Closure.DELEGATE_FIRST
         t.cmd = code
+        t.workingDir = file(zooKeeper.compileTemplate.workingDir).getSingleFile()
     }
 
     void build(String... taskNames) {

@@ -111,7 +111,11 @@ class BasicTask implements BuildTask {
 
             final int exitCode = childProcess.waitFor();
 
-            return exitCode == 0;
+            final boolean success = exitCode == 0;
+            if(!success) {
+                LOGGER.error("process ended with status code: {}", exitCode)
+            }
+            return success;
 
         } catch (Exception e) {
             LOGGER.error("", e);

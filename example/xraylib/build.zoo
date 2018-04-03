@@ -72,6 +72,8 @@ task {
   cmd { [getExe('prdata').output] }
 }
 
+def mingwinstall = 'C:/Users/pauls/.zookeeper/toolchains/mingw64/bin'
+
 compile {
   language 'c'
   target 'osx-x86_64'
@@ -88,15 +90,19 @@ compile {
     flags '-O3'
   }
 
-  cmd { ['gcc', flags, prefix('-I', includes), '-o', output, '-c', input] }
+  workingDir "$mingwinstall"
+
+  cmd { ["$mingwinstall/gcc", flags, prefix('-I', includes), '-o', output, '-c', input] }
 }
 
 link {
   target 'osx-x86_64'
 
-  cmd { ['gcc', flags, '-o', output, input, '-lm'] }
+  workingDir "$mingwinstall"
+  cmd { ["$mingwinstall/gcc", flags, '-o', output, input] }
 }
 
 staticlib {
-  cmd { ['ar', 'rcs', output, input] }
+  workingDir "$mingwinstall"
+  cmd { ["$mingwinstall/ar", 'rcs', output, input] }
 }
