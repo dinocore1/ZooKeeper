@@ -1,6 +1,7 @@
 package com.devsmart.zookeeper.projectmodel
 
 import com.devsmart.zookeeper.Version
+import com.devsmart.zookeeper.api.FileCollection
 
 import java.util.concurrent.Callable
 
@@ -8,7 +9,14 @@ class BuildableModule implements Module {
 
     String name
     Version version
+    FileCollection src
+    FileCollection includes
     LinkedHashSet<AbstractLibrary> dependencies = []
+
+    @Override
+    Set<Library> getDependencies() {
+        return this.dependencies
+    }
 
     void name(String name) {
         this.name = name
@@ -16,6 +24,14 @@ class BuildableModule implements Module {
 
     void version(String version) {
         this.version = Version.fromString(version)
+    }
+
+    void src(FileCollection files) {
+        this.src = files
+    }
+
+    void include(FileCollection includes) {
+        this.includes = includes
     }
 
     void dependencies(String... libs) {

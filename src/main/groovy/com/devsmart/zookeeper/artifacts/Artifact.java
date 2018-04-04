@@ -1,5 +1,5 @@
 package com.devsmart.zookeeper.artifacts;
 
-interface Artifact {
+public interface Artifact {
 
 }
