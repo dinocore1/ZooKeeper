@@ -34,7 +34,7 @@ public class Version implements Comparable<Version> {
 
     @Override
     public String toString() {
-        return String.format("v%d.%d.%d", major, minor, patch);
+        return String.format("%d.%d.%d", major, minor, patch);
     }
 
     @Override
