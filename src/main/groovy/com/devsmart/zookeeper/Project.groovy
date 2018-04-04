@@ -99,8 +99,16 @@ class Project {
         final List<File> objectFiles = []
     }
 
-    private BasicTask createCompileTask(String language, File sourceFile, CompileContext compileCtx) {
-        TemplateKey key = new TemplateKey(compileCtx.target, language, 'compile')
+    private BasicTask createCompileTask(File sourceFile, CompileContext compileCtx) {
+
+        String lang = ''
+        if(sourceFile.name.endsWith('.cpp')) {
+            lang = 'c++'
+        } else if(sourceFile.name.endsWith('.c')) {
+            lang = 'c'
+        }
+
+        TemplateKey key = new TemplateKey(compileCtx.target, lang, 'compile')
         CompileTemplate template = zooKeeper.templates.get(key)
         if(template == null) {
             LOGGER.warn("could not find template for: {}", key)
@@ -207,14 +215,7 @@ class Project {
                 buildExeTask.output = file(exeFile)
                 for(File f : buildExeTask.sources) {
 
-                    String lang = ''
-                    if(f.name.endsWith('.cpp')) {
-                        lang = 'c++'
-                    } else if(f.name.endsWith('.c')) {
-                        lang = 'c'
-                    }
-
-                    BasicTask compileTask = createCompileTask(lang, f, compileCtx)
+                    BasicTask compileTask = createCompileTask(f, compileCtx)
 
                     zooKeeper.dependencyGraph.addDependency(compileTask, mkdirTask)
                     zooKeeper.dependencyGraph.addDependency(buildExeTask, compileTask)
