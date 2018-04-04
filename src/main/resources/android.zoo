@@ -1,0 +1,83 @@
+/**
+* create stand-alone android toolchain with command:
+* $NDK/build/tools/make_standalone_toolchain.py --arch arm --api 19 --stl=libc++ --install-dir /home/paul/data/apps/android-toolchain
+*
+* see https://developer.android.com/ndk/guides/standalone_toolchain.html
+*/
+
+
+def toolchain = '/home/paul/data/apps/android-toolchain'
+
+
+compile {
+  language 'c'
+  target 'android-arm'
+
+  all {
+    flags '-Wall', '--sysroot', "$toolchain/sysroot"
+  }
+
+  debug {
+    flags '-O0', '-g'
+  }
+
+  release {
+    flags '-O3'
+  }
+
+  cmd { ["$toolchain/bin/clang", flags, prefix('-I', includes), '-o', output, '-c', input] }
+}
+
+compile {
+  language 'c++'
+  target 'android-arm'
+
+  all {
+    flags '-Wall', '-std=c++11', '--sysroot', "$toolchain/sysroot"
+  }
+
+  debug {
+    flags '-O0', '-g'
+  }
+
+  release {
+    flags '-O3'
+  }
+
+  cmd { ["$toolchain/bin/clang++", flags, prefix('-I', includes), '-o', output, '-c', input] }
+}
+
+link {
+  language 'c'
+  target 'android-arm'
+
+  cmd { ["$toolchain/bin/clang", flags, '-o', output, input, '-lm'] }
+}
+
+link {
+  language 'c++'
+  target 'android-arm'
+
+  cmd { ["$toolchain/bin/clang++", flags, '-o', output, input] }
+}
+
+staticlib {
+  language 'c', 'c++'
+  target 'android-arm'
+
+  cmd { ["$toolchain/bin/arm-linux-androideabi-ar", 'rcs', postfix('.a', output), input] }
+}
+
+sharedlib {
+  language 'c'
+  target 'android-arm'
+
+  cmd { ["$toolchain/bin/clang", '-shared', '-s', '-o', postfix('.so', output), input] }
+}
+
+sharedlib {
+  language 'c++'
+  target 'android-arm'
+
+  cmd { ["$toolchain/bin/clang++", '-shared', '-s', '-o', postfix('.so', output), input] }
+}

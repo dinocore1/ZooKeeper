@@ -174,20 +174,16 @@ class Project {
     }
 
     private void createCompileTasks(GenericBuildTask t, String stage) {
-        final Platform nativePlatform = Platform.getNativePlatform()
+
         for(Platform platform : getPlatformList(stage)) {
             for(String variant : ['debug', 'release']) {
 
-                GenericBuildTask buildExeTask
-                //if(platform.equals(nativePlatform) && variant.equals('debug')) {
-                    buildExeTask = t
-                //} else {
-                    buildExeTask = new GenericBuildTask()
-                    buildExeTask.name = t.name
-                    buildExeTask.sources = t.sources
-                    buildExeTask.includes = t.includes
-                    zooKeeper.dependencyGraph.addTask(buildExeTask, 'build' + buildExeTask.name.capitalize() + platform.toString().capitalize() + variant.capitalize())
-                //}
+                GenericBuildTask buildExeTask = new GenericBuildTask()
+                buildExeTask.name = t.name
+                buildExeTask.sources = t.sources
+                buildExeTask.includes = t.includes
+                zooKeeper.dependencyGraph.addTask(buildExeTask, stage + buildExeTask.name.capitalize() + platform.toString().capitalize() + variant.capitalize())
+
                 CompileContext compileCtx = new CompileContext()
                 compileCtx.target = platform
                 compileCtx.variant = variant

@@ -26,4 +26,12 @@ class ApplyTemplate {
         }
     }
 
+    static Closure postfix(String postfix, Iterable list) {
+        return {
+            list.collect({
+                "$it${postfix}"
+            })
+        }
+    }
+
 }
