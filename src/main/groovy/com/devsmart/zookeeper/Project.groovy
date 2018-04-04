@@ -7,6 +7,10 @@ import com.devsmart.zookeeper.file.DefaultBaseDirFileResolver
 import com.devsmart.zookeeper.file.DefaultFileCollection
 import com.devsmart.zookeeper.file.DefaultFileTree
 import com.devsmart.zookeeper.tasks.*
+import com.google.common.base.Function
+import com.google.common.base.Predicate
+import com.google.common.collect.Iterables
+import com.google.common.collect.Sets
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -152,111 +156,98 @@ class Project {
         return compileTask
     }
 
-    private void buildExeTasks(BuildExeTask t) {
-        CompileContext compileCtx = new CompileContext()
-        compileCtx.parentTask = t
-        compileCtx.target = Platform.getNativePlatform()
-        compileCtx.variant = 'debug'
-
-
-        File buildDir = new File(projectDir, 'build')
-        buildDir = new File(buildDir, compileCtx.target.toString())
-        buildDir = new File(buildDir, compileCtx.variant)
-        compileCtx.buildDir = buildDir
-
-        if(t.includes == null) {
-            t.includes = files('src', 'include')
-        }
-        compileCtx.includeDirs.addAll(t.getIncludes().files)
-
-        File exeFile = new File(buildDir, t.name)
-        BuildTask mkdirTask = new MkdirBuildTask(buildDir)
-        zooKeeper.dependencyGraph.addTask(mkdirTask)
-
-        t.output = file(exeFile)
-
-        for(File f : t.sources) {
-
-            String lang = ''
-            if(f.name.endsWith('.cpp')) {
-                lang = 'c++'
-            } else if(f.name.endsWith('.c')) {
-                lang = 'c'
+    private Set<Platform> getPlatformList(String stage) {
+        Iterable<TemplateKey> matchingStage = Iterables.filter(zooKeeper.templates.keySet(), new Predicate<TemplateKey>(){
+            @Override
+            boolean apply(TemplateKey input) {
+                return stage.equals(input.stage)
             }
+        })
+        Set<Platform> retval = Sets.newHashSet(Iterables.transform(matchingStage, new Function<TemplateKey, Platform>(){
 
-            BasicTask compileTask = createCompileTask(lang, f, compileCtx)
+            @Override
+            Platform apply(TemplateKey input) {
+                return input.platform
+            }
+        }))
+        return retval
+    }
 
-            zooKeeper.dependencyGraph.addDependency(compileTask, mkdirTask)
-            zooKeeper.dependencyGraph.addDependency(t, compileTask)
+    private void createCompileTasks(GenericBuildTask t, String stage) {
+        final Platform nativePlatform = Platform.getNativePlatform()
+        for(Platform platform : getPlatformList(stage)) {
+            for(String variant : ['debug', 'release']) {
+
+                GenericBuildTask buildExeTask
+                if(platform.equals(nativePlatform) && variant.equals('debug')) {
+                    buildExeTask = t
+                } else {
+                    buildExeTask = new GenericBuildTask()
+                    buildExeTask.name = t.name
+                    buildExeTask.sources = t.sources
+                    buildExeTask.includes = t.includes
+                    zooKeeper.dependencyGraph.addTask(buildExeTask, 'build' + buildExeTask.name.capitalize() + platform.toString().capitalize() + variant.capitalize())
+                }
+                CompileContext compileCtx = new CompileContext()
+                compileCtx.target = platform
+                compileCtx.variant = variant
+                compileCtx.parentTask = buildExeTask
+
+
+                File buildDir = new File(projectDir, 'build')
+                buildDir = new File(buildDir, compileCtx.target.toString())
+                buildDir = new File(buildDir, compileCtx.variant)
+                compileCtx.buildDir = buildDir
+
+                if(buildExeTask.includes == null) {
+                    buildExeTask.includes = files('src', 'include')
+                }
+                compileCtx.includeDirs.addAll(buildExeTask.includes.files)
+
+                File exeFile = new File(buildDir, buildExeTask.name)
+                BuildTask mkdirTask = new MkdirBuildTask(buildDir)
+                zooKeeper.dependencyGraph.addTask(mkdirTask)
+
+                buildExeTask.output = file(exeFile)
+                for(File f : buildExeTask.sources) {
+
+                    String lang = ''
+                    if(f.name.endsWith('.cpp')) {
+                        lang = 'c++'
+                    } else if(f.name.endsWith('.c')) {
+                        lang = 'c'
+                    }
+
+                    BasicTask compileTask = createCompileTask(lang, f, compileCtx)
+
+                    zooKeeper.dependencyGraph.addDependency(compileTask, mkdirTask)
+                    zooKeeper.dependencyGraph.addDependency(buildExeTask, compileTask)
+                }
+
+                TemplateKey linkKey = new TemplateKey(compileCtx.target, 'c', stage)
+                CompileTemplate linkTemplate = zooKeeper.templates.get(linkKey)
+
+                buildExeTask.input = files(compileCtx.objectFiles)
+                ApplyTemplate ctx = new ApplyTemplate()
+                ctx.input = buildExeTask.input
+                ctx.output = buildExeTask.output
+                Closure code = linkTemplate.cmd.rehydrate(ctx, this, null)
+                code.resolveStrategy = Closure.DELEGATE_FIRST
+                buildExeTask.cmd = code
+                if(linkTemplate.workingDir != null) {
+                    buildExeTask.workingDir = file(linkTemplate.workingDir).getSingleFile()
+                }
+            }
         }
+    }
 
-        TemplateKey linkKey = new TemplateKey(compileCtx.target, 'c', 'link')
-        CompileTemplate linkTemplate = zooKeeper.templates.get(linkKey)
-
-        t.input = files(compileCtx.objectFiles)
-        ApplyTemplate ctx = new ApplyTemplate()
-        ctx.input = t.input
-        ctx.output = t.output
-        Closure code = linkTemplate.cmd.rehydrate(ctx, this, null)
-        code.resolveStrategy = Closure.DELEGATE_FIRST
-        t.cmd = code
-        if(linkTemplate.workingDir != null) {
-            t.workingDir = file(linkTemplate.workingDir).getSingleFile()
-        }
-
+    private void buildExeTasks(BuildExeTask t) {
+        createCompileTasks(t, 'link')
     }
 
     void buildLibTask(BuildLibTask t) {
-        CompileContext compileCtx = new CompileContext()
-        compileCtx.parentTask = t
-        compileCtx.target = Platform.getNativePlatform()
-        compileCtx.variant = 'debug'
-
-
-        File buildDir = new File(projectDir, 'build')
-        buildDir = new File(buildDir, compileCtx.target.toString())
-        buildDir = new File(buildDir, compileCtx.variant)
-        compileCtx.buildDir = buildDir
-
-        if(t.includes == null) {
-            t.includes = files('src', 'include')
-        }
-        compileCtx.includeDirs.addAll(t.getIncludes().files)
-
-        File exeFile = new File(buildDir, t.name)
-        BuildTask mkdirTask = new MkdirBuildTask(buildDir)
-        zooKeeper.dependencyGraph.addTask(mkdirTask)
-
-        t.output = file(exeFile)
-
-        for(File f : t.sources) {
-
-            String lang = ''
-            if(f.name.endsWith('.cpp')) {
-                lang = 'c++'
-            } else if(f.name.endsWith('.c')) {
-                lang = 'c'
-            }
-
-            BasicTask compileTask = createCompileTask(lang, f, compileCtx)
-
-            zooKeeper.dependencyGraph.addDependency(compileTask, mkdirTask)
-            zooKeeper.dependencyGraph.addDependency(t, compileTask)
-        }
-
-        TemplateKey linkKey = new TemplateKey(compileCtx.target, 'c', 'staticlib')
-        CompileTemplate linkTemplate = zooKeeper.templates.get(linkKey)
-
-        t.input = files(compileCtx.objectFiles)
-        ApplyTemplate ctx = new ApplyTemplate()
-        ctx.input = t.input
-        ctx.output = t.output
-        Closure code = linkTemplate.cmd.rehydrate(ctx, this, null)
-        code.resolveStrategy = Closure.DELEGATE_FIRST
-        t.cmd = code
-        if(linkTemplate.workingDir != null) {
-            t.workingDir = file(linkTemplate.workingDir).getSingleFile()
-        }
+        createCompileTasks(t, 'staticlib')
+        createCompileTasks(t, 'sharedlib')
     }
 
     void build(String... taskNames) {
