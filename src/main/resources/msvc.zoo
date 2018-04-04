@@ -1,0 +1,27 @@
+/*
+*  Microsoft C/C++ Compiler (see https://msdn.microsoft.com/en-us/library/19z1t1wy.aspx)
+*/
+
+def msvccinstall = 'C:/Program Files (x86)/Microsoft Visual Studio 14.0/VC/bin'
+
+compile {
+  language 'c'
+  target 'win-x86_64'
+
+  all {
+    flags '/Wall', '/openmp', '/DBUILDING_API'
+    includes files('C:/Program Files (x86)/Microsoft Visual Studio 14.0/VC/include', 'C:/Program Files (x86)/Windows Kits/10/Include/10.0.10240.0/ucrt')
+  }
+
+  debug {
+    flags '/Od'
+  }
+
+  release {
+    flags '/O2'
+  }
+
+  workingDir "$msvccinstall"
+
+  cmd { ["$msvccinstall/cl", flags, prefix('/I', includes), prefix('/Fo', output), '/c', input] }
+}

@@ -14,6 +14,10 @@ class ApplyTemplate {
         flags.addAll(f)
     }
 
+    void includes(FileCollection fc) {
+        includes.addAll(fc.files)
+    }
+
     static Closure prefix(String prefix, Iterable list) {
         return {
             list.collect({

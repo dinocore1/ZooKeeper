@@ -179,15 +179,15 @@ class Project {
             for(String variant : ['debug', 'release']) {
 
                 GenericBuildTask buildExeTask
-                if(platform.equals(nativePlatform) && variant.equals('debug')) {
+                //if(platform.equals(nativePlatform) && variant.equals('debug')) {
                     buildExeTask = t
-                } else {
+                //} else {
                     buildExeTask = new GenericBuildTask()
                     buildExeTask.name = t.name
                     buildExeTask.sources = t.sources
                     buildExeTask.includes = t.includes
                     zooKeeper.dependencyGraph.addTask(buildExeTask, 'build' + buildExeTask.name.capitalize() + platform.toString().capitalize() + variant.capitalize())
-                }
+                //}
                 CompileContext compileCtx = new CompileContext()
                 compileCtx.target = platform
                 compileCtx.variant = variant
