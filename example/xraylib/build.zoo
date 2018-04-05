@@ -63,7 +63,7 @@ lib {
     'build/generated/xrayglob_inline.c')
 }
 
-task {
+runtask {
   output file('build/generated/xrayglob_inline.c')
   depends 'prdata'
 

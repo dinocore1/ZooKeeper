@@ -7,6 +7,7 @@ import com.devsmart.zookeeper.file.DefaultBaseDirFileResolver
 import com.devsmart.zookeeper.file.DefaultFileCollection
 import com.devsmart.zookeeper.file.DefaultFileTree
 import com.devsmart.zookeeper.projectmodel.BuildableExecutable
+import com.devsmart.zookeeper.projectmodel.BuildableModule
 import com.devsmart.zookeeper.tasks.*
 import com.google.common.base.Function
 import com.google.common.base.Predicate
@@ -22,6 +23,7 @@ class Project {
     private ZooKeeper mZooKeeper
     private File mProjectDir
     private DefaultBaseDirFileResolver mBaseDirFileResolver
+    public final List<BuildableModule> buildableModules = new ArrayList<>()
 
     Project(File projectDir, ZooKeeper zooKeeper) {
         mProjectDir = projectDir

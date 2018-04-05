@@ -1,6 +1,7 @@
 package com.devsmart.zookeeper
 
 import com.devsmart.zookeeper.projectmodel.BuildableExecutable
+import com.devsmart.zookeeper.projectmodel.BuildableLibrary
 import com.devsmart.zookeeper.tasks.BuildExeTask
 import com.devsmart.zookeeper.tasks.BasicTask
 import com.devsmart.zookeeper.tasks.BuildLibTask
@@ -12,15 +13,15 @@ abstract class ZooKeeper_DSL extends Script {
         Closure code = cl.rehydrate(exe, project, exe)
         code()
 
-        project.addExecutable(exe)
+        project.buildableModules.add(exe)
     }
 
     def lib(Closure cl) {
-        BuildLibTask t = BuildLibTask.make(cl, project)
-        project.addLibTask(t)
-        project.addDoLast({
-            project.zooKeeper.resolveTaskDependencies(t)
-        })
+        BuildableLibrary lib = new BuildableLibrary()
+        Closure code = cl.rehydrate(lib, project, lib)
+        code()
+
+        project.buildableModules.add(exe)
     }
 
     def task(Closure cl) {
