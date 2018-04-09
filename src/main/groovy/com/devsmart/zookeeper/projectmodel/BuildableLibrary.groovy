@@ -1,7 +1,5 @@
 package com.devsmart.zookeeper.projectmodel
 
-import com.devsmart.zookeeper.api.FileCollection
-
 class BuildableLibrary extends BuildableModule implements Library {
 
     LinkType type

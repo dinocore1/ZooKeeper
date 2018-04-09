@@ -14,7 +14,7 @@ compile {
     flags '-O3'
   }
 
-  cmd { ['gcc', flags, prefix('-I', includes), '-o', output, '-c', input] }
+  cmd { ['com.devsmart.zookeeper.plugins.DefaultGCCCompiler', flags, prefix('-I', includes), '-o', output, '-c', input] }
 }
 
 compile {
@@ -40,7 +40,7 @@ link {
   language 'c'
   target 'linux-x86_64'
 
-  cmd { ['gcc', flags, '-o', output, input, '-lm'] }
+  cmd { ['com.devsmart.zookeeper.plugins.DefaultGCCCompiler', flags, '-o', output, input, '-lm'] }
 }
 
 link {
@@ -61,7 +61,7 @@ sharedlib {
   language 'c'
   target 'linux-x86_64'
 
-  cmd { ['gcc', '-shared', '-o', output, input] }
+  cmd { ['com.devsmart.zookeeper.plugins.DefaultGCCCompiler', '-shared', '-o', output, input] }
 }
 
 sharedlib {

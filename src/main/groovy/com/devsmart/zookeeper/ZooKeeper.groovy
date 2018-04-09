@@ -3,6 +3,7 @@ package com.devsmart.zookeeper
 import com.devsmart.zookeeper.artifacts.Artifact
 import com.devsmart.zookeeper.artifacts.FileArtifact
 import com.devsmart.zookeeper.file.FileUtils
+import com.devsmart.zookeeper.projectmodel.ProjectVisitor
 import com.devsmart.zookeeper.tasks.BuildExeTask
 import com.devsmart.zookeeper.tasks.BuildLibTask
 import com.devsmart.zookeeper.tasks.BuildTask
@@ -36,11 +37,27 @@ class ZooKeeper {
     final List<BuildLibTask> libTasks = []
     final Map<TemplateKey, CompileTemplate> templates = [:]
 
+    final List<ProjectVisitor> projectVisitors = []
+
 
     void init(Project project) {
         File zookeeperRoot = new File(System.getProperty('user.home'))
         zookeeperRoot = new File(zookeeperRoot, '.zookeeper')
         zookeeperRoot.mkdirs()
+
+
+        //read project visitors
+        File pluginDir = new File(zookeeperRoot, 'plugins')
+        for(File f : pluginDir.listFiles()) {
+            CompilerConfiguration cc = new CompilerConfiguration()
+            //cc.scriptBaseClass = 'com.devsmart.zookeeper.ZooKeeper_DSL'
+            Binding binding = new Binding()
+            binding.setProperty("project", project)
+            GroovyShell shell = new GroovyShell(binding, cc)
+
+            Script script = shell.parse(f)
+            script.run()
+        }
 
         //read template files
 
@@ -125,6 +142,8 @@ class ZooKeeper {
 
                 Script script = shell.parse(inputFile)
                 script.run()
+
+                project.visit(zooKeeper.projectVisitors)
 
                 zooKeeper.runDoLast()
 

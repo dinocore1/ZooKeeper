@@ -21,15 +21,20 @@ abstract class ZooKeeper_DSL extends Script {
         Closure code = cl.rehydrate(lib, project, lib)
         code()
 
-        project.buildableModules.add(exe)
+        project.buildableModules.add(lib)
     }
 
     def task(Closure cl) {
+
+        /*
+
         BasicTask t = BasicTask.make(cl, project)
         project.addTask(t)
         project.addDoLast({
             project.zooKeeper.resolveTaskDependencies(t)
         })
+
+        */
     }
 
     def compile(Closure cl) {

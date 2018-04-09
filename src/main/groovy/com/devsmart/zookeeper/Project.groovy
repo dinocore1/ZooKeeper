@@ -8,6 +8,7 @@ import com.devsmart.zookeeper.file.DefaultFileCollection
 import com.devsmart.zookeeper.file.DefaultFileTree
 import com.devsmart.zookeeper.projectmodel.BuildableExecutable
 import com.devsmart.zookeeper.projectmodel.BuildableModule
+import com.devsmart.zookeeper.projectmodel.ProjectVisitor
 import com.devsmart.zookeeper.tasks.*
 import com.google.common.base.Function
 import com.google.common.base.Predicate
@@ -51,6 +52,12 @@ class Project {
     FileTree fileTree(Map<String, ?> args) {
         return new DefaultFileTree(args, mBaseDirFileResolver)
 
+    }
+
+    void visit(Collection<ProjectVisitor> visitors) {
+        for(ProjectVisitor v : visitors) {
+            v.visit(this)
+        }
     }
 
     void addExecutable(BuildableExecutable exe) {
