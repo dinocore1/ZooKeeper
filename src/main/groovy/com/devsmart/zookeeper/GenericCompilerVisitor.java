@@ -1,6 +1,7 @@
 package com.devsmart.zookeeper;
 
 import com.devsmart.zookeeper.api.FileCollection;
+import com.devsmart.zookeeper.file.UnionFileCollection;
 import com.devsmart.zookeeper.projectmodel.BuildableExecutable;
 import com.devsmart.zookeeper.projectmodel.BuildableModule;
 import com.devsmart.zookeeper.tasks.DelegatingChildProcessTask;
@@ -46,10 +47,14 @@ public abstract class GenericCompilerVisitor extends DefaultProjectVisitor {
 
     @Override
     public void visit(File srcFile) {
+        FileCollection outputFile = project.file(genObjectFile(srcFile));
+
         compileTask = new DelegatingChildProcessTask();
         compileTask.setInput(project.file(srcFile));
-        compileTask.setOutput(project.file(genObjectFile(srcFile)));
+        compileTask.setOutput(outputFile);
 
+
+        buildTask.setInput(new UnionFileCollection(outputFile, buildTask.getInput()));
     }
 
     String genExeTaskName(BuildableExecutable exe) {
