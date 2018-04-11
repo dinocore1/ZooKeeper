@@ -2,6 +2,7 @@ package com.devsmart.zookeeper.plugins
 
 import com.devsmart.zookeeper.GenericCompilerVisitor
 import com.devsmart.zookeeper.Platform
+import com.devsmart.zookeeper.api.FileCollection
 import com.devsmart.zookeeper.projectmodel.BuildableExecutable
 import com.devsmart.zookeeper.tasks.DelegatingChildProcessTask
 
@@ -12,6 +13,7 @@ class DefaultGCCCompiler extends GenericCompilerVisitor {
     String cmd
     List<String> cflags = []
     List<String> linkflags = []
+    FileCollection includes
 
     private DelegatingChildProcessTask.Delegate compileDelegate = new DelegatingChildProcessTask.Delegate() {
         
@@ -20,6 +22,11 @@ class DefaultGCCCompiler extends GenericCompilerVisitor {
             cmdline.add(cmd)
             cmdline.addAll(cflags)
             cmdline.add('-c')
+
+            for(File includeDir : task.includes) {
+                cmdline.add('-I' + includeDir.absoluteFile.toString())
+            }
+
             cmdline.add('-o')
             cmdline.add(task.output.singleFile.absoluteFile.toString())
             cmdline.add(task.input.singleFile.absoluteFile.toString())
@@ -74,6 +81,7 @@ class DefaultGCCCompiler extends GenericCompilerVisitor {
     void visit(File srcFile) {
         super.visit(srcFile)
         compileTask.flags.addAll(cflags)
+        compileTask.includes.addAll(includes.files)
         compileTask.delegate = compileDelegate
     }
 }

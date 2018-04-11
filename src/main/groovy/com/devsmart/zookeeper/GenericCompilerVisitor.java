@@ -40,6 +40,7 @@ public abstract class GenericCompilerVisitor extends DefaultProjectVisitor {
         buildTask.setBuildableModule(module);
         buildTask.setName(genExeTaskName(module));
         buildTask.setOutput(genExeOutputs(module));
+        project.addTask(buildTask);
 
         super.visit(module);
 
@@ -52,9 +53,13 @@ public abstract class GenericCompilerVisitor extends DefaultProjectVisitor {
         compileTask = new DelegatingChildProcessTask();
         compileTask.setInput(project.file(srcFile));
         compileTask.setOutput(outputFile);
+        project.addTask(compileTask);
 
-
-        buildTask.setInput(new UnionFileCollection(outputFile, buildTask.getInput()));
+        if(buildTask.getInput() == null) {
+            buildTask.setInput(outputFile);
+        } else {
+            buildTask.setInput(new UnionFileCollection(outputFile, buildTask.getInput()));
+        }
     }
 
     String genExeTaskName(BuildableExecutable exe) {
@@ -87,7 +92,6 @@ public abstract class GenericCompilerVisitor extends DefaultProjectVisitor {
         String newName = srcFile.getName() + '_' + hashStr + ".o";
 
         return new File(genBuildDir(), newName);
-
     }
 
 

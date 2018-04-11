@@ -27,8 +27,12 @@ public class DependencyGraph {
     }
 
     public void addTask(BuildTask action, String name) {
-        mTaskNames.put(name, action);
+        setTaskName(action, name);
         addTask(action);
+    }
+
+    public void setTaskName(BuildTask task, String name) {
+        mTaskNames.put(name, task);
     }
 
     public void addTask(BuildTask action) {

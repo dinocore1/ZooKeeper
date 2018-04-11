@@ -60,10 +60,6 @@ class Project {
         }
     }
 
-    void addExecutable(BuildableExecutable exe) {
-
-    }
-
     void addDoLast(Runnable r) {
         zooKeeper.doLast.add(r)
     }
@@ -74,18 +70,52 @@ class Project {
         }
     }
 
-    void addTask(BasicTask t) {
-        String taskName = t.name
-        if(taskName != null) {
-            zooKeeper.dependencyGraph.addTask(t, taskName)
-        } else {
-            zooKeeper.dependencyGraph.addTask(t)
+    void addTask(BuildTask t) {
+
+        zooKeeper.dependencyGraph.addTask(t)
+
+        if (t instanceof BasicTask) {
+            String taskName = t.name
+            if (taskName != null) {
+                zooKeeper.dependencyGraph.setTaskName(t, taskName)
+
+            }
+
+            for (File f : t.output) {
+                zooKeeper.artifactMap.put(new FileArtifact(f), (BuildTask)t)
+            }
+
+            addDoLast(resolveDependencies(t))
         }
 
-        for(File f : t.output) {
-            zooKeeper.artifactMap.put(new FileArtifact(f), t)
-        }
+    }
 
+    private Runnable resolveDependencies(BasicTask t) {
+        return {
+
+            if(t instanceof BuildTask) {
+
+                for (File inputFile : t.input) {
+                    if (!inputFile.exists()) {
+                        BuildTask childTask = zooKeeper.artifactMap.get(new FileArtifact(inputFile))
+                        if (childTask != null) {
+                            zooKeeper.dependencyGraph.addDependency((BuildTask) t, childTask)
+                        }
+                    }
+                }
+
+                for (Object depend : t.dependencies) {
+                    if (depend instanceof String) {
+                        BuildTask childTask = zooKeeper.dependencyGraph.getTask((String) depend)
+                        if (childTask != null) {
+                            zooKeeper.dependencyGraph.addDependency((BuildTask) t, childTask)
+                        }
+                    }
+                }
+
+            }
+
+        }
     }
 
     void addExeTask(BuildExeTask t) {
@@ -261,7 +291,8 @@ class Project {
         createCompileTasks(t, 'sharedlib')
     }
 
-    void build(String... taskNames) {
+    boolean build(String... taskNames) {
+        boolean retval = true
         for(String taskName : taskNames) {
             BuildTask buildTask = null
 
@@ -280,11 +311,13 @@ class Project {
                 ExePlan plan = zooKeeper.dependencyGraph.createExePlan(buildTask)
 
                 int cores = Runtime.getRuntime().availableProcessors()
-                plan.run(cores)
+                retval &= plan.run(cores)
             } else {
                 LOGGER.warn('no task with name: {}', taskName)
             }
         }
+
+        return retval
     }
 
 

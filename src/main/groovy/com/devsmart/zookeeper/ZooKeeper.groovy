@@ -154,7 +154,14 @@ class ZooKeeper {
             }
 
             String[] unparsedArgs = cmdline.getArgs()
-            project.build(unparsedArgs)
+            boolean success = project.build(unparsedArgs)
+            if(success) {
+                System.out.println("Build success")
+                System.exit(0)
+            } else {
+                System.out.println("Build failure")
+                System.exit(1)
+            }
 
 
         } catch (ParseException e) {
