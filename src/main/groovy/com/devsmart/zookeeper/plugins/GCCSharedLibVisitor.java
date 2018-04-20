@@ -6,6 +6,7 @@ import com.devsmart.zookeeper.Project;
 import com.devsmart.zookeeper.projectmodel.BuildableExecutable;
 import com.devsmart.zookeeper.projectmodel.BuildableLibrary;
 import com.devsmart.zookeeper.tasks.CompileChildProcessTask;
+import org.apache.commons.io.filefilter.RegexFileFilter;
 import org.apache.commons.lang.StringUtils;
 
 import java.io.File;
@@ -45,7 +46,8 @@ public class GCCSharedLibVisitor extends DefaultProjectVisitor {
 
         //TODO: get all the dependencies and apply them to the build tasks
 
-        CPPVisitor cppVisitor = new CPPVisitor();
+        GnuCompilerVisitor cppVisitor = new GnuCompilerVisitor();
+        cppVisitor.fileFilter = new RegexFileFilter(".*\\.cpp|cc$");
         cppVisitor.project = project;
         cppVisitor.buildTask = buildTask;
         cppVisitor.platform = platform;
@@ -53,7 +55,8 @@ public class GCCSharedLibVisitor extends DefaultProjectVisitor {
         cppVisitor.extra = "sharedLib";
         cppVisitor.visit(lib);
 
-        CVisitor cVisitor = new CVisitor();
+        GnuCompilerVisitor cVisitor = new GnuCompilerVisitor();
+        cppVisitor.fileFilter = new RegexFileFilter(".*\\.c$");
         cVisitor.project = project;
         cVisitor.buildTask = buildTask;
         cVisitor.platform = platform;

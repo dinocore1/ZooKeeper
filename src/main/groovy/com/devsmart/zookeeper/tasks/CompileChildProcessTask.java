@@ -1,6 +1,7 @@
 package com.devsmart.zookeeper.tasks;
 
 import com.devsmart.zookeeper.plugins.CompileContext;
+import com.devsmart.zookeeper.plugins.CompileProcessModifier;
 
 import java.io.File;
 import java.util.Map;
@@ -26,6 +27,10 @@ public class CompileChildProcessTask extends ChildProcessTask {
 
     public CompileContext getCompileContext() {
         return mCompileContext;
+    }
+
+    public void addModifier(CompileProcessModifier modifier) {
+
     }
 
 

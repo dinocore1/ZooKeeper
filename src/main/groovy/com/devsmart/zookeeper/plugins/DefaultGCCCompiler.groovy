@@ -4,16 +4,13 @@ import com.devsmart.zookeeper.DefaultProjectVisitor
 import com.devsmart.zookeeper.Platform
 import com.devsmart.zookeeper.Project
 import com.devsmart.zookeeper.api.FileCollection
-import com.devsmart.zookeeper.projectmodel.BuildableExecutable
 import com.devsmart.zookeeper.projectmodel.BuildableLibrary
 
 class DefaultGCCCompiler extends DefaultProjectVisitor {
 
     String variant
     Platform platform
-    String cmd;
-    String cc;
-    String cpp;
+    String cmd
     List<String> cflags = []
     List<String> linkflags = []
     FileCollection includes
@@ -26,15 +23,10 @@ class DefaultGCCCompiler extends DefaultProjectVisitor {
         super.visit(project)
     }
 
-    @Override
-    void visit(BuildableExecutable module) {
-        super.visit(module)
-
-    }
 
     @Override
     void visit(BuildableLibrary module) {
-        GCCStaticLibProjectVisitor staticLib = new GCCStaticLibProjectVisitor()
+        GCCStaticLibVisitor staticLib = new GCCStaticLibVisitor()
         staticLib.linkCmd = cc
         staticLib.project = project
         staticLib.platform = platform

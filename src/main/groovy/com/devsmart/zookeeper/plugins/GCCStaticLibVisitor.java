@@ -6,38 +6,45 @@ import com.devsmart.zookeeper.Project;
 import com.devsmart.zookeeper.projectmodel.BuildableExecutable;
 import com.devsmart.zookeeper.projectmodel.BuildableLibrary;
 import com.devsmart.zookeeper.tasks.CompileChildProcessTask;
+import org.apache.commons.io.filefilter.RegexFileFilter;
 import org.apache.commons.lang.StringUtils;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Map;
 
-public class GCCStaticLibProjectVisitor extends DefaultProjectVisitor {
+public class GCCStaticLibVisitor extends DefaultProjectVisitor {
+
+    public Platform platform;
+    public String variant;
+
+    public String cppCmd;
+    public CompileSettings cppSettings;
+
+    public String cCmd;
+    public CompileSettings cSettings;
 
     public String linkCmd;
 
-    public Project project;
-    public Platform platform;
-    public String variant;
-    private BuildableLibrary library;
-    private CompileChildProcessTask buildTask;
+    protected BuildableLibrary library;
+    protected com.devsmart.zookeeper.tasks.CompileChildProcessTask buildTask;
+    protected Project project;
 
     @Override
     public void visit(Project project) {
-        throw new UnsupportedOperationException();
+        this.project = project;
+        super.visit(project);
     }
 
     @Override
     public void visit(BuildableExecutable exe) {
-        throw new UnsupportedOperationException();
-
     }
 
     @Override
     public void visit(BuildableLibrary lib) {
         library = lib;
 
-        buildTask = new CompileChildProcessTask();
+        buildTask = new com.devsmart.zookeeper.tasks.CompileChildProcessTask();
         buildTask.getCompileContext().module = lib;
         buildTask.setName(genTaskName());
         buildTask.setDelegate(linkDelegate);
@@ -45,7 +52,8 @@ public class GCCStaticLibProjectVisitor extends DefaultProjectVisitor {
 
         //TODO: get all the dependencies and apply them to the build tasks
 
-        CPPVisitor cppVisitor = new CPPVisitor();
+        GnuCompilerVisitor cppVisitor = new GnuCompilerVisitor();
+        cppVisitor.fileFilter = new RegexFileFilter(".*\\.cpp|cc$");
         cppVisitor.project = project;
         cppVisitor.buildTask = buildTask;
         cppVisitor.platform = platform;
@@ -53,7 +61,8 @@ public class GCCStaticLibProjectVisitor extends DefaultProjectVisitor {
         cppVisitor.extra = "staticLib";
         cppVisitor.visit(lib);
 
-        CVisitor cVisitor = new CVisitor();
+        GnuCompilerVisitor cVisitor = new GnuCompilerVisitor();
+        cppVisitor.fileFilter = new RegexFileFilter(".*\\.c$");
         cVisitor.project = project;
         cVisitor.buildTask = buildTask;
         cVisitor.platform = platform;
@@ -77,11 +86,14 @@ public class GCCStaticLibProjectVisitor extends DefaultProjectVisitor {
             CompileContext compileContext = task.getCompileContext();
             ArrayList<String> cmdline = new ArrayList<>();
             cmdline.add(linkCmd);
-            cmdline.addAll(compileContext.flags);
+            cmdline.add("rcs");
 
-            cmdline.add("-o");
             cmdline.add(task.getOutput().getSingleFile().getAbsoluteFile().toString());
-            cmdline.add(task.getInput().getSingleFile().getAbsoluteFile().toString());
+
+            for(File input : task.getInput()) {
+                cmdline.add(input.getAbsolutePath().toString());
+            }
+
             return cmdline.toArray(new String[cmdline.size()]);
         }
 

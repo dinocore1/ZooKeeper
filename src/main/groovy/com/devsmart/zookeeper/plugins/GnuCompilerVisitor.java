@@ -1,21 +1,49 @@
 package com.devsmart.zookeeper.plugins;
 
+import com.devsmart.zookeeper.projectmodel.BuildableLibrary;
 import com.devsmart.zookeeper.tasks.CompileChildProcessTask;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.util.ArrayList;
 import java.util.Map;
 
-public class CPPVisitor extends DefaultCompileFileVisitor {
+public class GnuCompilerVisitor extends BasicCompilerFileVisitor {
+
 
     String compilerCmd;
+    CompileProcessModifier compileSettings;
+    FileFilter fileFilter;
+
+    protected BuildableLibrary mLibrary;
+    protected CompileProcessModifier mDependenciesModifier;
+
+
+    @Override
+    public void visit(BuildableLibrary lib) {
+        this.mLibrary = lib;
+        createDependencyModifier();
+        super.visit(lib);
+    }
 
     @Override
     public void visit(File srcFile) {
-        if(srcFile.getName().endsWith(".cpp") || srcFile.getName().endsWith(".cc")) {
+
+        if(fileFilter.accept(srcFile)) {
             super.visit(srcFile);
+            compileTask.addModifier(compileSettings);
+            compileTask.addModifier(mDependenciesModifier);
             compileTask.setDelegate(compileDelegate);
         }
+    }
+
+    private void createDependencyModifier() {
+        mDependenciesModifier = new CompileProcessModifier() {
+            @Override
+            public void apply(CompileChildProcessTask ctx) {
+
+            }
+        };
     }
 
     private CompileChildProcessTask.Delegate compileDelegate = new CompileChildProcessTask.Delegate() {

@@ -15,9 +15,9 @@ import com.google.common.hash.Hashing;
 
 import java.io.File;
 
-public class DefaultCompileFileVisitor extends DefaultProjectVisitor {
+public class BasicCompilerFileVisitor extends DefaultProjectVisitor {
 
-    public static final HashFunction HASH_FUNCTION = Hashing.sha1();
+    private static final HashFunction HASH_FUNCTION = Hashing.sha1();
 
     Project project;
     CompileChildProcessTask buildTask;
@@ -31,7 +31,6 @@ public class DefaultCompileFileVisitor extends DefaultProjectVisitor {
     @Override
     public void visit(Project project) {
         throw new UnsupportedOperationException();
-
     }
 
     @Override
@@ -44,7 +43,6 @@ public class DefaultCompileFileVisitor extends DefaultProjectVisitor {
     @Override
     public void visit(BuildableLibrary lib) {
         this.module = lib;
-
         super.visit(lib);
     }
 
