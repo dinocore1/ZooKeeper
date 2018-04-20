@@ -1,87 +1,53 @@
 package com.devsmart.zookeeper.plugins
 
-import com.devsmart.zookeeper.GenericCompilerVisitor
+import com.devsmart.zookeeper.DefaultProjectVisitor
 import com.devsmart.zookeeper.Platform
+import com.devsmart.zookeeper.Project
 import com.devsmart.zookeeper.api.FileCollection
 import com.devsmart.zookeeper.projectmodel.BuildableExecutable
-import com.devsmart.zookeeper.tasks.DelegatingChildProcessTask
+import com.devsmart.zookeeper.projectmodel.BuildableLibrary
 
-class DefaultGCCCompiler extends GenericCompilerVisitor {
+class DefaultGCCCompiler extends DefaultProjectVisitor {
 
     String variant
     Platform platform
-    String cmd
+    String cmd;
+    String cc;
+    String cpp;
     List<String> cflags = []
     List<String> linkflags = []
     FileCollection includes
 
-    private DelegatingChildProcessTask.Delegate compileDelegate = new DelegatingChildProcessTask.Delegate() {
-        
-        String[] getCommandLine(DelegatingChildProcessTask task) {
-            ArrayList<String> cmdline = new ArrayList<String>()
-            cmdline.add(cmd)
-            cmdline.addAll(cflags)
-            cmdline.add('-c')
+    protected Project project
 
-            for(File includeDir : task.includes) {
-                cmdline.add('-I' + includeDir.absoluteFile.toString())
-            }
-
-            cmdline.add('-o')
-            cmdline.add(task.output.singleFile.absoluteFile.toString())
-            cmdline.add(task.input.singleFile.absoluteFile.toString())
-            return cmdline.toArray(new String[cmdline.size()])
-        }
-
-        File getWorkingDir(DelegatingChildProcessTask task) {
-            return null
-        }
-
-        void updateEnv(DelegatingChildProcessTask task, Map<String, String> env) {
-
-        }
-    }
-
-    private DelegatingChildProcessTask.Delegate exeLinkDelegate = new DelegatingChildProcessTask.Delegate() {
-        String[] getCommandLine(DelegatingChildProcessTask task) {
-            ArrayList<String> cmdline = new ArrayList<String>()
-            cmdline.add(cmd)
-            cmdline.addAll(linkflags)
-            cmdline.add('-o')
-            cmdline.add(task.output.singleFile.absoluteFile.toString())
-
-            for(File objFile : task.input) {
-                cmdline.add(objFile.absoluteFile.toString())
-            }
-
-            return cmdline.toArray(new String[cmdline.size()])
-        }
-
-        File getWorkingDir(DelegatingChildProcessTask task) {
-            return null
-        }
-
-        void updateEnv(DelegatingChildProcessTask task, Map<String, String> env) {
-
-        }
-    }
-
-    File genExeOutputFile(BuildableExecutable exe) {
-        return new File(genBuildDir(), exe.name)
+    @Override
+    void visit(Project project) {
+        this.project = project
+        super.visit(project)
     }
 
     @Override
     void visit(BuildableExecutable module) {
         super.visit(module)
-        buildTask.flags.addAll(linkflags)
-        buildTask.delegate = exeLinkDelegate
+
     }
 
     @Override
-    void visit(File srcFile) {
-        super.visit(srcFile)
-        compileTask.flags.addAll(cflags)
-        compileTask.includes.addAll(includes.files)
-        compileTask.delegate = compileDelegate
+    void visit(BuildableLibrary module) {
+        GCCStaticLibProjectVisitor staticLib = new GCCStaticLibProjectVisitor()
+        staticLib.linkCmd = cc
+        staticLib.project = project
+        staticLib.platform = platform
+        staticLib.variant = variant
+        staticLib.visit(module)
+
+        GCCSharedLibVisitor sharedLib = new GCCSharedLibVisitor()
+        sharedLib.linkCmd = cc
+        sharedLib.project = project
+        sharedLib.platform = platform
+        sharedLib.variant = variant
+        sharedLib.visit(module)
+
     }
+
 }

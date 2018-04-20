@@ -1,9 +1,6 @@
 package com.devsmart.zookeeper;
 
-import com.devsmart.zookeeper.projectmodel.BuildableExecutable;
-import com.devsmart.zookeeper.projectmodel.BuildableLibrary;
-import com.devsmart.zookeeper.projectmodel.BuildableModule;
-import com.devsmart.zookeeper.projectmodel.ProjectVisitor;
+import com.devsmart.zookeeper.projectmodel.*;
 
 import java.io.File;
 
@@ -11,7 +8,7 @@ public class DefaultProjectVisitor implements ProjectVisitor {
 
     @Override
     public void visit(Project project) {
-        for(BuildableModule module : project.buildableModules) {
+        for(Module module : project.modules) {
             if(module instanceof BuildableExecutable) {
                 visit((BuildableExecutable) module);
             }

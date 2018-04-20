@@ -1,6 +1,11 @@
 package com.devsmart.zookeeper.file;
 
+import com.devsmart.zookeeper.api.FileCollection;
+import com.google.common.collect.Sets;
+
 import java.io.File;
+import java.util.Collections;
+import java.util.Set;
 
 public class FileUtils {
 
@@ -22,5 +27,19 @@ public class FileUtils {
             parent = root.getParentFile();
         }
         return root;
+    }
+
+    public static FileCollection emptyFileCollection() {
+        return new AbstractFileCollection() {
+            @Override
+            public String getDisplayName() {
+                return "";
+            }
+
+            @Override
+            public Set<File> getFiles() {
+                return Collections.emptySet();
+            }
+        };
     }
 }
