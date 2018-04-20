@@ -50,7 +50,7 @@ public class GnuCompilerVisitor extends BasicCompilerFileVisitor {
 
                     if(module instanceof PrecompiledLibrary) {
                         PrecompiledLibrary precompiledLibrary = (PrecompiledLibrary) module;
-                        precompiledLibrary.
+
                     }
 
 
@@ -69,6 +69,7 @@ public class GnuCompilerVisitor extends BasicCompilerFileVisitor {
 
         @Override
         public String[] getCommandLine(CompileChildProcessTask task) {
+            task.doModify();
             CompileContext compileContext = task.getCompileContext();
             ArrayList<String> cmdline = new ArrayList<>();
             cmdline.add(compilerCmd);

@@ -26,12 +26,16 @@ public class GCCSharedLibVisitor extends DefaultProjectVisitor {
 
     public String linkCmd;
 
+    public String filenameExtendtion = ".so";
+
     protected BuildableLibrary library;
     protected com.devsmart.zookeeper.tasks.CompileChildProcessTask buildTask;
     protected Project project;
 
     @Override
     public void visit(Project project) {
+        this.project = project;
+        super.visit(project);
     }
 
     @Override
@@ -47,10 +51,11 @@ public class GCCSharedLibVisitor extends DefaultProjectVisitor {
         buildTask = new CompileChildProcessTask();
         buildTask.getCompileContext().module = lib;
         buildTask.setName(genTaskName());
+        buildTask.setOutput(project.file(new File(genBuildDir(), lib.getName() + filenameExtendtion)));
         buildTask.setDelegate(linkDelegate);
         project.addTask(buildTask);
 
-        //TODO: get all the dependencies and apply them to the build tasks
+        cppSettings.getFlags().add("-fPIC");
 
         GnuCompilerVisitor cppVisitor = new GnuCompilerVisitor();
         cppVisitor.compilerCmd = cppCmd;
@@ -63,10 +68,12 @@ public class GCCSharedLibVisitor extends DefaultProjectVisitor {
         cppVisitor.extra = "sharedLib";
         cppVisitor.visit(lib);
 
+        cSettings.getFlags().add("-fPIC");
+
         GnuCompilerVisitor cVisitor = new GnuCompilerVisitor();
-        cppVisitor.compilerCmd = cCmd;
-        cppVisitor.compileSettings = new SettingWrapper(cSettings);
-        cppVisitor.fileFilter = new RegexFileFilter(".*\\.c$");
+        cVisitor.compilerCmd = cCmd;
+        cVisitor.compileSettings = new SettingWrapper(cSettings);
+        cVisitor.fileFilter = new RegexFileFilter(".*\\.c$");
         cVisitor.project = project;
         cVisitor.buildTask = buildTask;
         cVisitor.platform = platform;
@@ -83,18 +90,34 @@ public class GCCSharedLibVisitor extends DefaultProjectVisitor {
                 + StringUtils.capitalize(variant);
     }
 
+    File genBuildDir() {
+        File buildDir = new File(project.getProjectDir(), "build");
+        buildDir = new File(buildDir, platform.toString());
+        buildDir = new File(buildDir, variant);
+        return buildDir;
+    }
+
     private CompileChildProcessTask.Delegate linkDelegate = new CompileChildProcessTask.Delegate() {
 
         @Override
         public String[] getCommandLine(CompileChildProcessTask task) {
+            task.doModify();
             CompileContext compileContext = task.getCompileContext();
+
+            compileContext.flags.add("-fPIC");
+            compileContext.flags.add("-shared");
+
             ArrayList<String> cmdline = new ArrayList<>();
             cmdline.add(linkCmd);
             cmdline.addAll(compileContext.flags);
 
             cmdline.add("-o");
             cmdline.add(task.getOutput().getSingleFile().getAbsoluteFile().toString());
-            cmdline.add(task.getInput().getSingleFile().getAbsoluteFile().toString());
+
+            for(File input : task.getInput()) {
+                cmdline.add(input.getAbsolutePath().toString());
+            }
+
             return cmdline.toArray(new String[cmdline.size()]);
         }
 

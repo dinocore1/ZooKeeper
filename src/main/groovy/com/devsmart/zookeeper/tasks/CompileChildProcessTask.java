@@ -4,6 +4,8 @@ import com.devsmart.zookeeper.plugins.CompileContext;
 import com.devsmart.zookeeper.plugins.CompileProcessModifier;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 public class CompileChildProcessTask extends ChildProcessTask {
@@ -16,6 +18,7 @@ public class CompileChildProcessTask extends ChildProcessTask {
 
     private Delegate mDelegate;
     private CompileContext mCompileContext = new CompileContext();
+    private List<CompileProcessModifier> mModifiers = new ArrayList<>();
 
     public void setDelegate(Delegate d) {
         mDelegate = d;
@@ -30,7 +33,7 @@ public class CompileChildProcessTask extends ChildProcessTask {
     }
 
     public void addModifier(CompileProcessModifier modifier) {
-
+        mModifiers.add(modifier);
     }
 
 
@@ -47,6 +50,14 @@ public class CompileChildProcessTask extends ChildProcessTask {
     @Override
     String[] getCommandLine() {
         return mDelegate.getCommandLine(this);
+    }
+
+    public void doModify() {
+        for(CompileProcessModifier modifier : mModifiers) {
+            modifier.apply(this);
+
+        }
+
     }
 
 

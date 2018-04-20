@@ -327,6 +327,7 @@ class Project {
                 retval &= plan.run(cores)
             } else {
                 LOGGER.warn('no task with name: {}', taskName)
+                retval = false
             }
         }
 

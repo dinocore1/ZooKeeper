@@ -9,7 +9,7 @@ import com.devsmart.zookeeper.Version
 class PrecompiledLibrary extends AbstractLibrary implements Module {
 
     Platform platform
-    LinkedHashSet<DefaultLibrary> dependencies = []
+    LinkedHashSet<Library> dependencies = []
 
     void name(String name) {
         this.name = name

@@ -48,9 +48,8 @@ public class GCCStaticLibVisitor extends DefaultProjectVisitor {
         buildTask.getCompileContext().module = lib;
         buildTask.setName(genTaskName());
         buildTask.setDelegate(linkDelegate);
+        buildTask.setOutput(project.file(new File(genBuildDir(), lib.getName() + ".a")));
         project.addTask(buildTask);
-
-        //TODO: get all the dependencies and apply them to the build tasks
 
         GnuCompilerVisitor cppVisitor = new GnuCompilerVisitor();
         cppVisitor.compilerCmd = cppCmd;
@@ -64,9 +63,9 @@ public class GCCStaticLibVisitor extends DefaultProjectVisitor {
         cppVisitor.visit(lib);
 
         GnuCompilerVisitor cVisitor = new GnuCompilerVisitor();
-        cppVisitor.compilerCmd = cCmd;
-        cppVisitor.compileSettings = new SettingWrapper(cSettings);
-        cppVisitor.fileFilter = new RegexFileFilter(".*\\.c$");
+        cVisitor.compilerCmd = cCmd;
+        cVisitor.compileSettings = new SettingWrapper(cSettings);
+        cVisitor.fileFilter = new RegexFileFilter(".*\\.c$");
         cVisitor.project = project;
         cVisitor.buildTask = buildTask;
         cVisitor.platform = platform;
@@ -83,10 +82,18 @@ public class GCCStaticLibVisitor extends DefaultProjectVisitor {
                 + StringUtils.capitalize(variant);
     }
 
+    File genBuildDir() {
+        File buildDir = new File(project.getProjectDir(), "build");
+        buildDir = new File(buildDir, platform.toString());
+        buildDir = new File(buildDir, variant);
+        return buildDir;
+    }
+
     private CompileChildProcessTask.Delegate linkDelegate = new CompileChildProcessTask.Delegate() {
 
         @Override
         public String[] getCommandLine(CompileChildProcessTask task) {
+            task.doModify();
             CompileContext compileContext = task.getCompileContext();
             ArrayList<String> cmdline = new ArrayList<>();
             cmdline.add(linkCmd);
