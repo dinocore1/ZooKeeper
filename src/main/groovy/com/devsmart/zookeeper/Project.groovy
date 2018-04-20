@@ -8,6 +8,7 @@ import com.devsmart.zookeeper.file.DefaultFileCollection
 import com.devsmart.zookeeper.file.DefaultFileTree
 import com.devsmart.zookeeper.projectmodel.BuildableExecutable
 import com.devsmart.zookeeper.projectmodel.BuildableModule
+import com.devsmart.zookeeper.projectmodel.Library
 import com.devsmart.zookeeper.projectmodel.Module
 import com.devsmart.zookeeper.projectmodel.ProjectVisitor
 import com.devsmart.zookeeper.tasks.*
@@ -133,6 +134,17 @@ class Project {
         zooKeeper.doLast.add({
             buildLibTask(t)
         })
+    }
+
+    Module resolveLibrary(Library library, Platform platform) {
+        Module retval = null;
+        for(Module m : modules) {
+            if(library.equals(m)) {
+
+            }
+        }
+
+        return retval;
     }
 
     private class CompileContext {

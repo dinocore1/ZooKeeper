@@ -15,17 +15,23 @@ import java.util.Map;
 
 public class GCCSharedLibVisitor extends DefaultProjectVisitor {
 
-    public String linkCmd;
-
-    public Project project;
     public Platform platform;
     public String variant;
-    private BuildableLibrary library;
-    private CompileChildProcessTask buildTask;
+
+    public String cppCmd;
+    public CompileSettings cppSettings;
+
+    public String cCmd;
+    public CompileSettings cSettings;
+
+    public String linkCmd;
+
+    protected BuildableLibrary library;
+    protected com.devsmart.zookeeper.tasks.CompileChildProcessTask buildTask;
+    protected Project project;
 
     @Override
     public void visit(Project project) {
-        throw new UnsupportedOperationException();
     }
 
     @Override
@@ -47,6 +53,8 @@ public class GCCSharedLibVisitor extends DefaultProjectVisitor {
         //TODO: get all the dependencies and apply them to the build tasks
 
         GnuCompilerVisitor cppVisitor = new GnuCompilerVisitor();
+        cppVisitor.compilerCmd = cppCmd;
+        cppVisitor.compileSettings = new SettingWrapper(cppSettings);
         cppVisitor.fileFilter = new RegexFileFilter(".*\\.cpp|cc$");
         cppVisitor.project = project;
         cppVisitor.buildTask = buildTask;
@@ -56,6 +64,8 @@ public class GCCSharedLibVisitor extends DefaultProjectVisitor {
         cppVisitor.visit(lib);
 
         GnuCompilerVisitor cVisitor = new GnuCompilerVisitor();
+        cppVisitor.compilerCmd = cCmd;
+        cppVisitor.compileSettings = new SettingWrapper(cSettings);
         cppVisitor.fileFilter = new RegexFileFilter(".*\\.c$");
         cVisitor.project = project;
         cVisitor.buildTask = buildTask;

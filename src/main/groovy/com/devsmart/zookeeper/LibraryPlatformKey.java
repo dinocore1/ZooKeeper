@@ -5,10 +5,10 @@ import com.google.common.collect.ComparisonChain;
 
 public class LibraryPlatformKey implements Comparable<LibraryPlatformKey> {
 
-    public final Library lib;
+    public final DefaultLibrary lib;
     public final Platform platform;
 
-    public LibraryPlatformKey(Library lib, Platform platform) {
+    public LibraryPlatformKey(DefaultLibrary lib, Platform platform) {
         this.lib = lib;
         this.platform = platform;
     }

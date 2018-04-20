@@ -1,6 +1,9 @@
 package com.devsmart.zookeeper.plugins;
 
 import com.devsmart.zookeeper.projectmodel.BuildableLibrary;
+import com.devsmart.zookeeper.projectmodel.Library;
+import com.devsmart.zookeeper.projectmodel.Module;
+import com.devsmart.zookeeper.projectmodel.PrecompiledLibrary;
 import com.devsmart.zookeeper.tasks.CompileChildProcessTask;
 
 import java.io.File;
@@ -28,7 +31,6 @@ public class GnuCompilerVisitor extends BasicCompilerFileVisitor {
 
     @Override
     public void visit(File srcFile) {
-
         if(fileFilter.accept(srcFile)) {
             super.visit(srcFile);
             compileTask.addModifier(compileSettings);
@@ -41,6 +43,23 @@ public class GnuCompilerVisitor extends BasicCompilerFileVisitor {
         mDependenciesModifier = new CompileProcessModifier() {
             @Override
             public void apply(CompileChildProcessTask ctx) {
+                CompileSettings settings = new CompileSettings();
+
+                for(Library lib : mLibrary.getDependencies()) {
+                    Module module = project.resolveLibrary(lib, platform);
+
+                    if(module instanceof PrecompiledLibrary) {
+                        PrecompiledLibrary precompiledLibrary = (PrecompiledLibrary) module;
+                        precompiledLibrary.
+                    }
+
+
+                }
+
+                ctx.getCompileContext().flags.addAll(settings.getFlags());
+                ctx.getCompileContext().includes.addAll(settings.getIncludes());
+                ctx.getCompileContext().sharedLinkedLibs.addAll(settings.getSharedLinkedLibs());
+                ctx.getCompileContext().staticLinkedLibs.addAll(settings.getStaticLinkedLibs());
 
             }
         };

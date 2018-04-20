@@ -44,7 +44,7 @@ public class GCCStaticLibVisitor extends DefaultProjectVisitor {
     public void visit(BuildableLibrary lib) {
         library = lib;
 
-        buildTask = new com.devsmart.zookeeper.tasks.CompileChildProcessTask();
+        buildTask = new CompileChildProcessTask();
         buildTask.getCompileContext().module = lib;
         buildTask.setName(genTaskName());
         buildTask.setDelegate(linkDelegate);
@@ -53,6 +53,8 @@ public class GCCStaticLibVisitor extends DefaultProjectVisitor {
         //TODO: get all the dependencies and apply them to the build tasks
 
         GnuCompilerVisitor cppVisitor = new GnuCompilerVisitor();
+        cppVisitor.compilerCmd = cppCmd;
+        cppVisitor.compileSettings = new SettingWrapper(cppSettings);
         cppVisitor.fileFilter = new RegexFileFilter(".*\\.cpp|cc$");
         cppVisitor.project = project;
         cppVisitor.buildTask = buildTask;
@@ -62,6 +64,8 @@ public class GCCStaticLibVisitor extends DefaultProjectVisitor {
         cppVisitor.visit(lib);
 
         GnuCompilerVisitor cVisitor = new GnuCompilerVisitor();
+        cppVisitor.compilerCmd = cCmd;
+        cppVisitor.compileSettings = new SettingWrapper(cSettings);
         cppVisitor.fileFilter = new RegexFileFilter(".*\\.c$");
         cVisitor.project = project;
         cVisitor.buildTask = buildTask;

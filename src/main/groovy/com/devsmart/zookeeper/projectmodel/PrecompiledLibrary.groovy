@@ -1,15 +1,15 @@
 package com.devsmart.zookeeper.projectmodel
 
+import com.devsmart.zookeeper.AbstractLibrary
+import com.devsmart.zookeeper.DefaultLibrary
 import com.devsmart.zookeeper.DependencyClosureDSL
 import com.devsmart.zookeeper.Platform
 import com.devsmart.zookeeper.Version
 
-class PrecompiledLibrary implements Library {
+class PrecompiledLibrary extends AbstractLibrary implements Module {
 
-    String name
-    Version version
     Platform platform
-    LinkedHashSet<AbstractLibrary> dependencies = []
+    LinkedHashSet<DefaultLibrary> dependencies = []
 
     void name(String name) {
         this.name = name
@@ -28,7 +28,7 @@ class PrecompiledLibrary implements Library {
         cl.delegate = delegate
         cl.run()
         for(String dependStr : delegate.call()) {
-            dependencies.add(AbstractLibrary.parse(dependStr))
+            dependencies.add(DefaultLibrary.parse(dependStr))
         }
     }
 }

@@ -1,5 +1,6 @@
 package com.devsmart.zookeeper.projectmodel
 
+import com.devsmart.zookeeper.DefaultLibrary
 import com.devsmart.zookeeper.DependencyClosureDSL
 import com.devsmart.zookeeper.Version
 import com.devsmart.zookeeper.api.FileCollection
@@ -10,7 +11,7 @@ class BuildableModule implements Module {
     Version version
     FileCollection src
     FileCollection includes
-    LinkedHashSet<AbstractLibrary> dependencies = []
+    LinkedHashSet<DefaultLibrary> dependencies = []
 
     @Override
     Set<Library> getDependencies() {
@@ -38,7 +39,7 @@ class BuildableModule implements Module {
         cl.delegate = delegate
         cl.run()
         for(String dependStr : delegate.call()) {
-            dependencies.add(AbstractLibrary.parse(dependStr))
+            dependencies.add(DefaultLibrary.parse(dependStr))
         }
     }
 

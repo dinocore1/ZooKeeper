@@ -1,5 +1,7 @@
 package com.devsmart.zookeeper.projectmodel
 
+import com.devsmart.zookeeper.AbstractLibrary
+
 class BuildableLibrary extends BuildableModule implements Library {
 
     LinkType type
@@ -11,5 +13,27 @@ class BuildableLibrary extends BuildableModule implements Library {
 
     void exportHeaders(Closure cl) {
 
+    }
+
+    @Override
+    int hashCode() {
+        return AbstractLibrary.libraryHashCode(this);
+    }
+
+    @Override
+    boolean equals(Object o) {
+        if(o == null) {
+            return false
+        }
+        if(o instanceof Library) {
+            return AbstractLibrary.libraryEquals(this, (Library)o)
+        } else {
+            return false
+        }
+    }
+
+    @Override
+    String toString() {
+        return String.format("%s:%s", name, version);
     }
 }
