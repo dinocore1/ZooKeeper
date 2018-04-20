@@ -98,11 +98,9 @@ class Project {
             if(t instanceof BuildTask) {
 
                 for (File inputFile : t.input) {
-                    if (!inputFile.exists()) {
-                        BuildTask childTask = zooKeeper.artifactMap.get(new FileArtifact(inputFile))
-                        if (childTask != null) {
-                            zooKeeper.dependencyGraph.addDependency((BuildTask) t, childTask)
-                        }
+                    BuildTask childTask = zooKeeper.artifactMap.get(new FileArtifact(inputFile))
+                    if (childTask != null) {
+                        zooKeeper.dependencyGraph.addDependency((BuildTask) t, childTask)
                     }
                 }
 
