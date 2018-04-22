@@ -19,12 +19,14 @@ public class GnuCompilerVisitor extends BasicCompilerFileVisitor {
     FileFilter fileFilter;
 
     protected BuildableLibrary mLibrary;
+    protected CompileProcessModifier mProjectModifier;
     protected CompileProcessModifier mDependenciesModifier;
 
 
     @Override
     public void visit(BuildableLibrary lib) {
         this.mLibrary = lib;
+        createProjectModifier();
         createDependencyModifier();
         super.visit(lib);
     }
@@ -34,9 +36,21 @@ public class GnuCompilerVisitor extends BasicCompilerFileVisitor {
         if(fileFilter.accept(srcFile)) {
             super.visit(srcFile);
             compileTask.addModifier(compileSettings);
+            compileTask.addModifier(mProjectModifier);
             compileTask.addModifier(mDependenciesModifier);
             compileTask.setDelegate(compileDelegate);
         }
+    }
+
+    private void createProjectModifier() {
+        mProjectModifier = new CompileProcessModifier() {
+
+            @Override
+            public void apply(CompileChildProcessTask ctx) {
+                ctx.getCompileContext().macrodefines.addAll(mLibrary.getMacrodefs());
+                ctx.getCompileContext().includes.addAll(mLibrary.getIncludes().getFiles());
+            }
+        };
     }
 
     private void createDependencyModifier() {
@@ -75,6 +89,10 @@ public class GnuCompilerVisitor extends BasicCompilerFileVisitor {
             cmdline.add(compilerCmd);
             cmdline.addAll(compileContext.flags);
             cmdline.add("-c");
+
+            for(String def : compileContext.macrodefines) {
+                cmdline.add("-D" + def);
+            }
 
             for(File includeDir : compileContext.includes) {
                 cmdline.add("-I" + includeDir.getAbsoluteFile().toString());

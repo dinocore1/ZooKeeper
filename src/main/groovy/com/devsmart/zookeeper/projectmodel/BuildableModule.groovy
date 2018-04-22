@@ -4,14 +4,16 @@ import com.devsmart.zookeeper.DefaultLibrary
 import com.devsmart.zookeeper.DependencyClosureDSL
 import com.devsmart.zookeeper.Version
 import com.devsmart.zookeeper.api.FileCollection
+import com.devsmart.zookeeper.file.FileUtils
 
 class BuildableModule implements Module {
 
     String name
     Version version
     FileCollection src
-    FileCollection includes
+    FileCollection includes = FileUtils.emptyFileCollection()
     LinkedHashSet<DefaultLibrary> dependencies = []
+    LinkedHashSet<String> macrodefs = []
 
     @Override
     Set<Library> getDependencies() {
@@ -24,6 +26,10 @@ class BuildableModule implements Module {
 
     void version(String version) {
         this.version = Version.fromString(version)
+    }
+
+    void defs(String... defs) {
+        macrodefs.addAll(defs)
     }
 
     void src(FileCollection files) {

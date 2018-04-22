@@ -59,7 +59,7 @@ public class GCCSharedLibVisitor extends DefaultProjectVisitor {
 
         GnuCompilerVisitor cppVisitor = new GnuCompilerVisitor();
         cppVisitor.compilerCmd = cppCmd;
-        cppVisitor.compileSettings = new SettingWrapper(cppSettings);
+        cppVisitor.compileSettings = cppSettings;
         cppVisitor.fileFilter = new RegexFileFilter(".*\\.cpp|cc$");
         cppVisitor.project = project;
         cppVisitor.buildTask = buildTask;
@@ -72,7 +72,7 @@ public class GCCSharedLibVisitor extends DefaultProjectVisitor {
 
         GnuCompilerVisitor cVisitor = new GnuCompilerVisitor();
         cVisitor.compilerCmd = cCmd;
-        cVisitor.compileSettings = new SettingWrapper(cSettings);
+        cVisitor.compileSettings = cSettings;
         cVisitor.fileFilter = new RegexFileFilter(".*\\.c$");
         cVisitor.project = project;
         cVisitor.buildTask = buildTask;
