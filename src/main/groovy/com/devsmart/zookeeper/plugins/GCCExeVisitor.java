@@ -4,17 +4,21 @@ import com.devsmart.zookeeper.DefaultProjectVisitor;
 import com.devsmart.zookeeper.Platform;
 import com.devsmart.zookeeper.Project;
 import com.devsmart.zookeeper.StringContext;
-import com.devsmart.zookeeper.projectmodel.BuildableExecutable;
-import com.devsmart.zookeeper.projectmodel.BuildableLibrary;
+import com.devsmart.zookeeper.projectmodel.*;
+import com.devsmart.zookeeper.tasks.BuildTask;
 import com.devsmart.zookeeper.tasks.CompileChildProcessTask;
 import org.apache.commons.io.filefilter.RegexFileFilter;
 import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Map;
 
 public class GCCExeVisitor extends DefaultProjectVisitor {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(GCCExeVisitor.class);
 
     public Platform platform;
     public String variant;
@@ -52,6 +56,8 @@ public class GCCExeVisitor extends DefaultProjectVisitor {
         buildTask.setDelegate(linkDelegate);
         project.addTask(buildTask);
 
+        project.addDoLast(createResolveDeps(exe, buildTask));
+
 
         GnuCompilerVisitor cppVisitor = new GnuCompilerVisitor();
         cppVisitor.compilerCmd = cppCmd;
@@ -77,6 +83,37 @@ public class GCCExeVisitor extends DefaultProjectVisitor {
         cVisitor.visit(executable);
 
     }
+
+    private Runnable createResolveDeps(final BuildableModule m, final CompileChildProcessTask buildTask) {
+        return new Runnable() {
+            @Override
+            public void run() {
+                for(Library childLib : m.getDependencies()) {
+                    Module module = project.resolveLibrary(childLib, platform);
+                    if(module == null) {
+                        LOGGER.error("can not resolve library: {}", childLib);
+                    } else {
+                        if(module instanceof BuildableLibrary) {
+                            //TODO: add graph dependency
+                        } else if(module instanceof PrecompiledLibrary) {
+                            PrecompiledLibrary childPrecompiledLib = (PrecompiledLibrary) module;
+                            buildTask.addModifier(createDepLibModifier(childPrecompiledLib));
+                        }
+                    }
+                }
+            }
+        };
+    }
+
+    private CompileProcessModifier createDepLibModifier(PrecompiledLibrary childPrecompiledLib) {
+        return new CompileProcessModifier() {
+            @Override
+            public void apply(CompileChildProcessTask ctx) {
+                ctx.getCompileContext().sharedLinkedLibs.add(childPrecompiledLib);
+            }
+        };
+    }
+
 
     @Override
     public void visit(BuildableLibrary lib) {
@@ -112,6 +149,10 @@ public class GCCExeVisitor extends DefaultProjectVisitor {
 
             for(File input : task.getInput()) {
                 cmdline.add(input.getAbsolutePath().toString());
+            }
+
+            for(Library l : compileContext.sharedLinkedLibs) {
+                cmdline.add("-l" + l.getName());
             }
 
             return cmdline.toArray(new String[cmdline.size()]);

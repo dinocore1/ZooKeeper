@@ -4,8 +4,8 @@ import com.devsmart.zookeeper.projectmodel.Library;
 
 public abstract class AbstractLibrary implements Library {
 
-    String name;
-    Version version;
+    protected String name;
+    protected Version version;
 
     @Override
     public String getName() {

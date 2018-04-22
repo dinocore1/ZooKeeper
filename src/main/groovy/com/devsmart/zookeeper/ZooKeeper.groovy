@@ -39,10 +39,14 @@ class ZooKeeper {
 
     final List<ProjectVisitor> projectVisitors = []
 
-
-    void init(Project project) {
+    File getRootDir() {
         File zookeeperRoot = new File(System.getProperty('user.home'))
         zookeeperRoot = new File(zookeeperRoot, '.zookeeper')
+        return zookeeperRoot;
+    }
+
+    void init(Project project) {
+        File zookeeperRoot = getRootDir()
         zookeeperRoot.mkdirs()
 
 
@@ -59,6 +63,10 @@ class ZooKeeper {
             script.run()
         }
 
+        //read pre-compiled libs
+        readPrecompiledLib(new File(zookeeperRoot, "install"), project)
+
+
         //read template files
 
         File templateDir = new File(zookeeperRoot, 'templates')
@@ -72,6 +80,31 @@ class ZooKeeper {
             Script script = shell.parse(f)
             script.run()
         }
+    }
+
+    private readPrecompiledLib(File f, Project project) {
+        if(f.isFile() && 'lib.zoo'.equals(f.name)) {
+
+            Project childProj = new Project(f.getParentFile(), this);
+
+            LOGGER.info("reading: {}", f.absolutePath)
+            CompilerConfiguration cc = new CompilerConfiguration()
+            cc.scriptBaseClass = 'com.devsmart.zookeeper.ZooKeeper_DSL'
+            Binding binding = new Binding()
+            binding.setProperty("project", childProj)
+            GroovyShell shell = new GroovyShell(binding, cc)
+
+            Script script = shell.parse(f)
+            script.run()
+
+            project.modules.addAll(childProj.modules)
+
+        } else if(f.isDirectory()) {
+            for(File fd : f.listFiles()) {
+                readPrecompiledLib(fd, project)
+            }
+        }
+
     }
 
     void resolveTaskDependencies(BasicTask t) {

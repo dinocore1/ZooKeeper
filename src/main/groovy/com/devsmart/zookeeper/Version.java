@@ -33,6 +33,20 @@ public class Version implements Comparable<Version> {
     }
 
     @Override
+    public boolean equals(Object obj) {
+        if(obj == null) {
+            return false;
+        }
+
+        if(obj instanceof Version) {
+            Version other = (Version) obj;
+            return major == other.major && minor == other.minor && patch == other.patch;
+        } else {
+            return false;
+        }
+    }
+
+    @Override
     public String toString() {
         return String.format("%d.%d.%d", major, minor, patch);
     }

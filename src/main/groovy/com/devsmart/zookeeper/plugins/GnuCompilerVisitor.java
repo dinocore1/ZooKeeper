@@ -60,23 +60,23 @@ public class GnuCompilerVisitor extends BasicCompilerFileVisitor {
         mDependenciesModifier = new CompileProcessModifier() {
             @Override
             public void apply(CompileChildProcessTask ctx) {
-                CompileSettings settings = new CompileSettings();
+                CompileContext compileCtx = ctx.getCompileContext();
 
                 for(Library lib : module.getDependencies()) {
                     Module module = project.resolveLibrary(lib, platform);
 
                     if(module instanceof PrecompiledLibrary) {
-                        PrecompiledLibrary precompiledLibrary = (PrecompiledLibrary) module;
+                        PrecompiledLibrary childLib = (PrecompiledLibrary) module;
+                        compileCtx.includes.addAll(childLib.getIncludes().getFiles());
+                        compileCtx.macrodefines.addAll(childLib.getMacrodefs());
 
+                    } else if(module instanceof BuildableLibrary) {
+                        BuildableLibrary childLib = (BuildableLibrary) module;
+                        compileCtx.includes.addAll(childLib.getIncludes().getFiles());
+                        compileCtx.macrodefines.addAll(childLib.getMacrodefs());
                     }
-
-
                 }
 
-                ctx.getCompileContext().flags.addAll(settings.getFlags());
-                ctx.getCompileContext().includes.addAll(settings.getIncludes());
-                ctx.getCompileContext().sharedLinkedLibs.addAll(settings.getSharedLinkedLibs());
-                ctx.getCompileContext().staticLinkedLibs.addAll(settings.getStaticLinkedLibs());
 
             }
         };

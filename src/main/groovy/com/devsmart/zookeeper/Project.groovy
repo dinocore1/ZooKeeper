@@ -7,9 +7,11 @@ import com.devsmart.zookeeper.file.DefaultBaseDirFileResolver
 import com.devsmart.zookeeper.file.DefaultFileCollection
 import com.devsmart.zookeeper.file.DefaultFileTree
 import com.devsmart.zookeeper.projectmodel.BuildableExecutable
+import com.devsmart.zookeeper.projectmodel.BuildableLibrary
 import com.devsmart.zookeeper.projectmodel.BuildableModule
 import com.devsmart.zookeeper.projectmodel.Library
 import com.devsmart.zookeeper.projectmodel.Module
+import com.devsmart.zookeeper.projectmodel.PrecompiledLibrary
 import com.devsmart.zookeeper.projectmodel.ProjectVisitor
 import com.devsmart.zookeeper.tasks.*
 import com.google.common.base.Function
@@ -134,15 +136,21 @@ class Project {
         })
     }
 
-    Module resolveLibrary(Library library, Platform platform) {
-        Module retval = null;
+
+
+    synchronized Module resolveLibrary(Library library, Platform platform) {
+        Module retval = null
         for(Module m : modules) {
             if(library.equals(m)) {
-
+                if(m instanceof PrecompiledLibrary && m.platform.equals(platform)) {
+                    return m
+                } else if(m instanceof BuildableLibrary) {
+                    retval = m
+                }
             }
         }
 
-        return retval;
+        return retval
     }
 
     private class CompileContext {

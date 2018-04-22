@@ -3,17 +3,20 @@ package com.devsmart.zookeeper.plugins;
 import com.devsmart.zookeeper.DefaultProjectVisitor;
 import com.devsmart.zookeeper.Platform;
 import com.devsmart.zookeeper.Project;
-import com.devsmart.zookeeper.projectmodel.BuildableExecutable;
-import com.devsmart.zookeeper.projectmodel.BuildableLibrary;
+import com.devsmart.zookeeper.projectmodel.*;
 import com.devsmart.zookeeper.tasks.CompileChildProcessTask;
 import org.apache.commons.io.filefilter.RegexFileFilter;
 import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Map;
 
 public class GCCSharedLibVisitor extends DefaultProjectVisitor {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(GCCSharedLibVisitor.class);
 
     public Platform platform;
     public String variant;
@@ -53,6 +56,9 @@ public class GCCSharedLibVisitor extends DefaultProjectVisitor {
         buildTask.setDelegate(linkDelegate);
         project.addTask(buildTask);
 
+        project.addDoLast(createResolveDeps(library));
+
+
         cppSettings.getFlags().add("-fPIC");
 
         GnuCompilerVisitor cppVisitor = new GnuCompilerVisitor();
@@ -79,6 +85,23 @@ public class GCCSharedLibVisitor extends DefaultProjectVisitor {
         cVisitor.extra = "sharedLib";
         cVisitor.visit(lib);
 
+    }
+
+    private Runnable createResolveDeps(final BuildableModule m) {
+        return new Runnable() {
+            @Override
+            public void run() {
+                for(Library childLib : m.getDependencies()) {
+                    Module module = project.resolveLibrary(childLib, platform);
+                    if(module == null) {
+                        LOGGER.error("can not resolve library: {}", childLib);
+                    } else {
+
+
+                    }
+                }
+            }
+        };
     }
 
     private String genTaskName() {
