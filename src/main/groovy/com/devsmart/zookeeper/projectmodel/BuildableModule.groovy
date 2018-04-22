@@ -14,6 +14,7 @@ class BuildableModule implements Module {
     FileCollection includes = FileUtils.emptyFileCollection()
     LinkedHashSet<DefaultLibrary> dependencies = []
     LinkedHashSet<String> macrodefs = []
+    LinkedHashMap<String, String> env = []
 
     @Override
     Set<Library> getDependencies() {
@@ -30,6 +31,10 @@ class BuildableModule implements Module {
 
     void defs(String... defs) {
         macrodefs.addAll(defs)
+    }
+
+    void env(Map<String, String> map) {
+        this.env.putAll(map)
     }
 
     void src(FileCollection files) {

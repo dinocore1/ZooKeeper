@@ -10,6 +10,7 @@ class CompileSettings implements CompileProcessModifier {
     final LinkedHashSet<DefaultLibrary> staticLinkedLibs = []
     final LinkedHashSet<DefaultLibrary> sharedLinkedLibs = []
     final LinkedHashSet<String> macrodefines = []
+    final LinkedHashMap<String, String> env = [:]
 
     @Override
     void apply(CompileChildProcessTask ctx) {
@@ -18,5 +19,6 @@ class CompileSettings implements CompileProcessModifier {
         ctx.compileContext.staticLinkedLibs.addAll(staticLinkedLibs)
         ctx.compileContext.sharedLinkedLibs.addAll(sharedLinkedLibs)
         ctx.compileContext.macrodefines.addAll(macrodefines)
+        ctx.compileContext.env.putAll(env)
     }
 }

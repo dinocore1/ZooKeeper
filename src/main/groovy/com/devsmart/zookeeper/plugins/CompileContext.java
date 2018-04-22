@@ -14,5 +14,6 @@ public class CompileContext {
     public final LinkedHashSet<DefaultLibrary> staticLinkedLibs = new LinkedHashSet<>();
     public final LinkedHashSet<DefaultLibrary> sharedLinkedLibs = new LinkedHashSet<>();
     public final LinkedHashSet<String> macrodefines = new LinkedHashSet<>();
+    public final LinkedHashMap<String, String> env = new LinkedHashMap<>();
     public BuildableModule module;
 }

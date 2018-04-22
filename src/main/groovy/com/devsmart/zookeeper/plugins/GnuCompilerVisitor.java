@@ -1,5 +1,6 @@
 package com.devsmart.zookeeper.plugins;
 
+import com.devsmart.zookeeper.StringContext;
 import com.devsmart.zookeeper.projectmodel.BuildableLibrary;
 import com.devsmart.zookeeper.projectmodel.Library;
 import com.devsmart.zookeeper.projectmodel.Module;
@@ -111,7 +112,18 @@ public class GnuCompilerVisitor extends BasicCompilerFileVisitor {
 
         @Override
         public void updateEnv(CompileChildProcessTask task, Map<String, String> env) {
+            CompileContext compileContext = task.getCompileContext();
+            StringContext strEnv = new StringContext();
+            strEnv.putAll(env);
 
+            for(Map.Entry<String, String> entry : compileContext.env.entrySet()) {
+                final String key = entry.getKey();
+                String value = entry.getValue();
+
+                value = strEnv.resolve(value);
+                env.put(key, value);
+                strEnv.setVar(key, value);
+            }
         }
     };
 }
