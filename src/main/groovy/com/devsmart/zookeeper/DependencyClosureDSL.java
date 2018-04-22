@@ -4,7 +4,7 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
-class DependencyClosureDSL implements Callable<Set<String>> {
+public class DependencyClosureDSL implements Callable<Set<String>> {
 
     private LinkedHashSet<String> mStrings = new LinkedHashSet<String>();
 

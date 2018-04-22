@@ -36,7 +36,6 @@ public class BasicCompilerFileVisitor extends DefaultProjectVisitor {
     @Override
     public void visit(BuildableExecutable exe) {
         this.module = exe;
-
         super.visit(exe);
     }
 

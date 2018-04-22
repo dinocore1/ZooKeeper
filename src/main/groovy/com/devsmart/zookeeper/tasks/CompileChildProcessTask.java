@@ -2,6 +2,7 @@ package com.devsmart.zookeeper.tasks;
 
 import com.devsmart.zookeeper.plugins.CompileContext;
 import com.devsmart.zookeeper.plugins.CompileProcessModifier;
+import com.google.common.base.Preconditions;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -33,6 +34,7 @@ public class CompileChildProcessTask extends ChildProcessTask {
     }
 
     public void addModifier(CompileProcessModifier modifier) {
+        Preconditions.checkNotNull(modifier);
         mModifiers.add(modifier);
     }
 
@@ -55,7 +57,6 @@ public class CompileChildProcessTask extends ChildProcessTask {
     public void doModify() {
         for(CompileProcessModifier modifier : mModifiers) {
             modifier.apply(this);
-
         }
 
     }

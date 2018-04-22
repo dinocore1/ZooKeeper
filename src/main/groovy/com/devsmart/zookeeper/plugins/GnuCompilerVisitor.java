@@ -1,10 +1,7 @@
 package com.devsmart.zookeeper.plugins;
 
 import com.devsmart.zookeeper.StringContext;
-import com.devsmart.zookeeper.projectmodel.BuildableLibrary;
-import com.devsmart.zookeeper.projectmodel.Library;
-import com.devsmart.zookeeper.projectmodel.Module;
-import com.devsmart.zookeeper.projectmodel.PrecompiledLibrary;
+import com.devsmart.zookeeper.projectmodel.*;
 import com.devsmart.zookeeper.tasks.CompileChildProcessTask;
 
 import java.io.File;
@@ -19,17 +16,22 @@ public class GnuCompilerVisitor extends BasicCompilerFileVisitor {
     CompileProcessModifier compileSettings;
     FileFilter fileFilter;
 
-    protected BuildableLibrary mLibrary;
     protected CompileProcessModifier mProjectModifier;
     protected CompileProcessModifier mDependenciesModifier;
 
 
     @Override
     public void visit(BuildableLibrary lib) {
-        this.mLibrary = lib;
         createProjectModifier();
         createDependencyModifier();
         super.visit(lib);
+    }
+
+    @Override
+    public void visit(BuildableExecutable exe) {
+        createProjectModifier();
+        createDependencyModifier();
+        super.visit(exe);
     }
 
     @Override
@@ -48,8 +50,8 @@ public class GnuCompilerVisitor extends BasicCompilerFileVisitor {
 
             @Override
             public void apply(CompileChildProcessTask ctx) {
-                ctx.getCompileContext().macrodefines.addAll(mLibrary.getMacrodefs());
-                ctx.getCompileContext().includes.addAll(mLibrary.getIncludes().getFiles());
+                ctx.getCompileContext().macrodefines.addAll(module.getMacrodefs());
+                ctx.getCompileContext().includes.addAll(module.getIncludes().getFiles());
             }
         };
     }
@@ -60,7 +62,7 @@ public class GnuCompilerVisitor extends BasicCompilerFileVisitor {
             public void apply(CompileChildProcessTask ctx) {
                 CompileSettings settings = new CompileSettings();
 
-                for(Library lib : mLibrary.getDependencies()) {
+                for(Library lib : module.getDependencies()) {
                     Module module = project.resolveLibrary(lib, platform);
 
                     if(module instanceof PrecompiledLibrary) {
@@ -118,10 +120,10 @@ public class GnuCompilerVisitor extends BasicCompilerFileVisitor {
 
             for(Map.Entry<String, String> entry : compileContext.env.entrySet()) {
                 final String key = entry.getKey();
-                String value = entry.getValue();
+                CharSequence value = entry.getValue();
 
                 value = strEnv.resolve(value);
-                env.put(key, value);
+                env.put(key, value.toString());
                 strEnv.setVar(key, value);
             }
         }
