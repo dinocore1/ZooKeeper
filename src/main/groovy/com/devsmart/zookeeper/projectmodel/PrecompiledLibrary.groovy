@@ -3,6 +3,7 @@ package com.devsmart.zookeeper.projectmodel
 import com.devsmart.zookeeper.AbstractLibrary
 import com.devsmart.zookeeper.DefaultLibrary
 import com.devsmart.zookeeper.DependencyClosureDSL
+import com.devsmart.zookeeper.LinkableLibrary
 import com.devsmart.zookeeper.Platform
 import com.devsmart.zookeeper.Version
 import com.devsmart.zookeeper.api.FileCollection
@@ -11,10 +12,12 @@ import com.devsmart.zookeeper.file.FileUtils
 class PrecompiledLibrary extends AbstractLibrary implements Module {
 
     Platform platform
-    LinkedHashSet<Library> dependencies = []
+    LinkedHashSet<LinkableLibrary> dependencies = []
     FileCollection includes = FileUtils.emptyFileCollection()
     LinkedHashSet<String> macrodefs = []
     LinkedHashMap<String, String> env = []
+    FileCollection sharedLib
+    FileCollection staticLib
 
     void name(String name) {
         this.name = name
@@ -25,7 +28,7 @@ class PrecompiledLibrary extends AbstractLibrary implements Module {
     }
 
     void platform(String platform) {
-        this.platform = Platform.parse(platform);
+        this.platform = Platform.parse(platform)
     }
 
     void defs(String... defs) {
@@ -40,14 +43,18 @@ class PrecompiledLibrary extends AbstractLibrary implements Module {
         this.includes = includes
     }
 
-    void sharedLib()
+    void sharedLib(FileCollection sharedLib) {
+        this.sharedLib = sharedLib
+    }
+
+    void staticLib(FileCollection staticLib) {
+        this.staticLib = staticLib
+    }
 
     void dependencies(Closure cl) {
         DependencyClosureDSL delegate = new DependencyClosureDSL()
         cl.delegate = delegate
         cl.run()
-        for(String dependStr : delegate.call()) {
-            dependencies.add(DefaultLibrary.parse(dependStr))
-        }
+        dependencies.addAll(delegate.call())
     }
 }

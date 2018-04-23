@@ -125,7 +125,6 @@ public class GCCSharedLibVisitor extends DefaultProjectVisitor {
             task.doModify();
             CompileContext compileContext = task.getCompileContext();
 
-            compileContext.flags.add("-fPIC");
             compileContext.flags.add("-shared");
 
             ArrayList<String> cmdline = new ArrayList<>();
@@ -138,6 +137,8 @@ public class GCCSharedLibVisitor extends DefaultProjectVisitor {
             for(File input : task.getInput()) {
                 cmdline.add(input.getAbsolutePath().toString());
             }
+
+            library.getType()
 
             return cmdline.toArray(new String[cmdline.size()]);
         }

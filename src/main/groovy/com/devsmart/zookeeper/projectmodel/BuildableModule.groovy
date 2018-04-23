@@ -1,7 +1,7 @@
 package com.devsmart.zookeeper.projectmodel
 
-import com.devsmart.zookeeper.DefaultLibrary
 import com.devsmart.zookeeper.DependencyClosureDSL
+import com.devsmart.zookeeper.LinkableLibrary
 import com.devsmart.zookeeper.Version
 import com.devsmart.zookeeper.api.FileCollection
 import com.devsmart.zookeeper.file.FileUtils
@@ -12,7 +12,7 @@ class BuildableModule implements Module {
     Version version
     FileCollection src
     FileCollection includes = FileUtils.emptyFileCollection()
-    LinkedHashSet<DefaultLibrary> dependencies = []
+    LinkedHashSet<LinkableLibrary> dependencies = []
     LinkedHashSet<String> macrodefs = []
     LinkedHashMap<String, String> env = []
 
@@ -49,9 +49,7 @@ class BuildableModule implements Module {
         DependencyClosureDSL delegate = new DependencyClosureDSL()
         cl.delegate = delegate
         cl.run()
-        for(String dependStr : delegate.call()) {
-            dependencies.add(DefaultLibrary.parse(dependStr))
-        }
+        dependencies.addAll(delegate.call())
     }
 
 }
