@@ -1,9 +1,6 @@
 package com.devsmart.zookeeper.plugins;
 
-import com.devsmart.zookeeper.DefaultProjectVisitor;
-import com.devsmart.zookeeper.Platform;
-import com.devsmart.zookeeper.Project;
-import com.devsmart.zookeeper.StringContext;
+import com.devsmart.zookeeper.*;
 import com.devsmart.zookeeper.projectmodel.*;
 import com.devsmart.zookeeper.tasks.BuildTask;
 import com.devsmart.zookeeper.tasks.CompileChildProcessTask;
@@ -14,6 +11,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.Map;
 
 public class GCCExeVisitor extends DefaultProjectVisitor {
@@ -151,8 +149,33 @@ public class GCCExeVisitor extends DefaultProjectVisitor {
                 cmdline.add(input.getAbsolutePath().toString());
             }
 
-            for(Library l : compileContext.sharedLinkedLibs) {
-                cmdline.add("-l" + l.getName());
+            LinkedHashSet<File> librarySearchPaths = new LinkedHashSet<>();
+            LinkedHashSet<String> linkLibNames = new LinkedHashSet<>();
+
+            for(LinkableLibrary dep : executable.getDependencies()) {
+                Module module = project.resolveLibrary(dep, platform);
+                if(module instanceof PrecompiledLibrary) {
+                    PrecompiledLibrary precompileLib = (PrecompiledLibrary) module;
+                    switch(dep.linkType) {
+                        case Dynamic:
+                            librarySearchPaths.add(precompileLib.getStaticLib().getSingleFile());
+                            linkLibNames.add(dep.getName());
+                        case Static:
+                            cmdline.add(precompileLib.getStaticLib().getSingleFile().getAbsolutePath());
+                            break;
+                    }
+                } else if(module instanceof BuildableLibrary){
+                    BuildableLibrary buildableLibrary = (BuildableLibrary) module;
+                    //TODO: get output dir
+                }
+            }
+
+            for(File linkSearchPath : librarySearchPaths) {
+                cmdline.add("-L" + linkSearchPath.getAbsolutePath());
+            }
+
+            for(String libName : linkLibNames) {
+                cmdline.add("-l" + libName);
             }
 
             return cmdline.toArray(new String[cmdline.size()]);

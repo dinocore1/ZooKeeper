@@ -17,7 +17,7 @@ class BuildableModule implements Module {
     LinkedHashMap<String, String> env = []
 
     @Override
-    Set<Library> getDependencies() {
+    Set<LinkableLibrary> getDependencies() {
         return this.dependencies
     }
 

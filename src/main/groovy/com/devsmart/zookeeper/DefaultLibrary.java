@@ -32,7 +32,7 @@ public class DefaultLibrary extends AbstractLibrary {
 
 
     @Override
-    public Set<Library> getDependencies() {
+    public Set<LinkableLibrary> getDependencies() {
         throw new UnsupportedOperationException();
     }
 

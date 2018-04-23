@@ -1,5 +1,7 @@
 package com.devsmart.zookeeper;
 
+import com.devsmart.zookeeper.projectmodel.LinkType;
+
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -10,12 +12,12 @@ public class DependencyClosureDSL implements Callable<Set<LinkableLibrary>> {
 
     void staticLib(String str) {
         DefaultLibrary lib = DefaultLibrary.parse(str);
-        mLibraries.add(new LinkableLibrary(lib, LinkableLibrary.LinkType.Static));
+        mLibraries.add(new LinkableLibrary(lib, LinkType.Static));
     }
 
     void sharedLib(String str) {
         DefaultLibrary lib = DefaultLibrary.parse(str);
-        mLibraries.add(new LinkableLibrary(lib, LinkableLibrary.LinkType.Shared));
+        mLibraries.add(new LinkableLibrary(lib, LinkType.Dynamic));
     }
 
     @Override
