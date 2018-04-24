@@ -12,12 +12,12 @@ class BuildableModule implements Module {
     Version version
     FileCollection src
     FileCollection includes = FileUtils.emptyFileCollection()
-    LinkedHashSet<LinkableLibrary> dependencies = []
+    LinkedHashSet<Library> dependencies = []
     LinkedHashSet<String> macrodefs = []
     LinkedHashMap<String, String> env = []
 
     @Override
-    Set<LinkableLibrary> getDependencies() {
+    Set<Library> getDependencies() {
         return this.dependencies
     }
 

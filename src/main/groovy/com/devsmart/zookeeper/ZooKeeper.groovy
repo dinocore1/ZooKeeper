@@ -167,6 +167,7 @@ class ZooKeeper {
             String inputFileStr = cmdline.getOptionValue('i', 'build.zoo')
             File inputFile = new File(inputFileStr)
             if(inputFile.exists() && inputFile.isFile()) {
+                LOGGER.info("reading: {}", inputFile.getAbsolutePath())
                 CompilerConfiguration cc = new CompilerConfiguration()
                 cc.scriptBaseClass = 'com.devsmart.zookeeper.ZooKeeper_DSL'
                 Binding binding = new Binding()

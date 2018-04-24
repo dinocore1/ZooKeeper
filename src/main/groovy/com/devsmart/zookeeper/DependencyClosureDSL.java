@@ -1,27 +1,22 @@
 package com.devsmart.zookeeper;
 
-import com.devsmart.zookeeper.projectmodel.LinkType;
+import com.devsmart.zookeeper.projectmodel.Library;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
-public class DependencyClosureDSL implements Callable<Set<LinkableLibrary>> {
+public class DependencyClosureDSL implements Callable<Set<Library>> {
 
-    private LinkedHashSet<LinkableLibrary> mLibraries = new LinkedHashSet<>();
+    private LinkedHashSet<Library> mLibraries = new LinkedHashSet<>();
 
-    void staticLib(String str) {
+    void lib(String str) {
         DefaultLibrary lib = DefaultLibrary.parse(str);
-        mLibraries.add(new LinkableLibrary(lib, LinkType.Static));
-    }
-
-    void sharedLib(String str) {
-        DefaultLibrary lib = DefaultLibrary.parse(str);
-        mLibraries.add(new LinkableLibrary(lib, LinkType.Dynamic));
+        mLibraries.add(lib);
     }
 
     @Override
-    public Set<LinkableLibrary> call() {
+    public Set<Library> call() {
         return mLibraries;
     }
 }

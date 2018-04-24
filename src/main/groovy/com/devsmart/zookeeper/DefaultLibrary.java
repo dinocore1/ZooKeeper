@@ -11,7 +11,7 @@ import java.util.regex.Pattern;
 public class DefaultLibrary extends AbstractLibrary {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DefaultLibrary.class);
-    private static final Pattern REGEX_STRING = Pattern.compile("([a-zA-Z0-9]+):([a-zA-Z0-9\\\\.\\\\-]+)");
+    private static final Pattern REGEX_STRING = Pattern.compile("([a-zA-Z0-9\\-_]+):([a-zA-Z0-9\\.\\-_]+)");
 
     public static DefaultLibrary parse(String string) {
         Matcher m = REGEX_STRING.matcher(string);
@@ -32,7 +32,7 @@ public class DefaultLibrary extends AbstractLibrary {
 
 
     @Override
-    public Set<LinkableLibrary> getDependencies() {
+    public Set<Library> getDependencies() {
         throw new UnsupportedOperationException();
     }
 

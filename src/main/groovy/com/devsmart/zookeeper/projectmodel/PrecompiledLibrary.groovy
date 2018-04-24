@@ -12,12 +12,11 @@ import com.devsmart.zookeeper.file.FileUtils
 class PrecompiledLibrary extends AbstractLibrary implements Module {
 
     Platform platform
-    LinkedHashSet<LinkableLibrary> dependencies = []
+    LinkedHashSet<Library> dependencies = []
     FileCollection includes = FileUtils.emptyFileCollection()
     LinkedHashSet<String> macrodefs = []
     LinkedHashMap<String, String> env = []
-    FileCollection sharedLib
-    FileCollection staticLib
+    FileCollection lib
 
     void name(String name) {
         this.name = name
@@ -43,12 +42,8 @@ class PrecompiledLibrary extends AbstractLibrary implements Module {
         this.includes = includes
     }
 
-    void sharedLib(FileCollection sharedLib) {
-        this.sharedLib = sharedLib
-    }
-
-    void staticLib(FileCollection staticLib) {
-        this.staticLib = staticLib
+    void libFile(FileCollection lib) {
+        this.lib = lib
     }
 
     void dependencies(Closure cl) {

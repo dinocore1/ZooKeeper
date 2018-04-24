@@ -17,7 +17,7 @@ public class Version implements Comparable<Version> {
     public static Version fromString(String value) {
         Version retval = null;
         Matcher m = REGEX.matcher(value);
-        if(m.find()) {
+        if(m.matches()) {
             retval = new Version();
             retval.major = Integer.parseInt(m.group(1));
             retval.minor = Integer.parseInt(m.group(2));
@@ -29,7 +29,7 @@ public class Version implements Comparable<Version> {
 
     @Override
     public int hashCode() {
-        return (major << 20) & (minor << 10) & patch;
+        return (major << 20) | (minor << 10) | patch;
     }
 
     @Override

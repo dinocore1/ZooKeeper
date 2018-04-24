@@ -15,6 +15,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Set;
 
 public class GCCSharedLibVisitor extends DefaultProjectVisitor {
 
@@ -143,22 +144,8 @@ public class GCCSharedLibVisitor extends DefaultProjectVisitor {
             LinkedHashSet<File> librarySearchPaths = new LinkedHashSet<>();
             LinkedHashSet<String> linkLibNames = new LinkedHashSet<>();
 
-            for(LinkableLibrary dep : library.getDependencies()) {
-                Module module = project.resolveLibrary(dep, platform);
-                if(module instanceof PrecompiledLibrary) {
-                    PrecompiledLibrary precompileLib = (PrecompiledLibrary) module;
-                    switch(dep.linkType) {
-                        case Dynamic:
-                        case Static:
-                            librarySearchPaths.add(precompileLib.getSharedLib().getSingleFile());
-                            linkLibNames.add(dep.getName());
-                            break;
-                    }
-                } else if(module instanceof BuildableLibrary){
-                    BuildableLibrary buildableLibrary = (BuildableLibrary) module;
-                    //TODO: get output dir
-                }
-            }
+
+            GCCHelper.libraryLinkerLine(project, library.getDependencies(), platform, librarySearchPaths, linkLibNames);
 
             for(File linkSearchPath : librarySearchPaths) {
                 cmdline.add("-L" + linkSearchPath.getAbsolutePath());
