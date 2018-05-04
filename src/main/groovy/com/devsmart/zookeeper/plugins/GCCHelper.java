@@ -22,6 +22,7 @@ public class GCCHelper {
             Pattern.compile("^lib([a-zA-Z0-9\\-_]+)\\.a$"),
             Pattern.compile("^lib([a-zA-Z0-9\\-_]+)\\.dll$"),
             Pattern.compile("^([a-zA-Z0-9\\-_]+)\\.dll$"),
+            Pattern.compile("^([a-zA-Z0-9\\-_]+)\\.lib$"),
 
             Pattern.compile("^lib([a-zA-Z0-9\\-_]+)\\.so$"),
             Pattern.compile("^lib([a-zA-Z0-9\\-_]+)\\.a$"),
