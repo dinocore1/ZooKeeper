@@ -1,11 +1,19 @@
 package com.devsmart.zookeeper;
 
+import com.google.common.base.Preconditions;
+import org.codehaus.groovy.util.StringUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class StringContext {
+
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(StringContext.class);
 
     private HashMap<CharSequence, Pattern> mPatterns = new HashMap<>();
     private HashMap<CharSequence, CharSequence> mVars = new HashMap<>();
@@ -30,12 +38,17 @@ public class StringContext {
         Matcher matcher = pattern.matcher(input);
 
         StringBuffer builder = new StringBuffer();
-        while(matcher.find()) {
-            matcher.appendReplacement(builder, value.toString());
+        while (matcher.find()) {
+            String v = value.toString();
+            if(v.endsWith("\\")) {
+                v = v + "\\";
+            }
+            matcher.appendReplacement(builder, v);
         }
         matcher.appendTail(builder);
 
         return builder.toString();
+
     }
 
     public void putAll(Map<String, String> values) {
