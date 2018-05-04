@@ -3,6 +3,8 @@ package com.devsmart.zookeeper.plugins;
 import com.devsmart.zookeeper.StringContext;
 import com.devsmart.zookeeper.projectmodel.*;
 import com.devsmart.zookeeper.tasks.CompileChildProcessTask;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -11,6 +13,7 @@ import java.util.Map;
 
 public class GnuCompilerVisitor extends BasicCompilerFileVisitor {
 
+    public static final Logger LOGGER = LoggerFactory.getLogger(GnuCompilerVisitor.class);
 
     String compilerCmd;
     CompileProcessModifier compileSettings;

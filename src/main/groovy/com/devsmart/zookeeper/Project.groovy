@@ -139,18 +139,24 @@ class Project {
 
 
     synchronized Module resolveLibrary(Library library, Platform platform) {
-        Module retval = null
+        ArrayList<Library> bestList = new ArrayList<Library>()
+
         for(Module m : modules) {
-            if(library.equals(m)) {
+            if(m.name.equals(library.name) && m.version.compareTo(library.version) >= 0) {
                 if(m instanceof PrecompiledLibrary && m.platform.equals(platform)) {
-                    return m
+                    bestList.add(m)
                 } else if(m instanceof BuildableLibrary) {
-                    retval = m
+                    bestList.add(m)
                 }
             }
         }
 
-        return retval
+        bestList.sort()
+        if(bestList.isEmpty()) {
+            return null
+        } else {
+            return (Module) bestList.last()
+        }
     }
 
     private class CompileContext {
