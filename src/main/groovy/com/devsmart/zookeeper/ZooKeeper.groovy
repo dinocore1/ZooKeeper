@@ -8,6 +8,7 @@ import com.devsmart.zookeeper.tasks.BuildExeTask
 import com.devsmart.zookeeper.tasks.BuildLibTask
 import com.devsmart.zookeeper.tasks.BuildTask
 import com.devsmart.zookeeper.tasks.BasicTask
+import com.devsmart.zookeeper.tasks.CleanTask
 import com.devsmart.zookeeper.tasks.ListBuildTasks
 import com.devsmart.zookeeper.tasks.MkdirBuildTask
 import com.google.common.base.Charsets
@@ -33,8 +34,6 @@ class ZooKeeper {
     public final DependencyGraph dependencyGraph = new DependencyGraph()
     final Queue<Runnable> doLast = new LinkedList<Runnable>()
     final Map<Artifact, BuildTask> artifactMap = [:]
-    final List<BuildExeTask> exeTasks = []
-    final List<BuildLibTask> libTasks = []
     final Map<TemplateKey, CompileTemplate> templates = [:]
 
     final List<ProjectVisitor> projectVisitors = []
@@ -42,7 +41,7 @@ class ZooKeeper {
     File getRootDir() {
         File zookeeperRoot = new File(System.getProperty('user.home'))
         zookeeperRoot = new File(zookeeperRoot, '.zookeeper')
-        return zookeeperRoot;
+        return zookeeperRoot
     }
 
     void init(Project project) {
@@ -150,7 +149,8 @@ class ZooKeeper {
         zooKeeper.init(project)
 
 
-        zooKeeper.dependencyGraph.addTask(new ListBuildTasks(zooKeeper), "tasks")
+        zooKeeper.dependencyGraph.addTask(new ListBuildTasks(zooKeeper), 'tasks')
+        zooKeeper.dependencyGraph.addTask(new CleanTask(zooKeeper), 'clean')
 
         Options options = new Options()
         options.addOption(Option.builder("i")
@@ -178,6 +178,8 @@ class ZooKeeper {
                 script.run()
 
                 project.visit(zooKeeper.projectVisitors)
+
+                project.addTaskAlias()
 
                 zooKeeper.runDoLast()
 

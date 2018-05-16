@@ -17,5 +17,29 @@ class StringUtils {
         return builder.toString()
     }
 
+    static String[] flatten(Object obj) {
+        if(obj instanceof Collection) {
+            return ((Collection) obj).collect({ it ->
+                return it.toString()
+            }) as String[]
+        } else {
+            return obj.toString()
+        }
+    }
+
+    static void mergeStringMaps(Map<String, String> src, Map<String, String> dest) {
+        StringContext strEnv = new StringContext();
+        strEnv.putAll(dest);
+
+        for(Map.Entry<String, String> entry : src) {
+            final String key = entry.getKey();
+            CharSequence value = entry.getValue();
+
+            value = strEnv.resolve(value);
+            dest.put(key, value.toString());
+            strEnv.setVar(key, value);
+        }
+    }
+
 
 }

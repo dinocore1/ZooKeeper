@@ -6,6 +6,7 @@ import com.devsmart.zookeeper.projectmodel.PrecompiledLibrary
 import com.devsmart.zookeeper.tasks.BuildExeTask
 import com.devsmart.zookeeper.tasks.BasicTask
 import com.devsmart.zookeeper.tasks.BuildLibTask
+import com.devsmart.zookeeper.tasks.ConfigCompileTask
 
 abstract class ZooKeeper_DSL extends Script {
 
@@ -26,16 +27,11 @@ abstract class ZooKeeper_DSL extends Script {
     }
 
     def task(Closure cl) {
+        ConfigCompileTask t = new ConfigCompileTask()
+        Closure code = cl.rehydrate(t, project, t)
+        code()
 
-        /*
-
-        BasicTask t = BasicTask.make(cl, project)
         project.addTask(t)
-        project.addDoLast({
-            project.zooKeeper.resolveTaskDependencies(t)
-        })
-
-        */
     }
 
     def precompiledLib(Closure cl) {

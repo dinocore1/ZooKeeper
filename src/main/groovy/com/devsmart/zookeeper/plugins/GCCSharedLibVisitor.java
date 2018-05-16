@@ -57,7 +57,7 @@ public class GCCSharedLibVisitor extends DefaultProjectVisitor {
         buildTask.setName(genTaskName());
         buildTask.setOutput(project.file(new File(genBuildDir(), lib.getName() + filenameExtendtion)));
         buildTask.setDelegate(linkDelegate);
-        project.addTask(buildTask);
+        project.addLibBuildTask(buildTask);
 
         project.addDoLast(createResolveDeps(library));
 

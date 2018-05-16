@@ -1,6 +1,6 @@
 package com.devsmart.zookeeper.plugins;
 
-import com.devsmart.zookeeper.DefaultLibrary;
+import com.devsmart.zookeeper.Platform;
 import com.devsmart.zookeeper.projectmodel.BuildableModule;
 import com.devsmart.zookeeper.projectmodel.Library;
 import com.devsmart.zookeeper.projectmodel.PrecompiledLibrary;
@@ -18,4 +18,5 @@ public class CompileContext {
     public final LinkedHashSet<String> macrodefines = new LinkedHashSet<>();
     public final LinkedHashMap<String, String> env = new LinkedHashMap<>();
     public BuildableModule module;
+    public Platform platform;
 }

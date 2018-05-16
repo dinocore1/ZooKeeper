@@ -49,7 +49,7 @@ public class GCCStaticLibVisitor extends DefaultProjectVisitor {
         buildTask.setName(genTaskName());
         buildTask.setDelegate(linkDelegate);
         buildTask.setOutput(project.file(new File(genBuildDir(), lib.getName() + ".a")));
-        project.addTask(buildTask);
+        project.addLibBuildTask(buildTask);
 
         GnuCompilerVisitor cppVisitor = new GnuCompilerVisitor();
         cppVisitor.compilerCmd = cppCmd;

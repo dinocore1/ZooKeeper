@@ -3,6 +3,7 @@ package com.devsmart.zookeeper
 import com.devsmart.zookeeper.api.FileCollection
 import com.devsmart.zookeeper.api.FileTree
 import com.devsmart.zookeeper.artifacts.FileArtifact
+import com.devsmart.zookeeper.artifacts.PhonyArtifact
 import com.devsmart.zookeeper.file.DefaultBaseDirFileResolver
 import com.devsmart.zookeeper.file.DefaultFileCollection
 import com.devsmart.zookeeper.file.DefaultFileTree
@@ -29,6 +30,8 @@ class Project {
     private File mProjectDir
     private DefaultBaseDirFileResolver mBaseDirFileResolver
     public final List<Module> modules = new ArrayList<>()
+    final List<BuildTask> exeTasks = []
+    final List<BuildTask> libTasks = []
 
     Project(File projectDir, ZooKeeper zooKeeper) {
         mProjectDir = projectDir
@@ -68,9 +71,21 @@ class Project {
         zooKeeper.doLast.add(r)
     }
 
-    BuildExeTask getExe(String name) {
-        return zooKeeper.exeTasks.find { it ->
-            it.name.equals(name)
+    CompileChildProcessTask getExe(String name) {
+
+
+        return exeTasks.find { it ->
+            BuildTask exe = it
+
+            if(exe instanceof CompileChildProcessTask) {
+                CompileChildProcessTask compileChildProcessTask = exe
+                if( Platform.nativePlatform.equals( compileChildProcessTask.compileContext.platform )
+                 && exe.compileContext.module.name.equals (name)){
+                    return true
+                }
+            }
+
+            return false
         }
     }
 
@@ -94,6 +109,16 @@ class Project {
 
     }
 
+    void addExeBuildTask(BuildTask t) {
+        exeTasks.add(t)
+        addTask(t)
+    }
+
+    void addLibBuildTask(BuildTask t) {
+        libTasks.add(t)
+        addTask(t)
+    }
+
     private Runnable resolveDependencies(BasicTask t) {
         return {
 
@@ -108,10 +133,20 @@ class Project {
 
                 for (Object depend : t.dependencies) {
                     if (depend instanceof String) {
-                        BuildTask childTask = zooKeeper.dependencyGraph.getTask((String) depend)
+                        BuildTask childTask
+
+                        childTask = zooKeeper.dependencyGraph.getTask((String) depend)
+                        if(childTask == null) {
+                            childTask = zooKeeper.artifactMap.get(new PhonyArtifact(depend))
+                        }
+
                         if (childTask != null) {
                             zooKeeper.dependencyGraph.addDependency((BuildTask) t, childTask)
+                        } else {
+                            LOGGER.warn("could not resolve task: {}", depend)
                         }
+                    } else if(depend instanceof BuildTask) {
+                        zooKeeper.dependencyGraph.addDependency((BuildTask) t, depend)
                     }
                 }
 
@@ -120,23 +155,37 @@ class Project {
         }
     }
 
-    void addExeTask(BuildExeTask t) {
-        addTask(t)
-        zooKeeper.exeTasks.add(t)
-        zooKeeper.doLast.add({
-            buildExeTasks(t)
-        })
+
+    void addTaskAlias() {
+        BuildTask phonyBuildTask = new BuildTask() {
+            @Override
+            boolean run(){}
+        }
+        PhonyArtifact buildArtifact = new PhonyArtifact('build')
+
+        zooKeeper.dependencyGraph.addTask(phonyBuildTask, 'build')
+        zooKeeper.artifactMap.put(buildArtifact, phonyBuildTask)
+
+        for(BuildTask exe : exeTasks) {
+            zooKeeper.dependencyGraph.addDependency(phonyBuildTask, exe)
+        }
+
+        for(BuildTask lib : libTasks) {
+            zooKeeper.dependencyGraph.addDependency(phonyBuildTask, lib)
+        }
+
+        for(BuildTask exe : exeTasks) {
+            if(exe instanceof CompileChildProcessTask) {
+                CompileChildProcessTask compileChildProcessTask = exe
+                if( Platform.nativePlatform.equals( compileChildProcessTask.compileContext.platform )){
+                    PhonyArtifact exeBuildArtifact = new PhonyArtifact(compileChildProcessTask.compileContext.module.name)
+                    zooKeeper.artifactMap.put(exeBuildArtifact, exe)
+                }
+            }
+        }
+
+
     }
-
-    void addLibTask(BuildLibTask t) {
-        addTask(t)
-        zooKeeper.libTasks.add(t)
-        zooKeeper.doLast.add({
-            buildLibTask(t)
-        })
-    }
-
-
 
     synchronized Module resolveLibrary(Library library, Platform platform) {
         ArrayList<Library> bestList = new ArrayList<Library>()
@@ -168,71 +217,6 @@ class Project {
         final List<File> objectFiles = []
     }
 
-    private BasicTask createCompileTask(File sourceFile, CompileContext compileCtx) {
-
-        String lang = ''
-        if(sourceFile.name.endsWith('.cpp')) {
-            lang = 'c++'
-        } else if(sourceFile.name.endsWith('.c')) {
-            lang = 'c'
-        }
-
-        TemplateKey key = new TemplateKey(compileCtx.target, lang, 'compile')
-        CompileTemplate template = zooKeeper.templates.get(key)
-        if(template == null) {
-            LOGGER.warn("could not find template for: {}", key)
-            return
-        }
-
-        BasicTask compileTask = new BasicTask()
-        addTask(compileTask)
-        compileTask.input = file(sourceFile)
-
-        if(!sourceFile.exists()) {
-            FileArtifact artifactKey = new FileArtifact(sourceFile)
-            BuildTask parentBuildTask = zooKeeper.artifactMap.get(artifactKey)
-            if(parentBuildTask == null) {
-                LOGGER.error("no build definition for: {}", artifactKey)
-            } else {
-                zooKeeper.dependencyGraph.addDependency(compileTask, parentBuildTask)
-            }
-        }
-
-        File outputFile = new File(compileCtx.buildDir, ZooKeeper.createArtifactFileName(compileCtx.parentTask.name, compileCtx.parentTask.version, sourceFile))
-        compileCtx.objectFiles.add(outputFile)
-        compileTask.output = file(outputFile)
-
-        Closure code
-        ApplyTemplate ctx = new ApplyTemplate()
-        ctx.input = compileTask.input
-        ctx.output = compileTask.output
-        ctx.includes.addAll(compileCtx.includeDirs)
-
-        code = template.all.rehydrate(ctx, this, null)
-        code.resolveStrategy = Closure.DELEGATE_FIRST
-        code()
-
-        if('debug'.equals(compileCtx.variant)) {
-            code = template.debug.rehydrate(ctx, this, null)
-            code.resolveStrategy = Closure.DELEGATE_FIRST
-            code()
-        } else if('release'.equals(compileCtx.variant)) {
-            code = template.release.rehydrate(ctx, this, null)
-            code.resolveStrategy = Closure.DELEGATE_FIRST
-            code()
-        }
-
-        code = template.cmd.rehydrate(ctx, this, null)
-        code.resolveStrategy = Closure.DELEGATE_FIRST
-        compileTask.cmd = code
-        if(template.workingDir != null) {
-            compileTask.workingDir = file(template.workingDir).getSingleFile()
-        }
-
-
-        return compileTask
-    }
-
     private Set<Platform> getPlatformList(String stage) {
         Iterable<TemplateKey> matchingStage = Iterables.filter(zooKeeper.templates.keySet(), new Predicate<TemplateKey>(){
             @Override
@@ -248,72 +232,6 @@ class Project {
             }
         }))
         return retval
-    }
-
-    private void createCompileTasks(GenericBuildTask t, String stage) {
-
-        for(Platform platform : getPlatformList(stage)) {
-            for(String variant : ['debug', 'release']) {
-
-                GenericBuildTask buildExeTask = new GenericBuildTask()
-                buildExeTask.name = t.name
-                buildExeTask.sources = t.sources
-                buildExeTask.includes = t.includes
-                zooKeeper.dependencyGraph.addTask(buildExeTask, stage + buildExeTask.name.capitalize() + platform.toString().capitalize() + variant.capitalize())
-
-                CompileContext compileCtx = new CompileContext()
-                compileCtx.target = platform
-                compileCtx.variant = variant
-                compileCtx.parentTask = buildExeTask
-
-
-                File buildDir = new File(projectDir, 'build')
-                buildDir = new File(buildDir, compileCtx.target.toString())
-                buildDir = new File(buildDir, compileCtx.variant)
-                compileCtx.buildDir = buildDir
-
-                if(buildExeTask.includes == null) {
-                    buildExeTask.includes = files('src', 'include')
-                }
-                compileCtx.includeDirs.addAll(buildExeTask.includes.files)
-
-                File exeFile = new File(buildDir, buildExeTask.name)
-                BuildTask mkdirTask = new MkdirBuildTask(buildDir)
-                zooKeeper.dependencyGraph.addTask(mkdirTask)
-
-                buildExeTask.output = file(exeFile)
-                for(File f : buildExeTask.sources) {
-
-                    BasicTask compileTask = createCompileTask(f, compileCtx)
-
-                    zooKeeper.dependencyGraph.addDependency(compileTask, mkdirTask)
-                    zooKeeper.dependencyGraph.addDependency(buildExeTask, compileTask)
-                }
-
-                TemplateKey linkKey = new TemplateKey(compileCtx.target, 'c', stage)
-                CompileTemplate linkTemplate = zooKeeper.templates.get(linkKey)
-
-                buildExeTask.input = files(compileCtx.objectFiles)
-                ApplyTemplate ctx = new ApplyTemplate()
-                ctx.input = buildExeTask.input
-                ctx.output = buildExeTask.output
-                Closure code = linkTemplate.cmd.rehydrate(ctx, this, null)
-                code.resolveStrategy = Closure.DELEGATE_FIRST
-                buildExeTask.cmd = code
-                if(linkTemplate.workingDir != null) {
-                    buildExeTask.workingDir = file(linkTemplate.workingDir).getSingleFile()
-                }
-            }
-        }
-    }
-
-    private void buildExeTasks(BuildExeTask t) {
-        createCompileTasks(t, 'link')
-    }
-
-    void buildLibTask(BuildLibTask t) {
-        createCompileTasks(t, 'staticlib')
-        createCompileTasks(t, 'sharedlib')
     }
 
     boolean build(String... taskNames) {

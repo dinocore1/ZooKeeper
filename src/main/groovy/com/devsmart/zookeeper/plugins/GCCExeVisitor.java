@@ -49,11 +49,12 @@ public class GCCExeVisitor extends DefaultProjectVisitor {
 
         buildTask = new CompileChildProcessTask();
         buildTask.getCompileContext().module = executable;
+        buildTask.getCompileContext().platform = platform;
         buildTask.addModifier(linkSettings);
         buildTask.setName(genTaskName());
         buildTask.setOutput(project.file(new File(genBuildDir(), executable.getName() + filenameExtendtion)));
         buildTask.setDelegate(linkDelegate);
-        project.addTask(buildTask);
+        project.addExeBuildTask(buildTask);
 
         project.addDoLast(createResolveDeps(exe, buildTask));
 
@@ -174,17 +175,7 @@ public class GCCExeVisitor extends DefaultProjectVisitor {
         @Override
         public void updateEnv(CompileChildProcessTask task, Map<String, String> env) {
             CompileContext compileContext = task.getCompileContext();
-            StringContext strEnv = new StringContext();
-            strEnv.putAll(env);
-
-            for(Map.Entry<String, String> entry : compileContext.env.entrySet()) {
-                final String key = entry.getKey();
-                CharSequence value = entry.getValue();
-
-                value = strEnv.resolve(value);
-                env.put(key, value.toString());
-                strEnv.setVar(key, value);
-            }
+            com.devsmart.zookeeper.StringUtils.mergeStringMaps(compileContext.env, env);
         }
     };
 }

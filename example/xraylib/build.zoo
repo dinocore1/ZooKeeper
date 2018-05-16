@@ -5,6 +5,7 @@ exe {
   name 'prdata'
   version "$versionStr"
 
+  include files('src', 'include', '.')
   src files(
     'src/pr_data.c',
     'src/xrayvars.c',
@@ -63,11 +64,11 @@ lib {
     'build/generated/xrayglob_inline.c')
 }
 
-runtask {
+task {
   output file('build/generated/xrayglob_inline.c')
   depends 'prdata'
 
   env { ['XRAYLIB_DIR': "${projectDir}"] }
   workingDir 'build/generated'
-  cmd { [getExe('prdata').output] }
+  cmd { [getExe('prdata').output.singleFile] }
 }

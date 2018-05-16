@@ -23,7 +23,7 @@ class BasicTask {
     }
 
     void depends(String... objs) {
-        dependencies.add(objs)
+        dependencies.addAll(objs)
     }
 
 }
