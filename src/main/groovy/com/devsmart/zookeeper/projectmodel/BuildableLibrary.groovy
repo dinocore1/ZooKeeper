@@ -5,19 +5,19 @@ import com.devsmart.zookeeper.AbstractLibrary
 class BuildableLibrary extends BuildableModule implements Library {
 
     LinkType type
-    Closure headers
+    Closure exportHeaders
 
     void type(String str) {
         this.type = LinkType.valueOf(str)
     }
 
     void exportHeaders(Closure cl) {
-
+        exportHeader = cl
     }
 
     @Override
     int hashCode() {
-        return AbstractLibrary.libraryHashCode(this);
+        return AbstractLibrary.libraryHashCode(this)
     }
 
     @Override
@@ -34,6 +34,6 @@ class BuildableLibrary extends BuildableModule implements Library {
 
     @Override
     String toString() {
-        return String.format("%s:%s", name, version);
+        return String.format("%s:%s", name, version)
     }
 }

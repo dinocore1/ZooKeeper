@@ -6,6 +6,7 @@ import com.devsmart.zookeeper.Platform;
 import com.devsmart.zookeeper.Project;
 import com.devsmart.zookeeper.projectmodel.*;
 import com.devsmart.zookeeper.tasks.CompileChildProcessTask;
+import com.devsmart.zookeeper.tasks.CreatePackageTask;
 import org.apache.commons.io.filefilter.RegexFileFilter;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
@@ -37,6 +38,7 @@ public class GCCSharedLibVisitor extends DefaultProjectVisitor {
     protected BuildableLibrary library;
     protected CompileChildProcessTask buildTask;
     protected Project project;
+    protected CreatePackageTask createPackageTask;
 
     @Override
     public void visit(Project project) {
@@ -60,6 +62,14 @@ public class GCCSharedLibVisitor extends DefaultProjectVisitor {
         project.addLibBuildTask(buildTask);
 
         project.addDoLast(createResolveDeps(library));
+
+        createPackageTask = new CreatePackageTask(lib, platform);
+        createPackageTask.setOutput(project.file(new File(genBuildDir(), "package/lib.zoo")));
+        createPackageTask.setName("package" + StringUtils.capitalize(library.getName())
+                + StringUtils.capitalize(platform.toString())
+                + StringUtils.capitalize(variant));
+        createPackageTask.libFileList.add("bin/" + lib.getName() + filenameExtendtion);
+
 
 
         cppSettings.getFlags().add("-fPIC");
