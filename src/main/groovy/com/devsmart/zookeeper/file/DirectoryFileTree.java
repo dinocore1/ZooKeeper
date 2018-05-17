@@ -21,7 +21,9 @@ public class DirectoryFileTree implements MinFileTree {
 
     @Override
     public void visit(FileVisitor visitor) {
-        visitFrom(visitor, mBaseDir, RelativePath.EMPTY_ROOT);
+        for(File f : mBaseDir.listFiles()) {
+            visitFrom(visitor, f, RelativePath.EMPTY_ROOT);
+        }
     }
 
     private void visitFrom(FileVisitor visitor, File fileOrDir, RelativePath path) {

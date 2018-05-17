@@ -25,7 +25,8 @@ lib {
   name 'xraylib'
   version "$versionStr"
   exportHeaders {
-    from 'include/**/*.h'
+    from 'include'
+    include '**/*.h'
   }
 
   include files('src', 'include', '.')
