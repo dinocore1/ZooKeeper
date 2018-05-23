@@ -1,12 +1,11 @@
 package com.devsmart.zookeeper.plugins;
 
 import com.devsmart.zookeeper.DefaultProjectVisitor;
-import com.devsmart.zookeeper.LinkableLibrary;
 import com.devsmart.zookeeper.Platform;
 import com.devsmart.zookeeper.Project;
 import com.devsmart.zookeeper.projectmodel.*;
 import com.devsmart.zookeeper.tasks.CompileChildProcessTask;
-import com.devsmart.zookeeper.tasks.CreatePackageTask;
+import com.devsmart.zookeeper.tasks.CreatePackageZooFile;
 import org.apache.commons.io.filefilter.RegexFileFilter;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
@@ -16,7 +15,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.Map;
-import java.util.Set;
 
 public class GCCSharedLibVisitor extends DefaultProjectVisitor {
 
@@ -38,7 +36,7 @@ public class GCCSharedLibVisitor extends DefaultProjectVisitor {
     protected BuildableLibrary library;
     protected CompileChildProcessTask buildTask;
     protected Project project;
-    protected CreatePackageTask createPackageTask;
+    protected CreatePackageZooFile createPackageTask;
 
     @Override
     public void visit(Project project) {
@@ -63,12 +61,14 @@ public class GCCSharedLibVisitor extends DefaultProjectVisitor {
 
         project.addDoLast(createResolveDeps(library));
 
-        createPackageTask = new CreatePackageTask(lib, platform);
+        createPackageTask = new CreatePackageZooFile(lib, platform);
         createPackageTask.setOutput(project.file(new File(genBuildDir(), "package/lib.zoo")));
+        createPackageTask.setInput(buildTask.getOutput());
         createPackageTask.setName("package" + StringUtils.capitalize(library.getName())
                 + StringUtils.capitalize(platform.toString())
                 + StringUtils.capitalize(variant));
         createPackageTask.libFileList.add("bin/" + lib.getName() + filenameExtendtion);
+        project.addTask(createPackageTask);
 
 
 

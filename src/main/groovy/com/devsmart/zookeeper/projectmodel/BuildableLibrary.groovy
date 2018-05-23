@@ -5,14 +5,14 @@ import com.devsmart.zookeeper.AbstractLibrary
 class BuildableLibrary extends BuildableModule implements Library {
 
     LinkType type
-    Closure exportHeaders
+    Closure exportHeaderCl
 
     void type(String str) {
         this.type = LinkType.valueOf(str)
     }
 
     void exportHeaders(Closure cl) {
-        exportHeader = cl
+        exportHeaderCl = cl
     }
 
     @Override

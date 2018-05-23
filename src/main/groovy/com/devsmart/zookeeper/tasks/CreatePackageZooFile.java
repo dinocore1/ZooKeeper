@@ -9,9 +9,9 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class CreatePackageTask extends BasicTask implements BuildTask {
+public class CreatePackageZooFile extends BasicTask implements BuildTask {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(CreatePackageTask.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(CreatePackageZooFile.class);
 
     public final BuildableLibrary lib;
     public final Platform platform;
@@ -19,7 +19,7 @@ public class CreatePackageTask extends BasicTask implements BuildTask {
 
 
 
-    public CreatePackageTask(BuildableLibrary lib, Platform platform) {
+    public CreatePackageZooFile(BuildableLibrary lib, Platform platform) {
         this.lib = lib;
         this.platform = platform;
     }
@@ -47,6 +47,8 @@ public class CreatePackageTask extends BasicTask implements BuildTask {
                 writer.println();
             }
             writer.println('}');
+
+            writer.close();
 
             return true;
 
