@@ -36,7 +36,7 @@ public class GCCSharedLibVisitor extends DefaultProjectVisitor {
     protected BuildableLibrary library;
     protected CompileChildProcessTask buildTask;
     protected Project project;
-    protected CreatePackageZooFile createPackageTask;
+    protected CreatePackageZooFile createPackageZooFileTask;
 
     @Override
     public void visit(Project project) {
@@ -61,14 +61,14 @@ public class GCCSharedLibVisitor extends DefaultProjectVisitor {
 
         project.addDoLast(createResolveDeps(library));
 
-        createPackageTask = new CreatePackageZooFile(lib, platform);
-        createPackageTask.setOutput(project.file(new File(genBuildDir(), "package/lib.zoo")));
-        createPackageTask.setInput(buildTask.getOutput());
-        createPackageTask.setName("package" + StringUtils.capitalize(library.getName())
+        createPackageZooFileTask = new CreatePackageZooFile(lib, platform);
+        createPackageZooFileTask.setOutput(project.file(new File(genBuildDir(), "package/lib.zoo")));
+        createPackageZooFileTask.setInput(buildTask.getOutput());
+        createPackageZooFileTask.setName("package" + StringUtils.capitalize(library.getName())
                 + StringUtils.capitalize(platform.toString())
                 + StringUtils.capitalize(variant));
-        createPackageTask.libFileList.add("bin/" + lib.getName() + filenameExtendtion);
-        project.addTask(createPackageTask);
+        createPackageZooFileTask.libFileList.add("bin/" + lib.getName() + filenameExtendtion);
+        project.addTask(createPackageZooFileTask);
 
 
 

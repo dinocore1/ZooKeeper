@@ -40,10 +40,10 @@ public class CreatePackageZooFile extends BasicTask implements BuildTask {
             writer.printf("  platform '%s'", platform);
             writer.println();
             writer.println();
-            writer.print(" include file('include')");
+            writer.print("  include file('include')");
             writer.println();
             for(String libFile : libFileList) {
-                writer.printf(" libFile file('%s')", libFile);
+                writer.printf("  libFile file('%s')", libFile);
                 writer.println();
             }
             writer.println('}');
