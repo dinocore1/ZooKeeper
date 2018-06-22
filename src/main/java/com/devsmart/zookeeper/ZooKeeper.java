@@ -228,6 +228,10 @@ public class ZooKeeper {
             }
 
             String[] unparsedArgs = cmdline.getArgs();
+            if(unparsedArgs == null || unparsedArgs.length == 0) {
+                System.out.println("try running 'listActions' to see available actions");
+                System.exit(1);
+            }
             for(String target : unparsedArgs) {
                 Action action = zoo.mDependencyGraph.getAction(target);
                 if(action != null) {
