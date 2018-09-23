@@ -107,7 +107,7 @@ public class GCCSharedLibVisitor extends DefaultProjectVisitor {
                 for(Library childLib : m.getDependencies()) {
                     Module module = project.resolveLibrary(childLib, platform);
                     if(module == null) {
-                        LOGGER.error("can not resolve library: {}", childLib);
+                        LOGGER.error("can not resolve library: [{}:{}]", childLib, platform);
                     } else {
 
 

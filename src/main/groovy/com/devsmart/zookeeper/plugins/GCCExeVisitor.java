@@ -62,7 +62,7 @@ public class GCCExeVisitor extends DefaultProjectVisitor {
         GnuCompilerVisitor cppVisitor = new GnuCompilerVisitor();
         cppVisitor.compilerCmd = cppCmd;
         cppVisitor.compileSettings = cppSettings;
-        cppVisitor.fileFilter = new RegexFileFilter(".*\\.cpp|cc$");
+        cppVisitor.fileFilter = new RegexFileFilter(".*\\.cpp|cc|cxx$");
         cppVisitor.project = project;
         cppVisitor.buildTask = buildTask;
         cppVisitor.platform = platform;
@@ -91,7 +91,7 @@ public class GCCExeVisitor extends DefaultProjectVisitor {
                 for(Library childLib : m.getDependencies()) {
                     Module module = project.resolveLibrary(childLib, platform);
                     if(module == null) {
-                        LOGGER.error("can not resolve library: {}", childLib);
+                        LOGGER.error("can not resolve library: [{}:{}]", childLib, platform);
                     } else {
                         if(module instanceof BuildableLibrary) {
                             //TODO: add graph dependency
