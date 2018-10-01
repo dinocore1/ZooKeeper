@@ -4,6 +4,7 @@ import com.devsmart.zookeeper.DefaultProjectVisitor;
 import com.devsmart.zookeeper.Platform;
 import com.devsmart.zookeeper.Project;
 import com.devsmart.zookeeper.projectmodel.*;
+import com.devsmart.zookeeper.tasks.BuildTask;
 import com.devsmart.zookeeper.tasks.CompileChildProcessTask;
 import com.devsmart.zookeeper.tasks.CreatePackageZooFile;
 import org.apache.commons.io.filefilter.RegexFileFilter;
@@ -59,7 +60,7 @@ public class GCCSharedLibVisitor extends DefaultProjectVisitor {
         buildTask.setDelegate(linkDelegate);
         project.addLibBuildTask(buildTask);
 
-        project.addDoLast(createResolveDeps(library));
+
 
         createPackageZooFileTask = new CreatePackageZooFile(lib, platform);
         createPackageZooFileTask.setOutput(project.file(new File(genBuildDir(), "package/lib.zoo")));
@@ -71,6 +72,8 @@ public class GCCSharedLibVisitor extends DefaultProjectVisitor {
         project.addTask(createPackageZooFileTask);
 
 
+        BuildTask resolveDependencyTask = createResolveDeps(library);
+        project.getZooKeeper().dependencyGraph.addTask(resolveDependencyTask);
 
         cppSettings.getFlags().add("-fPIC");
 
@@ -83,6 +86,7 @@ public class GCCSharedLibVisitor extends DefaultProjectVisitor {
         cppVisitor.platform = platform;
         cppVisitor.variant = variant;
         cppVisitor.extra = "sharedLib";
+        cppVisitor.resolveDependencyTask = resolveDependencyTask;
         cppVisitor.visit(lib);
 
         cSettings.getFlags().add("-fPIC");
@@ -96,23 +100,43 @@ public class GCCSharedLibVisitor extends DefaultProjectVisitor {
         cVisitor.platform = platform;
         cVisitor.variant = variant;
         cVisitor.extra = "sharedLib";
+        cVisitor.resolveDependencyTask = resolveDependencyTask;
         cVisitor.visit(lib);
 
     }
 
-    private Runnable createResolveDeps(final BuildableModule m) {
-        return new Runnable() {
+    private BuildTask createResolveDeps(final BuildableModule m) {
+        return new BuildTask() {
             @Override
-            public void run() {
+            public boolean run() {
                 for(Library childLib : m.getDependencies()) {
                     Module module = project.resolveLibrary(childLib, platform);
                     if(module == null) {
-                        LOGGER.error("can not resolve library: [{}:{}]", childLib, platform);
+                        LOGGER.error("can not resolve library: [{}:{}] need to build: {}", childLib, platform, m.getName());
+                        return false;
                     } else {
-
+                        if(module instanceof BuildableLibrary) {
+                            //TODO: add graph dependency
+                        } else if(module instanceof PrecompiledLibrary) {
+                            PrecompiledLibrary childPrecompiledLib = (PrecompiledLibrary) module;
+                            buildTask.addModifier(createDepLibModifier(childPrecompiledLib));
+                        }
 
                     }
+
+
                 }
+
+                return true;
+            }
+        };
+    }
+
+    private CompileProcessModifier createDepLibModifier(PrecompiledLibrary childPrecompiledLib) {
+        return new CompileProcessModifier() {
+            @Override
+            public void apply(CompileChildProcessTask ctx) {
+                ctx.getCompileContext().sharedLinkedLibs.add(childPrecompiledLib);
             }
         };
     }

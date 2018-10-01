@@ -14,7 +14,7 @@ public class DependencyGraph {
     private static final Logger LOGGER = LoggerFactory.getLogger(DependencyGraph.class);
 
 
-    private DirectedGraph<BuildTask, DefaultEdge> mGraph = new DirectedAcyclicGraph<BuildTask, DefaultEdge>(DefaultEdge.class);
+    public DirectedGraph<BuildTask, DefaultEdge> mGraph = new DirectedAcyclicGraph<BuildTask, DefaultEdge>(DefaultEdge.class);
     //private CycleDetector<BuildTask, DefaultEdge> mCycleDetector = new CycleDetector<BuildTask, DefaultEdge>(mGraph);
     private BiMap<String, BuildTask> mTaskNames = HashBiMap.create();
 

@@ -46,7 +46,10 @@ class ZooKeeper {
 
     void init(Project project) {
         File zookeeperRoot = getRootDir()
-        zookeeperRoot.mkdirs()
+
+        if(!zookeeperRoot.exists()) {
+            firstTimeInstall(zookeeperRoot)
+        }
 
 
         //read project visitors
@@ -79,6 +82,15 @@ class ZooKeeper {
             Script script = shell.parse(f)
             script.run()
         }
+    }
+
+    void firstTimeInstall(File zookeeperRootDir) {
+        LOGGER.info("running first time install")
+        zookeeperRootDir.mkdirs()
+
+        File pluginDir = new File(zookeeperRootDir, "plugins")
+        pluginDir.mkdirs()
+
     }
 
     private readPrecompiledLib(File f, Project project) {
@@ -159,6 +171,12 @@ class ZooKeeper {
             .desc('the input ZOO file')
             .build())
 
+        options.addOption(Option.builder("j")
+            .hasArg()
+            .argName('num concurrent jobs')
+            .desc('number of concurrent jobs')
+            .build())
+
         CommandLineParser parser = new DefaultParser()
 
         try {
@@ -189,8 +207,10 @@ class ZooKeeper {
                 System.exit(1)
             }
 
+            int numJobs = Integer.parseInt(cmdline.getOptionValue('j', '1'))
+
             String[] unparsedArgs = cmdline.getArgs()
-            boolean success = project.build(unparsedArgs)
+            boolean success = project.build(numJobs, unparsedArgs)
             if(success) {
                 System.out.println("Build success")
                 System.exit(0)

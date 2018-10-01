@@ -56,8 +56,9 @@ public class GCCExeVisitor extends DefaultProjectVisitor {
         buildTask.setDelegate(linkDelegate);
         project.addExeBuildTask(buildTask);
 
-        project.addDoLast(createResolveDeps(exe, buildTask));
 
+        BuildTask resolveDependencyTask = createResolveDeps(exe, buildTask);
+        project.getZooKeeper().dependencyGraph.addTask(resolveDependencyTask);
 
         GnuCompilerVisitor cppVisitor = new GnuCompilerVisitor();
         cppVisitor.compilerCmd = cppCmd;
@@ -68,6 +69,7 @@ public class GCCExeVisitor extends DefaultProjectVisitor {
         cppVisitor.platform = platform;
         cppVisitor.variant = variant;
         cppVisitor.extra = "exe";
+        cppVisitor.resolveDependencyTask = resolveDependencyTask;
         cppVisitor.visit(executable);
 
 
@@ -80,18 +82,20 @@ public class GCCExeVisitor extends DefaultProjectVisitor {
         cVisitor.platform = platform;
         cVisitor.variant = variant;
         cVisitor.extra = "exe";
+        cVisitor.resolveDependencyTask = resolveDependencyTask;
         cVisitor.visit(executable);
 
     }
 
-    private Runnable createResolveDeps(final BuildableModule m, final CompileChildProcessTask buildTask) {
-        return new Runnable() {
+    private BuildTask createResolveDeps(final BuildableModule m, final CompileChildProcessTask buildTask) {
+        return new BuildTask() {
             @Override
-            public void run() {
+            public boolean run() {
                 for(Library childLib : m.getDependencies()) {
                     Module module = project.resolveLibrary(childLib, platform);
                     if(module == null) {
-                        LOGGER.error("can not resolve library: [{}:{}]", childLib, platform);
+                        LOGGER.error("can not resolve library: [{}:{}] need to build: {}", childLib, platform, m.getName());
+                        return false;
                     } else {
                         if(module instanceof BuildableLibrary) {
                             //TODO: add graph dependency
@@ -101,6 +105,7 @@ public class GCCExeVisitor extends DefaultProjectVisitor {
                         }
                     }
                 }
+                return true;
             }
         };
     }

@@ -7,6 +7,7 @@ import com.devsmart.zookeeper.api.FileCollection;
 import com.devsmart.zookeeper.projectmodel.BuildableExecutable;
 import com.devsmart.zookeeper.projectmodel.BuildableLibrary;
 import com.devsmart.zookeeper.projectmodel.BuildableModule;
+import com.devsmart.zookeeper.tasks.BuildTask;
 import com.devsmart.zookeeper.tasks.CompileChildProcessTask;
 import com.google.common.base.Charsets;
 import com.google.common.hash.HashFunction;
@@ -27,6 +28,7 @@ public class BasicCompilerFileVisitor extends DefaultProjectVisitor {
 
     BuildableModule module;
     CompileChildProcessTask compileTask;
+    BuildTask resolveDependencyTask;
 
     @Override
     public void visit(Project project) {
@@ -53,6 +55,9 @@ public class BasicCompilerFileVisitor extends DefaultProjectVisitor {
         compileTask.setInput(project.file(srcFile));
         compileTask.setOutput(outputFile);
         project.addTask(compileTask);
+        if(resolveDependencyTask != null) {
+            project.getZooKeeper().dependencyGraph.addDependency(compileTask, resolveDependencyTask);
+        }
 
         buildTask.setInput(buildTask.getInput().plus(outputFile));
     }

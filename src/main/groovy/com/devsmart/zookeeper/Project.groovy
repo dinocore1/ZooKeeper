@@ -234,7 +234,7 @@ class Project {
         return retval
     }
 
-    boolean build(String... taskNames) {
+    boolean build(int numJobs, String... taskNames) {
         boolean retval = true
         for(String taskName : taskNames) {
             BuildTask buildTask = null
@@ -251,10 +251,13 @@ class Project {
             }
 
             if(buildTask != null) {
-                ExePlan plan = zooKeeper.dependencyGraph.createExePlan(buildTask)
+                //ExePlan plan = zooKeeper.dependencyGraph.createExePlan(buildTask)
+                //int cores = Runtime.getRuntime().availableProcessors()
+                //retval &= plan.run(numJobs)
 
-                int cores = Runtime.getRuntime().availableProcessors()
-                retval &= plan.run(cores)
+                TaskRunner runner = new TaskRunner(zooKeeper.dependencyGraph)
+                runner.build(buildTask)
+
             } else {
                 LOGGER.warn('no task with name: {}', taskName)
                 retval = false
