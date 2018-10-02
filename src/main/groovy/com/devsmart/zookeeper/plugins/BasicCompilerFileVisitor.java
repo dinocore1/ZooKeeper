@@ -9,6 +9,7 @@ import com.devsmart.zookeeper.projectmodel.BuildableLibrary;
 import com.devsmart.zookeeper.projectmodel.BuildableModule;
 import com.devsmart.zookeeper.tasks.BuildTask;
 import com.devsmart.zookeeper.tasks.CompileChildProcessTask;
+import com.devsmart.zookeeper.tasks.MkdirBuildTask;
 import com.google.common.base.Charsets;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hasher;
@@ -58,6 +59,10 @@ public class BasicCompilerFileVisitor extends DefaultProjectVisitor {
         if(resolveDependencyTask != null) {
             project.getZooKeeper().dependencyGraph.addDependency(compileTask, resolveDependencyTask);
         }
+
+        MkdirBuildTask mkdirTask = new MkdirBuildTask(outputFile.getSingleFile().getParentFile());
+        project.addTask(mkdirTask);
+        project.getZooKeeper().dependencyGraph.addDependency(compileTask, mkdirTask);
 
         buildTask.setInput(buildTask.getInput().plus(outputFile));
     }

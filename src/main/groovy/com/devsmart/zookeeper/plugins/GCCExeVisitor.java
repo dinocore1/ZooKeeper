@@ -94,7 +94,7 @@ public class GCCExeVisitor extends DefaultProjectVisitor {
                 for(Library childLib : m.getDependencies()) {
                     Module module = project.resolveLibrary(childLib, platform);
                     if(module == null) {
-                        LOGGER.error("can not resolve library: [{}:{}] need to build: {}", childLib, platform, m.getName());
+                        LOGGER.error("can not resolve library: [{}:{}] needed to build: {}", childLib, platform, m.getName());
                         return false;
                     } else {
                         if(module instanceof BuildableLibrary) {
