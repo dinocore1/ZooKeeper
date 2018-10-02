@@ -2,10 +2,10 @@
 import com.devsmart.zookeeper.plugins.*
 import com.devsmart.zookeeper.Platform
 
-def installDir = 'C:\\Users\\pauls\\.zookeeper\\toolchains\\mingw64\\bin'
+def installDir = 'C:\\Users\\pauls\\.zookeeper\\toolchains\\mingw32\\bin'
 
 def debugCPPSettings = new CompileSettings()
-debugCPPSettings.flags.addAll(['-g', '-O0'])
+debugCPPSettings.flags.addAll(['-g', '-O0', '-std=c++11'])
 debugCPPSettings.env.put('Path', "${installDir};\$(Path)")
 
 def debugCSettings = new CompileSettings()
@@ -13,11 +13,11 @@ debugCSettings.flags.addAll(['-g', '-O0'])
 debugCSettings.env.put('Path', "${installDir};\$(Path)")
 
 def staticLibDebug = new GCCStaticLibVisitor()
-staticLibDebug.platform = Platform.getNativePlatform()
+staticLibDebug.platform = Platform.parse('win-x86')
 staticLibDebug.variant = 'debug'
 staticLibDebug.cppCmd = "${installDir}\\g++"
 staticLibDebug.cppSettings = debugCPPSettings
-staticLibDebug.cCmd = 'gcc'
+staticLibDebug.cCmd = "${installDir}\\gcc"
 staticLibDebug.cSettings = debugCSettings
 staticLibDebug.linkCmd = 'ar'
 
@@ -25,7 +25,7 @@ project.zooKeeper.projectVisitors.add(staticLibDebug)
 
 //////// Shared Libs ///////
 debugCPPSettings = new CompileSettings()
-debugCPPSettings.flags.addAll(['-g', '-O0', '-fPIC'])
+debugCPPSettings.flags.addAll(['-g', '-O0', '-fPIC', '-std=c++11'])
 debugCPPSettings.env.put('Path', "${installDir};\$(Path)")
 
 debugCSettings = new CompileSettings()
@@ -33,19 +33,19 @@ debugCSettings.flags.addAll(['-g', '-O0', '-fPIC'])
 debugCSettings.env.put('Path', "${installDir};\$(Path)")
 
 def sharedLibDebug = new GCCSharedLibVisitor()
-sharedLibDebug.platform = Platform.getNativePlatform()
+sharedLibDebug.platform = Platform.parse('win-x86')
 sharedLibDebug.variant = 'debug'
 sharedLibDebug.cppCmd = "${installDir}\\g++"
 sharedLibDebug.cppSettings = debugCPPSettings
-sharedLibDebug.cCmd = 'gcc'
+sharedLibDebug.cCmd = "${installDir}\\gcc"
 sharedLibDebug.cSettings = debugCSettings
-sharedLibDebug.linkCmd = 'gcc'
+sharedLibDebug.linkCmd = "${installDir}\\g++"
 
 project.zooKeeper.projectVisitors.add(sharedLibDebug)
 
 ////// Exe ///////
 debugCPPSettings = new CompileSettings()
-debugCPPSettings.flags.addAll(['-g', '-O0'])
+debugCPPSettings.flags.addAll(['-g', '-O0', '-std=c++11'])
 debugCPPSettings.env.put('Path', "${installDir};\$(Path)")
 
 debugCSettings = new CompileSettings()
@@ -53,10 +53,11 @@ debugCSettings.flags.addAll(['-g', '-O0'])
 debugCSettings.env.put('Path', "${installDir};\$(Path)")
 
 def debugLinkSettings = new CompileSettings()
+//debugLinkSettings.flags.addAll(['-static-libstdc++'])
 debugLinkSettings.env.put('Path', "${installDir};\$(Path)")
 
 def exeDebug = new GCCExeVisitor()
-exeDebug.platform = Platform.getNativePlatform()
+exeDebug.platform = Platform.parse('win-x86')
 exeDebug.filenameExtendtion = '.exe'
 exeDebug.variant = 'debug'
 exeDebug.cppCmd = "${installDir}\\g++"
