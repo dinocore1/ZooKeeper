@@ -61,6 +61,25 @@ class Project {
 
     }
 
+    String getNativePlatform() {
+        return Platform.getNativePlatform().toString()
+    }
+
+    String camelCase(Collection<String> args) {
+        String[] strs = args
+        StringBuilder builder = new StringBuilder()
+        builder.append(strs[0].toLowerCase())
+
+        for(int i=1;i<strs.length;i++) {
+            String name = strs[i]
+            builder.append(name.charAt(0).toUpperCase())
+            if(name.length() > 1) {
+                builder.append(name.substring(1, strs[i].length()))
+            }
+        }
+        return builder.toString()
+    }
+
     void visit(Collection<ProjectVisitor> visitors) {
         for(ProjectVisitor v : visitors) {
             v.visit(this)
@@ -77,16 +96,25 @@ class Project {
         return exeTasks.find { it ->
             BuildTask exe = it
 
+            if(exe.name.equals(name)) {
+                return true
+            }
+
             if(exe instanceof CompileChildProcessTask) {
                 CompileChildProcessTask compileChildProcessTask = exe
-                if( Platform.nativePlatform.equals( compileChildProcessTask.compileContext.platform )
-                 && exe.compileContext.module.name.equals (name)){
+                exe.name.equals(name)
+                if(  Platform.nativePlatform.equals( compileChildProcessTask.compileContext.platform )
+                    && exe.compileContext.module.name.equals (name)){
                     return true
                 }
             }
 
             return false
         }
+    }
+
+    BuildTask getTask(String name) {
+        return
     }
 
     void addTask(BuildTask t) {

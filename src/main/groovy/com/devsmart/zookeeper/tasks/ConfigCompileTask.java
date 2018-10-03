@@ -1,6 +1,7 @@
 package com.devsmart.zookeeper.tasks;
 
 import com.devsmart.zookeeper.StringUtils;
+import com.devsmart.zookeeper.api.FileCollection;
 import groovy.lang.Closure;
 
 import java.io.File;
@@ -11,7 +12,7 @@ import java.util.Map;
 public class ConfigCompileTask extends CompileChildProcessTask {
 
     private Closure< Map<String, String> > mEnvClosure;
-    private String mWorkingDirPath;
+    private FileCollection mWorkingDirPath;
     private Closure mCommandLineClosure;
 
     public ConfigCompileTask() {
@@ -22,7 +23,7 @@ public class ConfigCompileTask extends CompileChildProcessTask {
         mEnvClosure = cl;
     }
 
-    void workingDir(String filePath) {
+    void workingDir(FileCollection filePath) {
         mWorkingDirPath = filePath;
     }
 
@@ -48,7 +49,7 @@ public class ConfigCompileTask extends CompileChildProcessTask {
         public File getWorkingDir(CompileChildProcessTask task) {
             File retval = null;
             if(mWorkingDirPath != null) {
-                retval = new File(mWorkingDirPath);
+                retval = mWorkingDirPath.getSingleFile();
             }
             return retval;
         }
