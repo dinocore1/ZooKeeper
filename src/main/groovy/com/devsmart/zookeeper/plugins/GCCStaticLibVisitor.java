@@ -29,6 +29,9 @@ public class GCCStaticLibVisitor extends DefaultProjectVisitor {
     public CompileSettings cSettings;
 
     public String linkCmd;
+    public CompileSettings linkSettings;
+
+    public String filenameExtendtion = ".a";
 
     protected BuildableLibrary library;
     protected com.devsmart.zookeeper.tasks.CompileChildProcessTask buildTask;
@@ -50,9 +53,12 @@ public class GCCStaticLibVisitor extends DefaultProjectVisitor {
 
         buildTask = new CompileChildProcessTask();
         buildTask.getCompileContext().module = lib;
+        if(linkSettings != null) {
+            buildTask.addModifier(linkSettings);
+        }
         buildTask.setName(genTaskName());
         buildTask.setDelegate(linkDelegate);
-        buildTask.setOutput(project.file(new File(genBuildDir(), lib.getName() + ".a")));
+        buildTask.setOutput(project.file(new File(genBuildDir(), lib.getName() + filenameExtendtion)));
         project.addLibBuildTask(buildTask);
 
         BuildTask resolveDependencyTask = createResolveDeps(lib, buildTask);
@@ -156,7 +162,8 @@ public class GCCStaticLibVisitor extends DefaultProjectVisitor {
 
         @Override
         public void updateEnv(CompileChildProcessTask task, Map<String, String> env) {
-
+            CompileContext compileContext = task.getCompileContext();
+            com.devsmart.zookeeper.StringUtils.mergeStringMaps(compileContext.env, env);
         }
     };
 }

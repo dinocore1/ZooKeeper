@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 
@@ -31,6 +32,7 @@ public class GCCSharedLibVisitor extends DefaultProjectVisitor {
     public CompileSettings cSettings;
 
     public String linkCmd;
+    public CompileSettings linkSettings;
 
     public String filenameExtendtion = ".so";
 
@@ -55,6 +57,9 @@ public class GCCSharedLibVisitor extends DefaultProjectVisitor {
 
         buildTask = new CompileChildProcessTask();
         buildTask.getCompileContext().module = lib;
+        if(linkSettings != null) {
+            buildTask.addModifier(linkSettings);
+        }
         buildTask.setName(genTaskName());
         buildTask.setOutput(project.file(new File(genBuildDir(), lib.getName() + filenameExtendtion)));
         buildTask.setDelegate(linkDelegate);
@@ -199,7 +204,8 @@ public class GCCSharedLibVisitor extends DefaultProjectVisitor {
 
         @Override
         public void updateEnv(CompileChildProcessTask task, Map<String, String> env) {
-
+            CompileContext compileContext = task.getCompileContext();
+            com.devsmart.zookeeper.StringUtils.mergeStringMaps(compileContext.env, env);
         }
     };
 }

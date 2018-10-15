@@ -11,6 +11,7 @@ import java.io.InputStreamReader;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 public abstract class ChildProcessTask extends BasicTask implements BuildTask {
 
@@ -32,9 +33,10 @@ public abstract class ChildProcessTask extends BasicTask implements BuildTask {
 
     @Override
     public boolean run() {
+        String[] cmdLine = null;
         try {
 
-            String[] cmdLine = getCommandLine();
+            cmdLine = getCommandLine();
             File dir = getWorkingDir();
 
             LOGGER.info("run: {}", Joiner.on(" ").join(cmdLine));
@@ -52,13 +54,15 @@ public abstract class ChildProcessTask extends BasicTask implements BuildTask {
             Process childProcess = builder.start();
 
             InputStream inputStream = childProcess.getInputStream();
-            IOTHREADS.execute(createStreamTask(inputStream));
+            Future<?> logFuture = IOTHREADS.submit(createStreamTask(inputStream));
 
             final int exitCode = childProcess.waitFor();
 
             final boolean success = exitCode == 0;
             if(!success) {
                 LOGGER.warn("process ended with status code: {}", exitCode);
+                logFuture.get();
+
             }
             return success;
 

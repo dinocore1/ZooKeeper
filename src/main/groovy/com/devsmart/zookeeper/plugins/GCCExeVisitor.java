@@ -50,7 +50,9 @@ public class GCCExeVisitor extends DefaultProjectVisitor {
         buildTask = new CompileChildProcessTask();
         buildTask.getCompileContext().module = executable;
         buildTask.getCompileContext().platform = platform;
-        buildTask.addModifier(linkSettings);
+        if(linkSettings != null) {
+            buildTask.addModifier(linkSettings);
+        }
         buildTask.setName(genTaskName());
         buildTask.setOutput(project.file(new File(genBuildDir(), executable.getName() + filenameExtendtion)));
         buildTask.setDelegate(linkDelegate);
