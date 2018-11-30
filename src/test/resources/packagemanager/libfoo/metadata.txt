@@ -1,0 +1,14 @@
+
+library {
+  org 'example.com'
+  name 'foo'
+  version '1.0.3'
+  platform 'win-x86_64'
+
+  dependencies [
+    'example.com:bar:1.2+'
+  ]
+
+  include file('include')
+  lib file('lib/foo.dll')
+}
