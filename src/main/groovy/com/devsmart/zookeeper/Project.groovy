@@ -284,7 +284,7 @@ class Project {
                 //retval &= plan.run(numJobs)
 
                 TaskRunner runner = new TaskRunner(zooKeeper.dependencyGraph)
-                runner.build(buildTask)
+                retval = runner.build(buildTask) == 0
 
             } else {
                 LOGGER.warn('no task with name: {}', taskName)
